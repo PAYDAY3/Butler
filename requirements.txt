@@ -1,0 +1,13 @@
+SpeechRecognition
+PocketSphinx
+pyttsx3
+logging
+tempfile
+snowboy
+PyAudio
+snowboy
+shutil
+tempfile
+prompt_toolkit
+pillow
+pygame

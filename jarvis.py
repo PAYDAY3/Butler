@@ -17,22 +17,23 @@ import tempfile
 import concurrent.futures
 
 import threading
-from thread import start_threads, start_external_python_script
+from thread import process_tasks
 
 from my_package.date import date
-from my_package.wenhou import wishme
-from TextEditor import create_archive, load_archive, save_archive, find_file, delete_file, delete_specified_file
+from my_package.speak import wishme
+from TextEditor import TextEditor
 from my_package.virtual_keyboard import VirtualKeyboard
+from my_package.algorithm import greedy_activity_selection
 
 # Snowboy 模型文件路径
-model = "Snowboy/snowboy.umdl"
+model = "my_Snowboy/jarvis.umdl"
 
 # pocketsphinx 参数配置
 config = {
     "verbose": False,
     "audio_gain": 1.5,
     "keyphrase": "jarvis",
-    "kws_threshold": 1e-5
+    "kws_threshold": 1e-5    
 }
 
 # 初始化语音识别器和文本到语音引擎
@@ -48,7 +49,7 @@ log_file = "program_log.txt"
 logging.basicConfig(filename=log_file, level=logging.DEBUG)
 
 # 定义唤醒词
-WAKE_WORD = "龍"
+WAKE_WORD = "jarvis"
 
 Input_command = ">>> "
 program_folder = "/program"
@@ -67,8 +68,13 @@ def takecommand():
         recognizer.operation_timeout = 5  # 最长等待时间（秒）
         recognizer.energy_threshold = 4000      # 设置音量阈值
         recognizer.dynamic_energy_threshold = True  # 自动调整音量阈值
-        recognizer.default = 'snowboy/resources/jarvis.umdl'
+        recognizer.default = "model"
         audio = recognizer.listen(source, phrase_time_limit=5)
+        # 将录制的音频保存为临时文件
+        with tempfile.NamedTemporaryFile(delete=False) as f:
+            audio_file_path = f.name + ".wav"
+            f.write(audio.get_wav_data())
+    return audio_file_path 
     try:
         print("Recognizing...")  # 识别中...
         query = recognizer.recognize_sphinx(audio, language='zh-CN')
@@ -85,7 +91,8 @@ def takecommand():
         return ""
 
 # 创建 Snowboy 监听器
-detector = snowboydecoder.HotwordDetector(model, sensitivity=0.5)
+detector = snowboydecoder.HotwordDetector(model, sensitivity=0.5, audio_gain=1)
+detector.start(takecommand)
 
 # 主程序逻辑
 def main_program_logic(program_folder):
@@ -102,7 +109,7 @@ def main_program_logic(program_folder):
     running = True
     while running:
         try:
-            wake_command = recognize_sphinx(takecommand()).lower()
+            wake_command = takecommand().lower() #recognize_sphinx(takecommand()).lower()
             program_file_name = program_mapping.get(wake_command, None)
             if program_file_name:
                 print(f"正在执行命令: {wake_command}")
@@ -142,62 +149,6 @@ def open_programs(program_folder):
             except ImportError as error:
                 logging.error(f"导入模块 {program_name} 失败：{error}")
     return programs
-    
-def thread():
-    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-        for i in range(10):
-            future = executor.submit(start_external_python_script, 'external_script.py')
-        
-        for future in concurrent.futures.as_completed(future_to_script):
-            try:
-                result = future.result()
-                print('任务执行结果：', result)
-            except Exception as e:
-                print('任务执行出错：', e)
-
-def command_listener():
-    while True:
-        command = input()
-        if "保存文件" in command:
-            # 解析出要保存的文件名
-            filename = command.split("保存文件")[-1].strip()
-            save_archive(file_path=filename)
-        elif "查找文件" in command:
-            # 解析出要查找的文件名
-            filename = command.split("查找文件")[-1].strip()
-            find_file(file_path=filename)
-        elif "删除文件" in command:
-            # 解析出要删除的文件名
-            filename = command.split("删除文件")[-1].strip()
-            delete_file(file_path=filename)
-        elif "退出" in command:
-            break
-
-def speech_listener():
-    recognizer = sr.Recognizer()
-    with sr.Microphone() as source:
-        print("开始语音识别...")
-        while True:
-            audio = recognizer.listen(source)
-            try:
-                text = recognizer.recognize_google(audio, language="zh-CN")
-                print("识别结果：", text)
-                if "保存文件" in text:
-                    # 解析出要保存的文件名
-                    filename = text.split("保存文件")[-1].strip()
-                    save_archive(file_path=filename)
-                elif "查找文件" in text:
-                    # 解析出要查找的文件名
-                    filename = text.split("查找文件")[-1].strip()
-                    find_file(file_path=filename)
-                elif "删除文件" in text:
-                    # 解析出要删除的文件名
-                    filename = text.split("删除文件")[-1].strip()
-                    delete_file(file_path=filename)
-                elif "退出" in text:
-                    break
-            except sr.UnknownValueError:
-                print("无法识别语音输入。")
 
  # 主函数
 def main():
@@ -240,7 +191,7 @@ def main():
         # 程序结束时停止监听
         detector.terminate()
 
-        wake_command = recognize_sphinx(takecommand()).lower()
+        wake_command = takecommand().lower()#    recognize_sphinx(takecommand()).lower()
         user_input = None
         print("等待唤醒词")
         logging.info("等待唤醒词")
@@ -251,7 +202,7 @@ def main():
 
     if not running:
         # 打开另一个程序
-        os.system("python /待机程序") 
+        os.system("python Bide_one's_time.py") 
                  
         if "手动输入" in wake_command:
             keyboard = VirtualKeyboard()
@@ -275,11 +226,11 @@ def main():
 
             # 通过文本交流获取用户输入
             query = input(Input_command)
-            response_text = recognize_sphinx(query).lower()
+            response_text = takecommand(query).lower()
 
             user_command = response_text[len(WAKE_WORD):].strip()  
             # 对用户输入进行处理，执行特定操作
-            if "打开程序" in response_text:
+            if "打开程序" in user_command:
                 program_name = response_text.replace("打开程序", "").strip()
                 if program_name in programs:
                     program_module = programs[program_name]
@@ -290,11 +241,10 @@ def main():
                 else:
                     print(f"未找到程序：{program_name}")
 
-            elif "退出" in response_text or "结束" in response_text:
+            elif "退出" in user_command or "结束" in user_command:
                 print("程序已退出")
                 logging.info("用户已退出程序")
                 running = False  # 设置标志为 False，用于退出主循环
-                break
             else:
                 print("未知指令，请重试")
                 logging.warning("未知指令")
@@ -322,21 +272,23 @@ def main():
                                     print(f"导入模块失败: {error}")
                                     logging.error(f"导入模块失败: {error}")
 
-
+# 定义活动的开始时间和结束时间列表
+start_times = [1, 3, 0, 5, 8, 5]
+finish_times = [2, 4, 6, 7, 9, 9]
 if __name__ == "__main__":
     wishme()# 执行程序初始化逻辑
-   
+    # 调用贪心算法函数，获取选择的活动列表
+    selected_activities = greedy_activity_selection(start_times, finish_times)
+    # 打印选择的活动列表
+    print(selected_activities)    
     while True:
         try:
+           
             # 执行主程序的逻辑
             main()
             # 执行主程序的逻辑
             main_program_logic("program_folder")
-            # 调用命令监听函数
-            command_listener()
-            # 调用语音识别函数
-            speech_listener()
-            thread()# 运行多线程程序
+            process_tasks()# 运行多线程程序
             # 从文件中加载程序映射
             mapping = load_program_mapping()
             print(mapping)
@@ -357,7 +309,7 @@ if __name__ == "__main__":
             logging.info(f"程序发生异常：{error}")
         finally:
             try:
-                main_program_logic("./program_folder")  # 执行主程序的逻辑
+                main_program_logic("program_folder")  # 执行主程序的逻辑
             except Exception as error:
                 print(f"程序发生异常：{error}")
                 logging.info(f"程序发生异常：{error}")
@@ -376,4 +328,9 @@ if __name__ == "__main__":
             speak("I'm fine sir, What about you?")#译文：我很好，先生，你呢?
             print("I'm fine sir, What about you?")
 
-
+        elif 'play music' in query:
+            music_folder = Your_music_folder_path
+            music = [music1, music2, music3, music4, music5]
+            random_music = music_folder + random.choice(music) + '.mp3'
+            os.system(random_music)     
+            speak('Okay, here is your music! Enjoy!')
