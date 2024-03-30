@@ -17,9 +17,9 @@ def send_email(subject, message, sender, receiver):
 email_subject = input("主题：")
 email_message = input("内容：")
 recipient_email = input("邮箱地址：")
-print = (email_subject)
-print = (email_message)
-print = (recipient_email)
+print(email_subject)
+print(email_message)
+print(recipient_email)
 
 # 调用发送邮件函数
 send_email(email_subject, email_message, 'sender@example.com', recipient_email)
