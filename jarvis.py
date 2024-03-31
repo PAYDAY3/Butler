@@ -289,24 +289,6 @@ if __name__ == "__main__":
             # 执行主程序的逻辑
             main_program_logic("program_folder")
             process_tasks()# 运行多线程程序
-            # 从文件中加载程序映射
-            mapping = load_program_mapping()
-            print(mapping)
-            manual_command = manual_input()  # 执行主程序的逻辑
-            # 在这里根据输入的命令执行相应操作
-            if "退出" in manual_command or "结束" in manual_command:
-                print("程序已退出")
-                logging.info("程序已退出")
-                break
-            # 添加更多命令处理逻辑
-        except KeyboardInterrupt:
-            print("用户中断程序")
-            logging.info("用户中断程序")
-        except ImportError as error:
-            logging.error(f"导入模块失败: {error}")
-        except Exception as error:
-            print(f"程序发生异常：{error}")
-            logging.info(f"程序发生异常：{error}")
         finally:
             try:
                 main_program_logic("program_folder")  # 执行主程序的逻辑
