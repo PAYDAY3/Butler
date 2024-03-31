@@ -48,14 +48,10 @@ def speak(audio):
 log_file = "program_log.txt"
 logging.basicConfig(filename=log_file, level=logging.DEBUG)
 
-# 定义唤醒词
+# 定义唤醒词和其他全局变量
 WAKE_WORD = "jarvis"
-
 Input_command = ">>> "
 program_folder = "/program"
-
-# 唤醒成功，开始监听用户命令
-wake_command = recognize_sphinx().lower()
 
 # 语音识别
 def takecommand():
