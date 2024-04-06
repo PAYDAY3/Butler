@@ -8,6 +8,8 @@ from dateutil import parser
 import smtplib
 from email.mime.text import MIMEText
 from email.header import Header
+
+your_password = ""#邮箱密码
 class Plugin():
 
     SLUG = "email"
@@ -146,27 +148,30 @@ class Plugin():
     def isValid(self, text, parsed):
         return any(word in text for word in ["邮箱", "邮件"])
         
-def send_email(subject, message, sender, receiver):
-    msg = MIMEText(message)
-    msg['Subject'] = subject
-    msg['From'] = sender
-    msg['To'] = receiver
-    
-    # 设置 SMTP 服务器地址和端口
-    smtp_server = 'smtp.example.com'  # 修改为你的SMTP服务器地址
-    smtp_port = 587  # 一般情况下使用587端口
-    
-    # 登录 SMTP 服务器并发送邮件
-    try:
-        server = smtplib.SMTP(smtp_server, smtp_port)
-        server.starttls()  # 开启安全传输模式（TLS）
-        server.login(sender, 'your_password')  # 修改为你的邮箱密码
-        server.sendmail(sender, [receiver], msg.as_string())
-        print("邮件发送成功！")
-    except Exception as e:
-        print("邮件发送失败:", e)
-    finally:
-        server.quit()
+    def send_email(self, subject, message, receiver):
+        msg = MIMEText(message)
+        msg['Subject'] = subject
+        msg['From'] = 'sender@qq.com'  # 发件人地址
+        msg['To'] = receiver
+        
+        # 设置 SMTP 服务器地址和端口
+        smtp_server = 'smtp.qq.com'  # 修改为你的SMTP服务器地址
+        smtp_port = 587  # 一般情况下使用587端口
+        
+        # 登录 SMTP 服务器并发送邮件
+        try:
+            server = smtplib.SMTP(smtp_server, smtp_port)
+            server.starttls()  # 开启安全传输模式（TLS）
+            server.login('sender@qq.com', 'your_password')  # 修改为你的邮箱密码
+            server.sendmail('sender@qq.com', [receiver], msg.as_string())
+            print("邮件发送成功！")
+        except Exception as e:
+            print("邮件发送失败:", e)
+        finally:
+            server.quit()
+
+# 实例化插件对象
+email_plugin = Plugin()
 
 # 要发送的邮件内容
 email_subject = input("主题：")
