@@ -5,21 +5,14 @@ import time
 import datetime
 from Logging import getLogger, readLog
 from dateutil import parser
-
-class Plugin(AbstractPlugin):
+import smtplib
+from email.mime.text import MIMEText
+from email.header import Header
+class Plugin():
 
     SLUG = "email"
 
     def getSender(self, msg):
-        """
-        Returns the best-guess sender of an email.
-
-        Arguments:
-        msg -- the email whose sender is desired
-
-        Returns:
-        Sender of the sender.
-        """
         fromstr = str(msg["From"])
         ls = fromstr.split(" ")
         if len(ls) == 2:
@@ -48,15 +41,6 @@ class Plugin(AbstractPlugin):
         return addr == address
 
     def getSubject(self, msg):
-        """
-        Returns the title of an email
-
-        Arguments:
-        msg -- the email
-
-        Returns:
-        Title of the email.
-        """
         subject = email.header.decode_header(msg["subject"])
         if isinstance(subject[0][0], bytes):
             try:
@@ -87,15 +71,6 @@ class Plugin(AbstractPlugin):
         return parser.parse(email.get("date"))
 
     def getMostRecentDate(self, emails):
-        """
-        Returns the most recent date of any email in the list provided.
-
-        Arguments:
-        emails -- a list of emails to check
-
-        Returns:
-        Date of the most recent email.
-        """
         dates = [self.getDate(e) for e in emails]
         dates.sort(reverse=True)
         if dates:
@@ -103,16 +78,6 @@ class Plugin(AbstractPlugin):
         return None
 
     def fetchUnreadEmails(self, since=None, markRead=False, limit=None):
-        """
-        Fetches a list of unread email objects from a user's email inbox.
-
-        Arguments:
-        since -- if provided, no emails before this date will be returned
-        markRead -- if True, marks all returned emails as read in target inbox
-
-        Returns:
-        A list of unread email objects.
-        """
         logger = logging.getLogger(__name__)
         profile = config.get()
         conn = imaplib.IMAP4(
@@ -180,3 +145,36 @@ class Plugin(AbstractPlugin):
 
     def isValid(self, text, parsed):
         return any(word in text for word in ["邮箱", "邮件"])
+        
+def send_email(subject, message, sender, receiver):
+    msg = MIMEText(message)
+    msg['Subject'] = subject
+    msg['From'] = sender
+    msg['To'] = receiver
+    
+    # 设置 SMTP 服务器地址和端口
+    smtp_server = 'smtp.example.com'  # 修改为你的SMTP服务器地址
+    smtp_port = 587  # 一般情况下使用587端口
+    
+    # 登录 SMTP 服务器并发送邮件
+    try:
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        server.starttls()  # 开启安全传输模式（TLS）
+        server.login(sender, 'your_password')  # 修改为你的邮箱密码
+        server.sendmail(sender, [receiver], msg.as_string())
+        print("邮件发送成功！")
+    except Exception as e:
+        print("邮件发送失败:", e)
+    finally:
+        server.quit()
+
+# 要发送的邮件内容
+email_subject = input("主题：")
+email_message = input("内容：")
+recipient_email = input("邮箱地址：")
+print(email_subject)
+print(email_message)
+print(recipient_email)
+
+# 调用发送邮件函数
+send_email(email_subject, email_message, 'sender@qq.com', recipient_email)
