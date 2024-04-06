@@ -24,7 +24,7 @@ from my_package.speak import wishme
 from TextEditor import TextEditor
 from my_package.virtual_keyboard import VirtualKeyboard
 from my_package.algorithm import greedy_activity_selection
-
+from my_package.Logging import getLogger, readLog
 # Snowboy 模型文件路径
 model = "my_Snowboy/jarvis.umdl"
 
@@ -268,15 +268,8 @@ def main():
                                     print(f"导入模块失败: {error}")
                                     logging.error(f"导入模块失败: {error}")
 
-# 定义活动的开始时间和结束时间列表
-start_times = [1, 3, 0, 5, 8, 5]
-finish_times = [2, 4, 6, 7, 9, 9]
 if __name__ == "__main__":
-    wishme()# 执行程序初始化逻辑
-    # 调用贪心算法函数，获取选择的活动列表
-    selected_activities = greedy_activity_selection(start_times, finish_times)
-    # 打印选择的活动列表
-    print(selected_activities)    
+    wishme()# 执行程序初始化逻辑    
     while True:
         try:
            
