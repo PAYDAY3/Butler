@@ -10,6 +10,7 @@ from email.mime.text import MIMEText
 from email.header import Header
 
 your_password = ""#邮箱密码
+Email_address = "@qq.com"#邮箱地址
 class Plugin():
 
     SLUG = "email"
@@ -60,7 +61,7 @@ class Plugin():
         return ""
 
     def isNewEmail(msg):
-        """Wether an email is a new email"""
+        """邮件是否为新邮件"""
         date = str(msg["Date"])
         dtext = date.split(",")[1].split("+")[0].strip()
         dtime = time.strptime(dtext, "%d %b %Y %H:%M:%S")
@@ -151,7 +152,7 @@ class Plugin():
     def send_email(self, subject, message, receiver):
         msg = MIMEText(message)
         msg['Subject'] = subject
-        msg['From'] = 'sender@qq.com'  # 发件人地址
+        msg['From'] = "Email_address"  # 发件人地址
         msg['To'] = receiver
         
         # 设置 SMTP 服务器地址和端口
@@ -162,8 +163,8 @@ class Plugin():
         try:
             server = smtplib.SMTP(smtp_server, smtp_port)
             server.starttls()  # 开启安全传输模式（TLS）
-            server.login('sender@qq.com', 'your_password')  # 修改为你的邮箱密码
-            server.sendmail('sender@qq.com', [receiver], msg.as_string())
+            server.login('Email_address', 'your_password')  # 修改为你的邮箱密码
+            server.sendmail('Email_address', [receiver], msg.as_string())
             print("邮件发送成功！")
         except Exception as e:
             print("邮件发送失败:", e)
@@ -182,4 +183,4 @@ print(email_message)
 print(recipient_email)
 
 # 调用发送邮件函数
-send_email(email_subject, email_message, 'sender@qq.com', recipient_email)
+send_email(email_subject, email_message, 'Email_address', recipient_email)
