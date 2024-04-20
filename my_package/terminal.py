@@ -60,9 +60,10 @@ def execute_command(command):
         if cmd == 'cd':
             if args:
                 os.chdir(args[0])
-                print(f"Changed current directory to: {os.getcwd()}")
+                self.update_result_text(text=f"将当前目录更改为: {os.getcwd()}")
             else:
-                print("No directory specified.")
+                self.update_result_text(text=f"将当前目录更改为: {os.getcwd()}")
+                
         elif cmd == 'ls':
             files = os.listdir(os.getcwd())
             for file in files:
