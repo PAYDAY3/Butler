@@ -1,5 +1,7 @@
+
 import threading
 import queue
+from concurrent.futures import ThreadPoolExecutor
 
 # 模拟处理任务的函数
 def do_something(task):
@@ -8,7 +10,13 @@ def do_something(task):
 # 获取大任务列表
 def get_tasks():
     return ["task1", "task2", "task3", "task4", "task5", "task6", "task7", "task8", "task9", "task10"]
+    
+with ThreadPoolExecutor() as executor:
+    results = executor.map(do_something, tasks)
 
+for result in results:
+    print(result)   
+    
 # 定义任务处理函数
 def process_task(task, result_queue):
     # 处理任务
