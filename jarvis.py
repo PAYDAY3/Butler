@@ -21,7 +21,7 @@ from thread import process_tasks
 
 from my_package.date import date
 from my_package.speak import wishme
-from TextEditor import TextEditor
+from my_package.TextEditor import TextEditor
 from my_package.virtual_keyboard import VirtualKeyboard
 from my_package.algorithm import greedy_activity_selection
 from my_package.Logging import getLogger, readLog

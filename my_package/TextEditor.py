@@ -1,6 +1,7 @@
 import json
 import os
 import time
+import util
 from PIL import Image
 import shutil
 import speech_recognition as sr
@@ -136,7 +137,7 @@ def rename_file(file_path, new_name):
 # 处理命令
 def process_command(takecommand):
     if "保存文件" in takecommand:
-        filename = command.split("保存文件")[-1].strip()
+        filename = takecommand.split("保存文件")[-1].strip()
         content = input("请输入文本内容：")
         save_text_file(filename, content)
     elif "查找文件" in takecommand:
@@ -145,8 +146,8 @@ def process_command(takecommand):
     elif "删除文件" in takecommand:
         filename = takecommand.split("删除文件")[-1].strip()
         delete_file(filename)
-    elif "打开图片" in command:
-        filename = command.split("打开图片")[-1].strip()
+    elif "打开图片" in takecommand:
+        filename = takecommand.split("打开图片")[-1].strip()
         open_image_file(filename)
     elif "打开文件" in takecommand:
         filename = takecommand.split("打开文件")[-1].strip()
@@ -165,7 +166,7 @@ def process_command(takecommand):
         if len(parts) < 3:
             print("请提供文件路径和新的文件名。")
         else:
-            src_file, dest_folder = map(str.strip, file_paths)
+            src_file, dest_folder = map(str.strip, file_path)
             move_file(src_file, dest_folder)
     elif "复制文件" in takecommand:
         parts = takecommand.split("复制文件")
@@ -198,7 +199,7 @@ def TextEditor():
     max_retries = 1  # 最大重试次数
     retries = 0
 
-     while True:
+    while True:
         try:
             command = takecommand()
             if not command:
