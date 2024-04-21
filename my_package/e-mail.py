@@ -164,7 +164,7 @@ class Plugin():
             server = smtplib.SMTP(smtp_server, smtp_port)
             server.starttls()  # 开启安全传输模式（TLS）
             server.login(Email_address, your_password)  # 修改为你的邮箱密码
-            server.sendmail(Email_address, [receiver], msg.as_string())
+            server.sendmail(Email_address, [recipient_email], msg.as_string())
             print("邮件发送成功！")
         except Exception as e:
             print("邮件发送失败:", e)
