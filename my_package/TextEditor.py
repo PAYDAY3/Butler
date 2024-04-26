@@ -1,7 +1,7 @@
 import json
 import os
 import time
-import util
+from util import *
 from PIL import Image
 import shutil
 import speech_recognition as sr
