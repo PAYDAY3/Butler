@@ -2,7 +2,8 @@
 import json
 import re
 import os
-
+import datetime
+import statistics
 
 def read_jsonline(address):
     not_mark = []
@@ -103,7 +104,70 @@ def update_progress(progress_file, index):
     """Update the last processed index in the progress file."""
     with open(progress_file, 'w', encoding='utf-8') as f:
         f.write(str(index))
+def get_current_timestamp():
+    return datetime.datetime.now().timestamp()
 
+def convert_timestamp_to_datetime(timestamp):
+    return datetime.datetime.fromtimestamp(timestamp)
+
+def convert_datetime_to_timestamp(datetime_object):
+    return datetime_object.timestamp()
+
+def is_valid_email(email):
+    regex = r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
+    return bool(re.match(regex, email))
+
+def is_valid_url(url):
+    regex = r"^(http|https)://\S+$"
+    return bool(re.match(regex, url))
+
+def is_valid_json(json_string):
+    try:
+        json.loads(json_string)
+        return True
+    except ValueError:
+        return False
+
+def calculate_mean(numbers):
+    return statistics.mean(numbers)
+
+def calculate_median(numbers):
+    return statistics.median(numbers)
+
+def calculate_standard_deviation(numbers):
+    return statistics.stdev(numbers)
+
+def remove_html_tags(string):
+    return re.sub(r"<.*?>", "", string)
+
+def extract_numbers(string):
+    return re.findall(r"\d+", string)
+
+def truncate_string(string, length):
+    return string[:length] if len(string) > length else string
+
+def create_directory(directory_path):
+    os.makedirs(directory_path, exist_ok=True)
+
+def delete_directory(directory_path):
+    shutil.rmtree(directory_path, ignore_errors=True)
+
+def copy_file(source_path, destination_path):
+    shutil.copyfile(source_path, destination_path)
+
+def generate_random_string(length):
+    return ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(length))
+
+def convert_to_boolean(value):
+    if isinstance(value, str):
+        return value.lower() in ("true", "1")
+    elif isinstance(value, int):
+        return value != 0
+    else:
+        return bool(value)
+
+def get_file_extension(filename):
+    return os.path.splitext(filename)[1]
 
 if __name__ == '__main__':
     print("util.py")
