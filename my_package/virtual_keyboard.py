@@ -83,8 +83,14 @@ class VirtualKeyboard:
             btn = tk.Button(frame, text=symbol, command=lambda s=symbol: self.on_button_click(s))
             btn.grid(row=row, column=i, padx=3, pady=3)
 
-    def on_button_click(self, char):
-        self.text_input.insert(tk.END, char)
+    def on_button_click(char):
+        def inner():
+            self.text_input.insert(tk.END, char)
+        return inner
+        
+    for i, letter in enumerate(letters):
+        btn = tk.Button(frame, text=letter, command=on_button_click(letter))
+        btn.grid(row=row, column=i, padx=3, pady=3)
 
     def toggle_case(self):
         self.is_uppercase = not self.is_uppercase  # 切换大小写模式
