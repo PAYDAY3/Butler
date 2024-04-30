@@ -25,6 +25,16 @@ class Application(tk.Frame):
         self.result_text = tk.Text(self, height=10, width=50)
         self.result_text.pack(side="bottom")
         self.result_text.config(state=tk.DISABLED)
+        
+    def Shell(SubprocessLanguage):
+        file_extension = "sh"
+        name = "Shell"
+        aliases = ["bash", "sh", "zsh"]
+
+    def C(SubprocessLanguage):
+        file_extension = "c"
+        name = "C"
+        aliases = ["c", "cpp"]
 
     def execute_command(self):
         command = self.input.get()
