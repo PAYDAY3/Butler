@@ -25,16 +25,6 @@ from my_package.TextEditor import TextEditor
 from my_package.virtual_keyboard import VirtualKeyboard
 from my_package.algorithm import greedy_activity_selection
 from my_package.Logging import getLogger, readLog
-# Snowboy 模型文件路径
-model = "my_Snowboy/jarvis.umdl"
-
-# pocketsphinx 参数配置
-config = {
-    "verbose": False,
-    "audio_gain": 1.5,
-    "keyphrase": "jarvis",
-    "kws_threshold": 1e-5    
-}
 
 # 初始化语音识别器和文本到语音引擎
 recognizer = sr.Recognizer()
@@ -45,13 +35,24 @@ def speak(audio):
     engine.runAndWait()# 播放语音
 
 # 初始化日志
-log_file = "program_log.txt"
-logging.basicConfig(filename=log_file, level=logging.DEBUG)
+#   log_file = "program_log.txt"
+#   logging.basicConfig(filename=log_file, level=logging.DEBUG)
+
+logger = Logging.getLogger(__name__)
 
 # 定义唤醒词和其他全局变量
 WAKE_WORD = "jarvis"
 Input_command = ">>> "
 program_folder = "/program"
+model = "my_Snowboy/jarvis.umdl"  # Snowboy 模型文件路径
+
+# pocketsphinx 参数配置
+config = {
+    "verbose": False,
+    "audio_gain": 1.5,
+    "keyphrase": "jarvis",
+    "kws_threshold": 1e-5    
+}
 
 # 语音识别
 def takecommand():
@@ -64,7 +65,7 @@ def takecommand():
         recognizer.operation_timeout = 5  # 最长等待时间（秒）
         recognizer.energy_threshold = 4000      # 设置音量阈值
         recognizer.dynamic_energy_threshold = True  # 自动调整音量阈值
-        recognizer.default = "model"
+        recognizer.default = model
         audio = recognizer.listen(source, phrase_time_limit=5)
         # 将录制的音频保存为临时文件
         with tempfile.NamedTemporaryFile(delete=False) as f:
