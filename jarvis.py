@@ -57,6 +57,7 @@ config = {
 # 语音识别
 def takecommand():
     recognizer = sr.Recognizer()
+    global recognizer
     with sr.Microphone() as source:
         print("请说话...")
         recognizer.pause_threshold = 1  # 静态能量阈值
@@ -72,20 +73,20 @@ def takecommand():
             audio_file_path = f.name + ".wav"
             f.write(audio.get_wav_data())
     return audio_file_path 
-    try:
-        print("Recognizing...")  # 识别中...
-        query = recognizer.recognize_sphinx(audio, language='zh-CN')
-        print('User: ' + query + '\n')
-        return query     
-    except Exception as e:
-        print("对不起，我没有听清楚，请再说一遍。")
-        speak("对不起，我没有听清楚，请再说一遍。")
-        query = None
-        return query
-    except sr.RequestError as error:
-        print(f"语音识别请求出错：{error}")
-        logging.error(f"语音识别请求出错：{error}")
-        return ""
+        try:
+            print("Recognizing...")  # 识别中...
+            query = recognizer.recognize_sphinx(audio, language='zh-CN')
+            print('User: ' + query + '\n')
+            return query     
+        except Exception as e:
+            print("对不起，我没有听清楚，请再说一遍。")
+            speak("对不起，我没有听清楚，请再说一遍。")
+            query = None
+            return query
+        except sr.RequestError as error:
+            print(f"语音识别请求出错：{error}")
+            logging.error(f"语音识别请求出错：{error}")
+            return ""
 
 # 创建 Snowboy 监听器
 detector = snowboydecoder.HotwordDetector(model, sensitivity=0.5, audio_gain=1)
@@ -135,7 +136,11 @@ def main_program_logic(program_folder):
             speak(f"程序出现异常: {error}")
             
 # 打开程序模块
+programs_cache = {}
 def open_programs(program_folder):
+    global programs_cache
+    if program_folder in programs_cache:
+        return programs_cache[program_folder]
     programs = {}
     for program_file in os.listdir(program_folder):
         if program_file.endswith('.py'):
@@ -145,6 +150,7 @@ def open_programs(program_folder):
                 programs[program_name] = program_module
             except ImportError as error:
                 logging.error(f"导入模块 {program_name} 失败：{error}")
+    programs_cache[program_folder] = programs                
     return programs
 
  # 主函数
