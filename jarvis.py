@@ -278,8 +278,7 @@ def main():
 if __name__ == "__main__":
     wishme()# 执行程序初始化逻辑    
     while True:
-        try:
-           
+        try:           
             # 执行主程序的逻辑
             main()
             # 执行主程序的逻辑
@@ -305,10 +304,3 @@ if __name__ == "__main__":
         elif "how are you" in query:#译文:你好吗?
             speak("I'm fine sir, What about you?")#译文：我很好，先生，你呢?
             print("I'm fine sir, What about you?")
-
-        elif 'play music' in query:
-            music_folder = Your_music_folder_path
-            music = [music1, music2, music3, music4, music5]
-            random_music = music_folder + random.choice(music) + '.mp3'
-            os.system(random_music)     
-            speak('Okay, here is your music! Enjoy!')
