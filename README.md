@@ -34,28 +34,51 @@
 
 文件构成：
 ├── LICENSE #项目许可证文件
+
 ├── README.md  #项目的自述文件
+
 ├── requirements.txt#项目依赖项列表
+
 ├── jarvis.py  #程序的主脚本
+
 ├── my_package# 一个包含各种实用程序和功能的自定义 Python 包
+
 │   ├── algorithm.py#算法
+
 │   ├── date.py
+
 │   ├── Logging.py#日志记录
+
 │   ├── speak.py
+
 │   ├── TextEditor.py
+
 │   ├── virtual_keyboard.py
+
 ├── my_snowboy  #一个用于语音唤醒的第三方库
+
 │   ├── snowboydecoder.py
+
 │   ├── snowboydetect.py
+
 │   ├── jarvis.pmdl
+
 │   ├── jarvis.umdl
+
 │   ├── resources
+
      │   ├── dong.wav、ding.wav和common.res
+
 ├── program_folder #一个包含自定义程序模块的文件夹
+
 │   ├── browser_program.py
+
 │   ├── calendar_program.py
+
 │   ├── music_program.py
+
 │   ├── notepad_program.py  # 自定义程序模块示例
+
 ├── program_log.txt#一个日志文件，用于记录程序的活动
 
 
