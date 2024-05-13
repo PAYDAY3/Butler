@@ -29,6 +29,7 @@ from my_package.Logging import getLogger, readLog
 # 初始化语音识别器和文本到语音引擎
 recognizer = sr.Recognizer()
 engine = pyttsx3.init()# 为语音合成创建一个引擎实例
+engine.set_output('jarvis.wav')  #修改成自己.wav文件
 
 def speak(audio):
     engine.say(audio)# 将需要语音合成的文本传递给引擎
