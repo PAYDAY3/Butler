@@ -1,5 +1,7 @@
 import threading
 import queue
+import logging
+from concurrent.futures import ThreadPoolExecutor
 
 # 模拟处理任务的函数
 def do_something(task):
@@ -11,82 +13,86 @@ def get_tasks():
 
 # 定义任务处理函数
 def process_task(task, result_queue):
-    # 处理任务
-    task_result = do_something(task)
-    result_queue.put(task_result)  # 将处理结果放入队列中
+    try:
+        task_result = do_something(task)
+        result_queue.put(task_result)  # 将处理结果放入队列中
+    except Exception as e:
+        logging.error(f"处理任务 {task} 时发生错误: {e}")
 
 # 工作线程函数
-def worker(subtasks, result_queue=None):
+def worker(subtasks, result_queue):
     results = []
     for task in subtasks:
-        if result_queue:
-            task_result = process_task(task, result_queue)
-        else:
-            task_result = process_task(task)
+        task_result = process_task(task, result_queue)
         results.append(task_result)
-
-    if not result_queue:
-        return results
+    return result_queue
 
 # 定义任务分发函数
 def dispatch_tasks(tasks, num_threads):
     # 将大任务分解成多个小任务
     subtasks = divide_tasks(tasks, num_threads)
 
-    # 定义共享队列
-    result_queue = queue.Queue()
-
     # 创建线程池
-    thread_pool = []
+    with ThreadPoolExecutor(max_workers=num_threads) as executor:
+        # 将任务提交给线程池执行
+        future_to_task = {executor.submit(worker, subtasks[i], queue.Queue()): i for i in range(num_threads)}
+        # 等待所有任务完成并获取结果
+        results = []
+        for future in concurrent.futures.as_completed(future_to_task):
+            result_queue = future.result()
+            while not result_queue.empty():
+                results.extend(result_queue.get())
 
-    # 分配任务给各个线程处理
-    for i in range(num_threads):
-        thread = threading.Thread(target=worker, args=(subtasks[i],))
-        thread_pool.append(thread)
-
-    # 启动线程池
-    for thread in thread_pool:
-        thread.start()
-
-    # 等待线程池中的所有线程执行完毕
-    for thread in thread_pool:
-        thread.join()
-
-    # 合并各个线程的处理结果
-    result = merge_results(result_queue)
-
-    return result
-
-# 定义结果合并函数
-def merge_results():
-    # 从共享队列中读取所有工作线程的处理结果
-    results = []
-    while not result_queue.empty():
-        results.extend(result_queue.get())
-
-    # 对所有处理结果进行合并并返回
-    final_result = merge(results)
-    return final_result
+    return results
 
 # 定义任务分解函数
-def divide_tasks(tasks):
+def divide_tasks(tasks, num_threads):
     # 将大任务分解成多个小任务
     subtasks = []
-    # 以每num_threads个任务为一组分配任务给各个线程处理
     for i in range(0, len(tasks), num_threads):
         subtasks.append(tasks[i:i+num_threads])
     return subtasks
 
+   #    
+def dispatch_tasks(tasks, num_threads):
+    if len(tasks) < 10:  # threshold for small tasks
+        return dispatch_tasks_small(tasks, num_threads)
+    else:
+        return dispatch_tasks_large(tasks, num_threads)
+
+def dispatch_tasks_small(tasks, num_threads):
+    # use individual threads for small tasks
+    results = []
+    for task in tasks:
+        result_queue = queue.Queue()
+        thread = threading.Thread(target=process_task, args=(task, result_queue))
+        thread.start()
+        thread.join()
+        results.extend(result_queue.get())
+    return results
+
+def dispatch_tasks_large(tasks, num_threads):
+    # use ThreadPoolExecutor for large tasks
+    with ThreadPoolExecutor(max_workers=num_threads) as executor:
+        future_to_task = {executor.submit(worker, subtasks[i], queue.Queue()): i for i in range(num_threads)}
+        results = []
+        for future in concurrent.futures.as_completed(future_to_task):
+            result_queue = future.result()
+            while not result_queue.empty():
+                results.extend(result_queue.get())
+    return results
+    #
 # 主函数
 def process_tasks():
-    # 定义共享队列
-    result_queue = queue.Queue()
-
     # 定义大任务，比如需要处理100个任务
     tasks = get_tasks()
 
-    # 定义线程数
-    num_threads = 4
+    # 定义线程数，根据CPU核心数动态设置
+    num_threads = min(len(tasks), os.cpu_count() or 1)
 
     # 分发任务并等待结果
     result = dispatch_tasks(tasks, num_threads)
+    print(result)
+
+if __name__ == "__main__":
+    process_tasks()
