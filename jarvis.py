@@ -16,7 +16,6 @@ import shutil
 import tempfile
 import concurrent.futures
 
-import threading
 from thread import process_tasks
 
 from my_package.date import date
@@ -25,6 +24,7 @@ from my_package.TextEditor import TextEditor
 from my_package.virtual_keyboard import VirtualKeyboard
 from my_package.algorithm import greedy_activity_selection
 from my_package.Logging import getLogger, readLog
+from my_package.music import music_player
 
 # 初始化语音识别器和文本到语音引擎
 recognizer = sr.Recognizer()
@@ -99,9 +99,8 @@ def main_program_logic(program_folder):
     programs = open_programs(program_folder)
     # 定义程序映射关系字典
     program_mapping = {
-        "打开浏览器": "browser_program",
+        "打开邮箱": "e-mail",
         "播放音乐": "music_program",
-        "查看日历": "calendar_program"
         # 在这里继续添加其他命令和程序的映射关系
     }
     
@@ -279,7 +278,8 @@ def main():
 if __name__ == "__main__":
     wishme()# 执行程序初始化逻辑    
     while True:
-        try:           
+        try:     
+            music_player()
             # 执行主程序的逻辑
             main()
             # 执行主程序的逻辑
