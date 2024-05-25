@@ -1,7 +1,11 @@
 import threading
 import queue
-import logging
+import os
+import time
+from my_package.Logging import getLogger, readLog
 from concurrent.futures import ThreadPoolExecutor
+
+logger = Logging.getLogger(__name__)
 
 # 模拟处理任务的函数
 def do_something(task):
@@ -13,11 +17,16 @@ def get_tasks():
 
 # 定义任务处理函数
 def process_task(task, result_queue):
+    start_time = time.time()  # 记录任务开始时间
     try:
         task_result = do_something(task)
         result_queue.put(task_result)  # 将处理结果放入队列中
     except Exception as e:
         logging.error(f"处理任务 {task} 时发生错误: {e}")
+    finally:
+        end_time = time.time()  # 记录任务结束时间
+        print(f"任务 {task} 执行完成，耗时 {end_time - start_time} 秒")
+        logging.info(f"任务 {task} 执行完成，耗时 {end_time - start_time} 秒")
 
 # 工作线程函数
 def worker(subtasks, result_queue):
