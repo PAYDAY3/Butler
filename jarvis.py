@@ -26,8 +26,6 @@ from my_package.algorithm import greedy_activity_selection
 from my_package.Logging import getLogger, readLog
 from my_package.music import music_player
 
-# 初始化语音识别器和文本到语音引擎
-recognizer = sr.Recognizer()
 engine = pyttsx3.init()# 为语音合成创建一个引擎实例
 engine.set_output('jarvis.wav')  #修改成自己.wav文件
 
@@ -57,7 +55,7 @@ config = {
 
 # 语音识别
 def takecommand():
-    recognizer = sr.Recognizer()
+    recognizer = sr.Recognizer()   # 初始化语音识别器和文本到语音引擎
     global recognizer
     with sr.Microphone() as source:
         print("请说话...")
@@ -155,6 +153,8 @@ def open_programs(program_folder):
 
  # 主函数
 def main():
+    process_tasks()# 运行多线程程序
+    
     # 获取系统的临时文件夹路径
     temp_dir = tempfile.gettempdir()
 
@@ -284,7 +284,6 @@ if __name__ == "__main__":
             main()
             # 执行主程序的逻辑
             main_program_logic("program_folder")
-            process_tasks()# 运行多线程程序
         finally:
             try:
                 main_program_logic("program_folder")  # 执行主程序的逻辑
