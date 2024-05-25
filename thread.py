@@ -54,14 +54,25 @@ def divide_tasks(tasks, num_threads):
     return subtasks
 
    #    
+# 定义任务分发函数
 def dispatch_tasks(tasks, num_threads):
-    if len(tasks) < 10:  # threshold for small tasks
+    if len(tasks) < 10:  # 小任务阈值
         return dispatch_tasks_small(tasks, num_threads)
     else:
-        return dispatch_tasks_large(tasks, num_threads)
+        adjusted_num_threads = adjust_num_threads(len(tasks))  # 动态调整线程数
+        return dispatch_tasks_large(tasks, adjusted_num_threads)
+
+# 动态调整任务大小的函数
+def adjust_num_threads(num_tasks):
+    system_load = os.getloadavg()  # 获取系统负载信息
+    # 假设当系统负载较低时处理更多任务
+    if system_load[0] < 1.0 and num_tasks > 10:
+        return 2  # 适当增加线程数以处理更多任务
+    else:
+        return 1  # 否则维持原样
 
 def dispatch_tasks_small(tasks, num_threads):
-    # use individual threads for small tasks
+    # 为小任务使用单独的线程
     results = []
     for task in tasks:
         result_queue = queue.Queue()
@@ -72,7 +83,7 @@ def dispatch_tasks_small(tasks, num_threads):
     return results
 
 def dispatch_tasks_large(tasks, num_threads):
-    # use ThreadPoolExecutor for large tasks
+    # 对于大型任务使用ThreadPoolExecutor
     with ThreadPoolExecutor(max_workers=num_threads) as executor:
         future_to_task = {executor.submit(worker, subtasks[i], queue.Queue()): i for i in range(num_threads)}
         results = []
@@ -84,7 +95,7 @@ def dispatch_tasks_large(tasks, num_threads):
     #
 # 主函数
 def process_tasks():
-    # 定义大任务，比如需要处理100个任务
+    # 定义大任务
     tasks = get_tasks()
 
     # 定义线程数，根据CPU核心数动态设置
