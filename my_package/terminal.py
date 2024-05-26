@@ -12,6 +12,7 @@ class Application(tk.Frame):
         self.master = master
         self.pack()
         self.create_widgets()
+        self.history = []
         self.executor = ThreadPoolExecutor(max_workers=5)
 
     def create_widgets(self):
@@ -26,6 +27,13 @@ class Application(tk.Frame):
         self.result_text.pack(side="bottom")
         self.result_text.config(state=tk.DISABLED)
         
+        # 创建菜单栏
+        self.menu_bar = tk.Menu(self.master)
+        self.master.config(menu=self.menu_bar)
+        self.file_menu = tk.Menu(self.menu_bar, tearoff=0)
+        self.file_menu.add_command(label="Exit", command=self.master.quit)
+        self.menu_bar.add_cascade(label="File", menu=self.file_menu)
+        
     def Shell(SubprocessLanguage):
         file_extension = "sh"
         name = "Shell"
@@ -38,6 +46,7 @@ class Application(tk.Frame):
 
     def execute_command(self):
         command = self.input.get()
+        self.history.append(command)
         self.executor.submit(self.execute_command_in_thread, command)
 
     def execute_command_in_thread(self, command):
