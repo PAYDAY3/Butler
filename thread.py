@@ -56,6 +56,7 @@ def dispatch_tasks(tasks, num_threads):
 
 # 定义任务分解函数
 def divide_tasks(tasks, num_threads):
+    batch_size = len(tasks) // num_threads
     # 将大任务分解成多个小任务
     subtasks = []
     for i in range(0, len(tasks), num_threads):
@@ -101,6 +102,29 @@ def dispatch_tasks_large(tasks, num_threads):
             while not result_queue.empty():
                 results.extend(result_queue.get())
     return results
+
+def retry_task(task, max_retries=3):
+    for i in range(max_retries):
+        try:
+            result = process_task(task, queue.Queue())
+            return result
+        except Exception as e:
+            logging.error(f"处理任务 {task} 时发生错误: {e}")
+            time.sleep(1)  # 等待 1 秒后重试
+    return None  # task failed after max retries
+
+def dispatch_tasks_with_retry(tasks, num_threads):
+    with ThreadPoolExecutor(max_workers=num_threads) as executor:
+        futures = []
+        for task in tasks:
+            futures.append(executor.submit(retry_task, task))
+        results = []
+        for future in concurrent.futures.as_completed(futures):
+            result = future.result()
+            if result is not None:
+                results.append(result)
+        return results
+
     #
 # 主函数
 def process_tasks():
