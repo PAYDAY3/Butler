@@ -9,8 +9,9 @@ import smtplib
 from email.mime.text import MIMEText
 from email.header import Header
 
-your_password = ""#邮箱密码
-Email_address = "@qq.com"#邮箱地址
+your_password = "your_password"  # 请替换为您的实际密码
+Email_address = "example@qq.com"  # 请替换为您的实际邮箱地址
+
 class Plugin():
 
     SLUG = "email"
