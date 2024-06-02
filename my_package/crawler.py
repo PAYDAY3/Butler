@@ -5,6 +5,8 @@ import redis
 from bs4 import BeautifulSoup
 import os
 
+downloaded_images = "" #放存数据文件
+
 # 设置User Agent列表
 user_agents = [
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3',
@@ -39,6 +41,15 @@ url_queue = [start_url]
 # 创建一个Redis客户端来存储爬虫的状态
 redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
 
+# 创建一个文件夹用于存储下载的图片
+if not os.path.exists(downloaded_images):
+    os.makedirs(downloaded_images)
+
+def download_image(url, filename):
+    response = requests.get(url)
+    with open(os.path.join(downloaded_images, filename), 'wb') as f:
+        f.write(response.content)
+        
 def search_and_crawl_images(search_query):
     search_url = 'https://www.bing.com/search'
     params = {'q': search_query, 'tbm': 'isch'}
