@@ -45,14 +45,6 @@ Input_command = ">>> "
 program_folder = "/program"
 model = "my_Snowboy/jarvis.umdl"  # Snowboy 模型文件路径
 
-# pocketsphinx 参数配置
-config = {
-    "verbose": False,
-    "audio_gain": 1.5,
-    "keyphrase": "jarvis",
-    "kws_threshold": 1e-5    
-}
-
 # 语音识别
 def takecommand():
     recognizer = sr.Recognizer()   # 初始化语音识别器和文本到语音引擎
@@ -137,18 +129,36 @@ def main_program_logic(program_folder):
 programs_cache = {}
 def open_programs(program_folder):
     global programs_cache
-    if program_folder in programs_cache:
-        return programs_cache[program_folder]
+    
+    # 检查程序文件夹是否存在
+    if not os.path.exists(program_folder):
+        print(f"程序文件夹 '{program_folder}' 未找到。")
+        return {}
+        
     programs = {}
     for program_file in os.listdir(program_folder):
         if program_file.endswith('.py'):
             program_name = program_file[:-3]
-            try:
-                program_module= importlib.import_module(f"{program_folder}.{program_name}")
-                programs[program_name] = program_module
-            except ImportError as error:
-                logging.error(f"导入模块 {program_name} 失败：{error}")
-    programs_cache[program_folder] = programs                
+            program_path = os.path.join(program_folder, program_file)
+            else:
+                try:
+                    # 加载程序模块
+                    program_module = importlib.import_module(f"{program_folder}.{program_name}")
+                    program_cache[program_name] = program_module
+                except ImportError as e:
+                    print(f"加载程序模块 '{program_name}' 时出错：{e}")
+                    continue
+
+            # 验证程序模块
+            if not hasattr(program_module, 'run'):
+                print(f"程序模块 '{program_name}' 无效。")
+                continue
+
+            # 将程序模块存储在字典中
+            programs[program_name] = program_module
+
+    # 按字母顺序排序程序模块
+    programs = dict(sorted(programs.items()))
     return programs
 
  # 主函数
