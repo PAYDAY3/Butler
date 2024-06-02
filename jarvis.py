@@ -140,6 +140,10 @@ def open_programs(program_folder):
         if program_file.endswith('.py'):
             program_name = program_file[:-3]
             program_path = os.path.join(program_folder, program_file)
+            
+            # 检查程序模块是否已经加载
+            if program_name in program_cache:
+                program_module = program_cache[program_name]
             else:
                 try:
                     # 加载程序模块
