@@ -29,12 +29,12 @@ def process_task(task, result_queue):
         logging.info(f"任务 {task} 执行完成，耗时 {end_time - start_time} 秒")
 
 # 工作线程函数
-def worker(subtasks, result_queue):
+def worker(subtasks, result_queue, task_done_event):
     results = []
     for task in subtasks:
-        task_result = process_task(task, result_queue)
+        task_result = process_task(task, result_queue, task_done_event)
         results.append(task_result)
-    return result_queue
+    return results
 
 # 定义任务分发函数
 def dispatch_tasks(tasks, num_threads):
