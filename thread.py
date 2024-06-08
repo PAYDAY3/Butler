@@ -27,12 +27,16 @@ def process_task(task, result_queue):
         end_time = time.time()  # 记录任务结束时间
         print(f"任务 {task} 执行完成，耗时 {end_time - start_time} 秒")
         logging.info(f"任务 {task} 执行完成，耗时 {end_time - start_time} 秒")
-
+        # 检查是否需要停止线程
+        if stop_event.is_set():
+            logger.info("接收到停止信号，线程将退出。")
+            return
+            
 # 工作线程函数
-def worker(subtasks, result_queue, task_done_event):
+def worker(subtasks, result_queue, stop_event):
     results = []
     for task in subtasks:
-        task_result = process_task(task, result_queue, task_done_event)
+        task_result = process_task(task, result_queue, stop_event)
         results.append(task_result)
     return results
 
@@ -133,7 +137,9 @@ def process_tasks():
 
     # 定义线程数，根据CPU核心数动态设置
     num_threads = min(len(tasks), os.cpu_count() or 1)
-
+    # 创建一个Event对象，用于控制线程退出
+    stop_event = threading.Event()
+    stop_event.set()
     # 分发任务并等待结果
     result = dispatch_tasks(tasks, num_threads)
     print(result)
