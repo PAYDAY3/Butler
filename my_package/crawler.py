@@ -57,8 +57,24 @@ def search_and_crawl_images(search_query):
     response = requests.get(search_url, params=params, headers=headers)
     soup = BeautifulSoup(response.content, 'html.parser')
     image_links = [img.get('src') for img in soup.find_all('img')]
-    for img_url in image_links:
-        download_image(img_url, os.path.basename(img_url))
+    print("搜索结果:")
+    for i, image_link in enumerate(image_links):
+        print(f"{i+1}. {image_link}")
+    print()
+    while True:
+        choice = input("输入要下载的图像编号(或'q'退出)")
+        if choice.lower() == 'q':
+            break
+        try:
+            choice = int(choice)
+            if choice > 0 and choice <= len(image_links):
+                image_url = image_links[choice-1]
+                download_image(image_url)
+                print(f"Downloaded {image_url}")
+            else:
+                print("无效的选择")
+        except ValueError:
+            print("无效的输入")
 
 def crawl_website(start_url, max_depth):
     while url_queue:
