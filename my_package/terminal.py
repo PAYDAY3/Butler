@@ -33,16 +33,6 @@ class Application(tk.Frame):
         self.file_menu = tk.Menu(self.menu_bar, tearoff=0)
         self.file_menu.add_command(label="Exit", command=self.master.quit)
         self.menu_bar.add_cascade(label="File", menu=self.file_menu)
-        
-    def Shell(SubprocessLanguage):
-        file_extension = "sh"
-        name = "Shell"
-        aliases = ["bash", "sh", "zsh"]
-
-    def C(SubprocessLanguage):
-        file_extension = "c"
-        name = "C"
-        aliases = ["c", "cpp"]
 
     def execute_command(self):
         command = self.input.get()
@@ -112,10 +102,14 @@ def execute_script(script_file):
     except Exception as e:
         print(f"Error executing script: {e}")
 
-
 def main():
-    session = PromptSession()
+    # 创建图形界面应用程序
+    root = tk.Tk()
+    app = Application(master=root)
+    app.pack(fill=tk.BOTH, expand=True)
 
+    # 运行命令行交互程序
+    session = PromptSession()
     while True:
         try:
             user_input = session.prompt(">>> ")
@@ -128,17 +122,9 @@ def main():
         except EOFError:
             break
 
-if __name__ == '__main__':
-    # 创建图形界面应用程序
-    root = tk.Tk()
-    app = Application(master=root)
-
-    # 运行命令行交互程序
-    main()
-
     # 启动图形界面应用程序
     app.mainloop()
 
-    
-    
-    
+if __name__ == '__main__':
+    main()
+
