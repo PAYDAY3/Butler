@@ -97,6 +97,9 @@ def dispatch_tasks_small(tasks, num_threads):
     return results
 
 def dispatch_tasks_large(tasks, num_threads):
+    subtasks = divide_tasks(tasks, num_threads)
+    result_queue = queue.Queue()
+    stop_event = threading.Event()    
     # 对于大型任务使用ThreadPoolExecutor
     with ThreadPoolExecutor(max_workers=num_threads) as executor:
         future_to_task = {executor.submit(worker, subtasks[i], queue.Queue()): i for i in range(num_threads)}
