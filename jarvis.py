@@ -26,6 +26,42 @@ from my_package.algorithm import greedy_activity_selection
 from my_package.Logging import getLogger, readLog
 from my_package.music import music_player
 
+import transformers
+
+# 加载预训练的对话模型
+model = transformers.AutoModelForSeq2SeqLM.from_pretrained("facebook/blenderbot-400M")
+tokenizer = transformers.AutoTokenizer.from_pretrained("facebook/blenderbot-400M")
+
+# 创建一个用户配置文件字典，存储用户的偏好和历史
+user_profiles = {}
+
+# 在生成响应之前，将用户配置文件作为附加输入传递给模型
+input_ids = tokenizer(prompt + user_input + "[USER_PROFILE]" + str(user_profiles[user_id]), return_tensors="pt").input_ids
+
+# 创建一个知识库，其中包含事实、信息和故事
+knowledge_base = {}
+# 定义对话提示
+prompt = "我是你的聊天助手。我的目的是和你进行自然的对话。请提出问题或发表评论，我会尽我所能提供帮助或参与讨论。"
+
+# 开始对话循环
+while True:
+    # 获取用户输入
+    user_input = input("> ")
+
+    # 将提示与用户输入连接起来
+    input_ids = tokenizer(prompt + user_input, return_tensors="pt").input_ids
+
+    # 使用模型生成响应
+    output = model.generate(input_ids=input_ids, max_length=1024)
+    response = tokenizer.batch_decode(output, skip_special_tokens=True)[0]
+
+    # 搜索知识库
+    answer = search_knowledge_base(user_input)
+    if answer:
+        response += " " + answer
+    # 打印响应
+    print(response)
+    
 engine = pyttsx3.init()# 为语音合成创建一个引擎实例
 engine.set_output('jarvis.wav')  #修改成自己.wav文件
 
