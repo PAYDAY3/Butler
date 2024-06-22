@@ -325,7 +325,7 @@ def main():
                                     print(f"导入模块失败: {error}")
                                     logging.error(f"导入模块失败: {error}")
 
-if __name__ == "__main__":
+def main1():
     wishme()# 执行程序初始化逻辑    
     while True:
         try:     
@@ -354,3 +354,6 @@ if __name__ == "__main__":
         elif "how are you" in query:#译文:你好吗?
             speak("I'm fine sir, What about you?")#译文：我很好，先生，你呢?
             print("I'm fine sir, What about you?")
+            
+if __name__ == "__main__":
+    main1()
