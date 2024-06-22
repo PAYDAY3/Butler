@@ -67,6 +67,13 @@ while True:
     response = f"分类结果: {response_class}"
     print(response)
     
+def get_response(user_input):
+    input_ids, attention_mask = preprocess(user_input)
+    outputs = model(input_ids, attention_mask=attention_mask)
+    logits = outputs[0]
+    predicted_class = torch.argmax(logits, dim=1).item()
+    return predicted_class
+    
 engine = pyttsx3.init()# 为语音合成创建一个引擎实例
 engine.set_output('jarvis.wav')  #修改成自己.wav文件
 
