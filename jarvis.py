@@ -27,39 +27,44 @@ from my_package.Logging import getLogger, readLog
 from my_package.music import music_player
 
 import transformers
+from transformers import BertTokenizer, BertForSequenceClassification
+import torch
 
-# 加载预训练的对话模型
-model = transformers.AutoModelForSeq2SeqLM.from_pretrained("facebook/blenderbot-400M")
-tokenizer = transformers.AutoTokenizer.from_pretrained("facebook/blenderbot-400M")
+# 加载BERT模型和tokenizer
+tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+model = BertForSequenceClassification.from_pretrained('bert-base-uncased')
 
-# 创建一个用户配置文件字典，存储用户的偏好和历史
-user_profiles = {}
+def preprocess(text):
+    inputs = tokenizer.encode_plus(
+        text,
+        None,
+        add_special_tokens=True,
+        max_length=512,
+        pad_to_max_length=True,
+        return_token_type_ids=True,
+        truncation=True
+    )
+    input_ids = torch.tensor(inputs['input_ids']).unsqueeze(0)
+    attention_mask = torch.tensor(inputs['attention_mask']).unsqueeze(0)
+    return input_ids, attention_mask
 
-# 在生成响应之前，将用户配置文件作为附加输入传递给模型
-input_ids = tokenizer(prompt + user_input + "[USER_PROFILE]" + str(user_profiles[user_id]), return_tensors="pt").input_ids
+def get_response(user_input):
+    input_ids, attention_mask = preprocess(user_input)
+    outputs = model(input_ids, attention_mask=attention_mask)
+    logits = outputs[0]
+    predicted_class = torch.argmax(logits, dim=1).item()
+    return predicted_class
 
-# 创建一个知识库，其中包含事实、信息和故事
-knowledge_base = {}
-# 定义对话提示
+# 对话提示
 prompt = "我是你的聊天助手。我的目的是和你进行自然的对话。请提出问题或发表评论，我会尽我所能提供帮助或参与讨论。"
 
-# 开始对话循环
+# 创建一个简单的对话循环
 while True:
-    # 获取用户输入
     user_input = input("> ")
-
-    # 将提示与用户输入连接起来
-    input_ids = tokenizer(prompt + user_input, return_tensors="pt").input_ids
-
-    # 使用模型生成响应
-    output = model.generate(input_ids=input_ids, max_length=1024)
-    response = tokenizer.batch_decode(output, skip_special_tokens=True)[0]
-
-    # 搜索知识库
-    answer = search_knowledge_base(user_input)
-    if answer:
-        response += " " + answer
-    # 打印响应
+    if user_input.lower() in ["退出", "结束"]:
+        break
+    response_class = get_response(user_input)
+    response = f"分类结果: {response_class}"
     print(response)
     
 engine = pyttsx3.init()# 为语音合成创建一个引擎实例
@@ -325,7 +330,7 @@ def main():
                                     print(f"导入模块失败: {error}")
                                     logging.error(f"导入模块失败: {error}")
 
-def main1():
+if __name__ == "__main__":
     wishme()# 执行程序初始化逻辑    
     while True:
         try:     
@@ -354,6 +359,3 @@ def main1():
         elif "how are you" in query:#译文:你好吗?
             speak("I'm fine sir, What about you?")#译文：我很好，先生，你呢?
             print("I'm fine sir, What about you?")
-            
-if __name__ == "__main__":
-    main1()
