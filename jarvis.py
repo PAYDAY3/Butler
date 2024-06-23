@@ -47,14 +47,18 @@ def preprocess(text):
     input_ids = torch.tensor(inputs['input_ids']).unsqueeze(0)
     attention_mask = torch.tensor(inputs['attention_mask']).unsqueeze(0)
     return input_ids, attention_mask
-
-def get_response(user_input):
-    input_ids, attention_mask = preprocess(user_input)
     outputs = model(input_ids, attention_mask=attention_mask)
     logits = outputs[0]
     predicted_class = torch.argmax(logits, dim=1).item()
-    return predicted_class
 
+    # 根据分类结果，调用相应的功能程序
+    if predicted_class in function_mapping:
+        function_mapping[predicted_class]()
+
+    # 使用 BERT 模型来生成回应语句
+    response = generate_response(user_input)
+    print("Chatbot:", response)
+    
 # 对话提示
 prompt = "我是你的聊天助手。我的目的是和你进行自然的对话。请提出问题或发表评论，我会尽我所能提供帮助或参与讨论。"
 
