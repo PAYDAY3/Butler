@@ -5,7 +5,8 @@ logging
 tempfile
 snowboy
 PyAudio
-snowboy
+transformers
+torch
 shutil
 tempfile
 prompt_toolkit
