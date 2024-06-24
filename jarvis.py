@@ -198,9 +198,12 @@ def open_programs(program_folder):
                 program_module = program_cache[program_name]
             else:
                 try:
-                    # 加载程序模块
-                    program_module = importlib.import_module(f"{program_folder}.{program_name}")
-                    program_cache[program_name] = program_module
+                    # 动态加载程序模块
+                    spec = importlib.util.spec_from_file_location(program_name, program_path)
+                    program_module = importlib.util.module_from_spec(spec)
+                    sys.modules[program_name] = program_module
+                    spec.loader.exec_module(program_module)
+                    programs_cache[program_name] = program_module
                 except ImportError as e:
                     print(f"加载程序模块 '{program_name}' 时出错：{e}")
                     continue
