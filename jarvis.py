@@ -64,7 +64,7 @@ prompt = "我是你的聊天助手。我的目的是和你进行自然的对话�
 
 # 创建一个简单的对话循环
 while True:
-    user_input = input("> ")
+    user_input = input(">>> ")
     if user_input.lower() in ["退出", "结束"]:
         break
     response_class = get_response(user_input)
@@ -245,7 +245,7 @@ def main():
     global matched_program
     matched_program = None
     pygame.init()  # 初始化 Pygame
-    wen_jian = 'program_folder'
+    wen_jian = program_folder
     programs = open_programs(wen_jian)
     print("等待唤醒词")
     if not programs:
@@ -352,24 +352,10 @@ if __name__ == "__main__":
             # 执行主程序的逻辑
             main()
             # 执行主程序的逻辑
-            main_program_logic("program_folder")
+            main_program_logic(program_folder)
         finally:
             try:
-                main_program_logic("program_folder")  # 执行主程序的逻辑
+                main_program_logic(program_folder)  # 执行主程序的逻辑
             except Exception as error:
                 print(f"程序发生异常：{error}")
                 logging.info(f"程序发生异常：{error}")
-        query = takecommand().lower()
-        if "time" in query:
-          time()
-
-        elif "date" in query:
-            date()
-
-        elif "who are you" in query:#译文:你是谁
-            speak("")#增加程序介绍
-            print("")
-
-        elif "how are you" in query:#译文:你好吗?
-            speak("I'm fine sir, What about you?")#译文：我很好，先生，你呢?
-            print("I'm fine sir, What about you?")
