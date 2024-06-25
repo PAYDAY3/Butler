@@ -4,8 +4,15 @@ import random
 import redis
 from bs4 import BeautifulSoup
 import os
+import logging
+import concurrent.futures
+from tqdm import tqdm
+import argparse
 
-downloaded_images = "" #放存数据文件
+# 设置日志配置
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+downloaded_images = "downloaded_images"  # 存储数据文件
 
 # 设置User Agent列表
 user_agents = [
@@ -46,35 +53,45 @@ if not os.path.exists(downloaded_images):
     os.makedirs(downloaded_images)
 
 def download_image(url, filename):
-    response = requests.get(url)
-    with open(os.path.join(downloaded_images, filename), 'wb') as f:
-        f.write(response.content)
-        
+    try:
+        response = requests.get(url, stream=True)
+        response.raise_for_status()
+        file_path = os.path.join(downloaded_images, filename)
+        with open(file_path, 'wb') as f:
+            for chunk in response.iter_content(1024):
+                f.write(chunk)
+        logging.info(f"Downloaded {url}")
+    except requests.RequestException as e:
+        logging.error(f"Failed to download {url}: {e}")
+
 def search_and_crawl_images(search_query):
     search_url = 'https://www.bing.com/search'
     params = {'q': search_query, 'tbm': 'isch'}
     headers = get_headers()
-    response = requests.get(search_url, params=params, headers=headers)
-    soup = BeautifulSoup(response.content, 'html.parser')
-    image_links = [img.get('src') for img in soup.find_all('img')]
-    print("搜索结果:")
-    for i, image_link in enumerate(image_links):
-        print(f"{i+1}. {image_link}")
-    print()
-    while True:
-        choice = input("输入要下载的图像编号(或'q'退出)")
-        if choice.lower() == 'q':
-            break
-        try:
-            choice = int(choice)
-            if choice > 0 and choice <= len(image_links):
-                image_url = image_links[choice-1]
-                download_image(image_url)
-                print(f"Downloaded {image_url}")
-            else:
-                print("无效的选择")
-        except ValueError:
-            print("无效的输入")
+    try:
+        response = requests.get(search_url, params=params, headers=headers)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.content, 'html.parser')
+        image_links = [img.get('src') for img in soup.find_all('img')]
+        logging.info("搜索结果:")
+        for i, image_link in enumerate(image_links):
+            logging.info(f"{i+1}. {image_link}")
+        logging.info("")
+        while True:
+            choice = input("输入要下载的图像编号(或'q'退出): ")
+            if choice.lower() == 'q':
+                break
+            try:
+                choice = int(choice)
+                if 0 < choice <= len(image_links):
+                    image_url = image_links[choice-1]
+                    download_image(image_url, os.path.basename(image_url))
+                else:
+                    logging.warning("无效的选择")
+            except ValueError:
+                logging.warning("无效的输入")
+    except requests.RequestException as e:
+        logging.error(f"Failed to search images: {e}")
 
 def crawl_website(start_url, max_depth):
     while url_queue:
@@ -82,26 +99,37 @@ def crawl_website(start_url, max_depth):
         if url in visited_urls:
             continue
         visited_urls.add(url)
-        response = requests.get(url, headers=get_headers())
-        soup = BeautifulSoup(response.content, 'html.parser')
-        links = [link.get('href') for link in soup.find_all('a', href=True)]
-        for link in links:
-            if link not in visited_urls:
-                url_queue.append(link)
-        images = [img.get('src') for img in soup.find_all('img')]
-        for image_url in images:
-            download_image(image_url, os.path.basename(image_url))
-        time.sleep(delay_time + random.random())
+        try:
+            response = requests.get(url, headers=get_headers())
+            response.raise_for_status()
+            soup = BeautifulSoup(response.content, 'html.parser')
+            links = [link.get('href') for link in soup.find_all('a', href=True)]
+            for link in links:
+                if link not in visited_urls:
+                    url_queue.append(link)
+            images = [img.get('src') for img in soup.find_all('img')]
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                for image_url in tqdm(images, desc="Downloading images"):
+                    executor.submit(download_image, image_url, os.path.basename(image_url))
+            time.sleep(delay_time + random.random())
+        except requests.RequestException as e:
+            logging.error(f"Failed to crawl {url}: {e}")
         if len(visited_urls) >= max_depth:
             break
     redis_client.set('crawler_state', str(len(visited_urls)))
 
-
 def main():
-    search_query = input('输入搜索查询: ')
+    parser = argparse.ArgumentParser(description="Image Search and Crawler")
+    parser.add_argument('search_query', type=str, nargs='?', help='输入搜索查询')
+    args = parser.parse_args()
+    search_query = args.search_query
+    
+    if not search_query:
+        search_query = input('请输入要搜索的内容: ')
+    
     search_and_crawl_images(search_query)
     crawl_website(start_url, max_depth)
-    print('爬虫结束！')
+    logging.info('爬虫结束！')
 
 if __name__ == '__main__':
     main()
