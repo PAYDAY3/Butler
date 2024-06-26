@@ -4,14 +4,14 @@ import random
 import redis
 from bs4 import BeautifulSoup
 import os
-import logging
 import concurrent.futures
 from tqdm import tqdm
 import argparse
 import urlparse
+from  my_package.Logging import *
 
 # 设置日志配置
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging = logging.getLogger(__name__)
 
 downloaded_images = "downloaded_images"  # 存储数据文件
 
