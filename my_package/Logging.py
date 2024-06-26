@@ -8,7 +8,7 @@ DEBUG = logging.DEBUG
 INFO = logging.INFO
 WARNING = logging.WARNING
 ERROR = logging.ERROR
-TEMP_PATH = "longging/"
+TEMP_PATH = "longging.txt"
 
 def tail(filepath, n=10):
     """
@@ -58,7 +58,7 @@ def getLogger(name):
     file_handler = RotatingFileHandler(
         os.path.join(TEMP_PATH, "wukong.log"),
         maxBytes=1024 * 1024,
-        backupCount=5,
+        backupCount=1,
     )
     file_handler.setLevel(level=logging.NOTSET)
     file_handler.setFormatter(formatter)
@@ -74,7 +74,7 @@ def readLog(lines=200):
     :param lines: 最大的行数
     :returns: 最新指定行数的 log
     """
-    log_path = os.path.join(TEMP_PATH, "wukong.log")
+    log_path = os.path.join(TEMP_PATH)
     if os.path.exists(log_path):
         return tail(log_path, lines)
     return ""
