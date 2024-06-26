@@ -56,7 +56,7 @@ def getLogger(name):
 
     # FileHandler
     file_handler = RotatingFileHandler(
-        os.path.join(TEMP_PATH, "wukong.log"),
+        os.path.join(TEMP_PATH),
         maxBytes=1024 * 1024,
         backupCount=1,
     )
