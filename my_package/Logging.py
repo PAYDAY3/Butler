@@ -8,7 +8,7 @@ DEBUG = logging.DEBUG
 INFO = logging.INFO
 WARNING = logging.WARNING
 ERROR = logging.ERROR
-TEMP_PATH = "longging.txt"
+TEMP_PATH = "logging.txt"
 
 def tail(filepath, n=10):
     """
