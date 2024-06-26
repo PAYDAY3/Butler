@@ -6,7 +6,6 @@ import importlib
 import speech_recognition as sr
 import pygame
 import time
-import logging
 import json
 import pyttsx3
 import datetime
