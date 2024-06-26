@@ -8,6 +8,7 @@ import logging
 import concurrent.futures
 from tqdm import tqdm
 import argparse
+import urlparse
 
 # 设置日志配置
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -62,7 +63,7 @@ def download_image(url, filename):
                 f.write(chunk)
         logging.info(f"Downloaded {url}")
     except requests.RequestException as e:
-        logging.error(f"Failed to download {url}: {e}")
+        logging.error(f"下载了 {url}: {e}")
 
 def search_and_crawl_images(search_query):
     search_url = 'https://www.bing.com/search'
@@ -109,7 +110,7 @@ def crawl_website(start_url, max_depth):
                     url_queue.append(link)
             images = [img.get('src') for img in soup.find_all('img')]
             with concurrent.futures.ThreadPoolExecutor() as executor:
-                for image_url in tqdm(images, desc="Downloading images"):
+                for image_url in tqdm(images, desc="下载"):
                     executor.submit(download_image, image_url, os.path.basename(image_url))
             time.sleep(delay_time + random.random())
         except requests.RequestException as e:
@@ -125,10 +126,15 @@ def main():
     search_query = args.search_query
     
     if not search_query:
-        search_query = input('请输入要搜索的内容: ')
+        search_query = input('搜索内容: ')
     
-    search_and_crawl_images(search_query)
-    crawl_website(start_url, max_depth)
+    if urlparse.urlparse(input_str).scheme:  # 如果输入的是网址
+        crawl_website(input_str, max_depth)
+    else:  # 如果输入不是网址，作为搜索查询
+        search_querys = search_query
+        image_format = input("格式：")
+        limit = int(input("数量："))
+        search_and_crawl_images(search_query, image_format, limit)
     logging.info('爬虫结束！')
 
 if __name__ == '__main__':
