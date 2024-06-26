@@ -23,7 +23,7 @@ from my_package.speak import wishme
 from my_package.TextEditor import TextEditor
 from my_package.virtual_keyboard import VirtualKeyboard
 from my_package.algorithm import greedy_activity_selection
-from my_package.Logging import getLogger, readLog
+from my_package.Logging import *
 from my_package.music import music_player
 
 import transformers
@@ -89,7 +89,7 @@ def speak(audio):
 #   log_file = "program_log.txt"
 #   logging.basicConfig(filename=log_file, level=logging.DEBUG)
 
-logger = Logging.getLogger(__name__)
+logging = Logging.getLogger(__name__)
 
 # 定义唤醒词和其他全局变量
 WAKE_WORD = "jarvis"
