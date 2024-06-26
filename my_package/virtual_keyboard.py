@@ -8,21 +8,28 @@ class VirtualKeyboard:
         self.is_uppercase = True   # 用于跟踪当前是否为大写模式
         
         self.text_input = tk.Entry(self.root)
-        self.text_input.grid(row=0, column=0, columnspan=6)
+        self.text_input.grid(row=0, column=0, columnspan=12, padx=10, pady=10)
 
         self.tabControl = ttk.Notebook(self.root)
         self.init_keyboard()
         self.delete_btn = tk.Button(self.root, text="删除", command=self.delete_character)
-        self.delete_btn.grid(row=1, column=0, pady=10)
+        self.delete_btn.grid(row=1, column=0, padx=5, pady=10)
         
         # 添加切换大小写的按钮
         self.toggle_case_btn = tk.Button(self.root, text="大/小", command=self.toggle_case)
-        self.toggle_case_btn.grid(row=1, column=1, pady=10)
+        self.toggle_case_btn.grid(row=1, column=1, padx=5, pady=10)
         
         # 添加字体大小调节的滑动条
         self.size_slider = tk.Scale(self.root, from_=8, to=32, orient=tk.HORIZONTAL, label="字体大小", command=self.adjust_button_size)
         self.size_slider.set(12)   # 设置默认字体大小
-        self.size_slider.grid(row=1, column=2, columnspan=4, sticky="we")
+        self.size_slider.grid(row=1, column=2, columnspan=4, sticky="we", padx=5, pady=10)
+        self.enter_btn = tk.Button(self.root, text="回车", command=self.enter_pressed)
+        self.enter_btn.grid(row=1, column=6, columnspan=2, padx=5, pady=10)
+
+        self.space_btn = tk.Button(self.root, text="空格", command=lambda: self.on_button_click(" "))
+        self.space_btn.grid(row=1, column=8, columnspan=4, padx=5, pady=10)
+                
+        self.tabControl.grid(row=2, column=0, columnspan=12, padx=10, pady=10)
 
     def init_keyboard(self):
         # 创建字母面板
@@ -96,7 +103,9 @@ class VirtualKeyboard:
                     letter = child["text"]
                     new_text = letter.upper() if self.is_uppercase else letter.lower()   # 根据当前大小写模式设置按钮文本
                     child.config(text=new_text)
-                
+    def enter_pressed(self):
+        self.text_input.insert(tk.END, "\n")      
+        
 if __name__ == "__main__":
     root = tk.Tk()
     app = VirtualKeyboard(root)
