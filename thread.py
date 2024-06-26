@@ -5,7 +5,7 @@ import time
 from my_package.Logging import getLogger, readLog
 from concurrent.futures import ThreadPoolExecutor
 
-logger = Logging.getLogger(__name__)
+logging = Logging.getLogger(__name__)
 
 # 模拟处理任务的函数
 def do_something(task):
@@ -66,8 +66,7 @@ def divide_tasks(tasks, num_threads):
     for i in range(0, len(tasks), num_threads):
         subtasks.append(tasks[i:i+num_threads])
     return subtasks
-
-   #    
+   
 # 定义任务分发函数
 def dispatch_tasks(tasks, num_threads):
     if len(tasks) < 10:  # 小任务阈值
@@ -118,7 +117,7 @@ def retry_task(task, max_retries=3):
         except Exception as e:
             logging.error(f"处理任务 {task} 时发生错误: {e}")
             time.sleep(1)  # 等待 1 秒后重试
-    return None  # task failed after max retries
+    return None  # 重试次数最多后任务失败
 
 def dispatch_tasks_with_retry(tasks, num_threads):
     with ThreadPoolExecutor(max_workers=num_threads) as executor:
@@ -132,7 +131,6 @@ def dispatch_tasks_with_retry(tasks, num_threads):
                 results.append(result)
         return results
 
-    #
 # 主函数
 def process_tasks():
     # 定义大任务
