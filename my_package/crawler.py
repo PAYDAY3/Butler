@@ -16,7 +16,7 @@ import scrapy
 
 # 设置日志配置
 logging = logging.getLogger(__name__)
-downloaded_images = "./my_package/downloaded_images"  # 存储数据文件
+downloaded = "./downloaded/"  # 存储数据文件
 
 # 设置User Agent列表
 user_agents = [
@@ -53,14 +53,14 @@ url_queue = [start_url]
 redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
 
 # 创建一个文件夹用于存储下载的图片
-if not os.path.exists(downloaded_images):
-    os.makedirs(downloaded_images)
+if not os.path.exists(downloaded):
+    os.makedirs(downloaded)
 
 def download_image(url, filename):
     try:
         response = requests.get(url, stream=True)
         response.raise_for_status()
-        file_path = os.path.join(downloaded_images, filename)
+        file_path = os.path.join(downloaded, filename)
         with open(file_path, 'wb') as f:
             for chunk in response.iter_content(1024):
                 f.write(chunk)
@@ -138,7 +138,7 @@ class MyScrapySpider(scrapy.Spider):
             yield scrapy.Request(url=image_url, callback=self.download_image)
 
     def download_image(self, response):
-        path = f'{downloaded_images}/{os.path.basename(response.url)}'
+        path = f'{downloaded}/{os.path.basename(response.url)}'
         with open(path, 'wb') as f:
             f.write(response.body)
         self.log(f'下载 {response.url}')    
