@@ -16,14 +16,13 @@ import tempfile
 import concurrent.futures
 
 from thread import process_tasks
-
-from my_package.date import date
-from my_package.speak import wishme
+from my_package.speak import speak
 from my_package.TextEditor import TextEditor
 from my_package.virtual_keyboard import VirtualKeyboard
-from my_package.algorithm import greedy_activity_selection
+from my_package.algorithm import quickSort
 from my_package.Logging import *
 from my_package.music import music_player
+from my_package.crawler import 
 
 import transformers
 from transformers import BertTokenizer, BertForSequenceClassification
@@ -93,7 +92,7 @@ logging = Logging.getLogger(__name__)
 # 定义唤醒词和其他全局变量
 WAKE_WORD = "jarvis"
 Input_command = ">>> "
-program_folder = "/program"
+program_folder = ["./program", "./tools"]
 model = "my_Snowboy/jarvis.umdl"  # Snowboy 模型文件路径
 
 # 语音识别
