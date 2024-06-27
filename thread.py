@@ -78,6 +78,7 @@ def dispatch_tasks(tasks, num_threads):
 # 动态调整任务大小的函数
 def adjust_num_threads(num_tasks):
     system_load = os.getloadavg()  # 获取系统负载信息
+    logging.info(f"系统负载: {system_load}, 任务数量: {num_tasks}")
     # 假设当系统负载较低时处理更多任务
     if system_load[0] < 1.0 and num_tasks > 10:
         return 2  # 适当增加线程数以处理更多任务
@@ -111,15 +112,18 @@ def dispatch_tasks_large(tasks, num_threads):
 
 def retry_task(task, max_retries=3):
     for i in range(max_retries):
+        logging.info(f"第 {i + 1} 次尝试处理任务: {task}")
         try:
             result = process_task(task, queue.Queue())
             return result
         except Exception as e:
             logging.error(f"处理任务 {task} 时发生错误: {e}")
             time.sleep(1)  # 等待 1 秒后重试
+    logging.error(f"任务 {task} 在重试 {max_retries} 次后仍然失败")       
     return None  # 重试次数最多后任务失败
 
 def dispatch_tasks_with_retry(tasks, num_threads):
+    logging.info(f"分发任务并重试: {tasks}")
     with ThreadPoolExecutor(max_workers=num_threads) as executor:
         futures = []
         for task in tasks:
@@ -133,6 +137,7 @@ def dispatch_tasks_with_retry(tasks, num_threads):
 
 # 主函数
 def process_tasks():
+    logging.info("开始任务处理")
     # 定义大任务
     tasks = get_tasks()
 
@@ -143,6 +148,7 @@ def process_tasks():
     stop_event.set()
     # 分发任务并等待结果
     result = dispatch_tasks(tasks, num_threads)
+    logging.info(f"任务处理完成，结果: {result}")
     print(result)
 
 if __name__ == "__main__":
