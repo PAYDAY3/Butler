@@ -8,17 +8,20 @@ import concurrent.futures
 from tqdm import tqdm
 import argparse
 import urlparse
-from  my_package.Logging import *
+from my_package.Logging import *
+from urllib.parse import urlparse, urljoin
+from scrapy.crawler import CrawlerProcess
+from scrapy.utils.project import get_project_settings
+import scrapy
 
 # 设置日志配置
 logging = logging.getLogger(__name__)
-
-downloaded_images = "downloaded_images"  # 存储数据文件
+downloaded_images = "./my_package/downloaded_images"  # 存储数据文件
 
 # 设置User Agent列表
 user_agents = [
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3',
-    # Add more user agents here
+    # 在这里添加更多用户代理
 ]
 
 # 随机选择 User Agent
