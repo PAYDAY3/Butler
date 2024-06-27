@@ -61,7 +61,7 @@ def download_image(url, filename):
         with open(file_path, 'wb') as f:
             for chunk in response.iter_content(1024):
                 f.write(chunk)
-        logging.info(f"Downloaded {url}")
+        logging.info(f"下载 {url}")
     except requests.RequestException as e:
         logging.error(f"下载了 {url}: {e}")
 
@@ -93,6 +93,8 @@ def search_and_crawl_images(search_query):
                 logging.warning("无效的输入")
     except requests.RequestException as e:
         logging.error(f"Failed to search images: {e}")
+        return False  # 返回False表示失败
+    return True  # 返回True表示成功
 
 def crawl_website(start_url, max_depth):
     while url_queue:
@@ -118,8 +120,27 @@ def crawl_website(start_url, max_depth):
         if len(visited_urls) >= max_depth:
             break
     redis_client.set('crawler_state', str(len(visited_urls)))
+    return True  # 返回True表示成功
+    
+class MyScrapySpider(scrapy.Spider):
+    name = "my_scrapy_spider"
 
-def main():
+    def __init__(self, search_query=None, *args, **kwargs):
+        super(MyScrapySpider, self).__init__(*args, **kwargs)
+        self.start_urls = [f'https://www.bing.com/images/search?q={search_query}']
+
+    def parse(self, response):
+        images = response.css('img::attr(src)').extract()
+        for image_url in images:
+            yield scrapy.Request(url=image_url, callback=self.download_image)
+
+    def download_image(self, response):
+        path = f'{downloaded_images}/{os.path.basename(response.url)}'
+        with open(path, 'wb') as f:
+            f.write(response.body)
+        self.log(f'下载 {response.url}')    
+        
+def crawler():
     parser = argparse.ArgumentParser(description="Image Search and Crawler")
     parser.add_argument('search_query', type=str, nargs='?', help='输入搜索查询')
     args = parser.parse_args()
@@ -129,13 +150,20 @@ def main():
         search_query = input('搜索内容: ')
     
     if urlparse.urlparse(input_str).scheme:  # 如果输入的是网址
-        crawl_website(input_str, max_depth)
+        success = crawl_website(input_str, max_depth)
+        if not success:
+            logger.info("切换到Scrapy爬虫")
+            run_scrapy_crawler(search_query)        
+            
     else:  # 如果输入不是网址，作为搜索查询
         search_querys = search_query
         image_format = input("格式：")
         limit = int(input("数量："))
         search_and_crawl_images(search_query, image_format, limit)
+        if not success:
+            logger.info("切换到Scrapy爬虫")
+            run_scrapy_crawler(search_query)
     logging.info('爬虫结束！')
-
+    
 if __name__ == '__main__':
-    main()
+    crawler()
