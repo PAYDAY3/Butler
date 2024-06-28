@@ -1,4 +1,3 @@
-
 import os
 import sys
 import time
@@ -22,15 +21,16 @@ from my_package.virtual_keyboard import VirtualKeyboard
 from my_package.algorithm import quickSort
 from my_package.Logging import *
 from my_package.music import music_player
-from my_package.crawler import 
+from my_package.crawler import crawler
 
 import transformers
 from transformers import BertTokenizer, BertForSequenceClassification
 import torch
 
+bert_model = "./model"
 # 加载BERT模型和tokenizer
-tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-model = BertForSequenceClassification.from_pretrained('bert-base-uncased')
+tokenizer = BertTokenizer.from_pretrained(bert_model)
+model = BertForSequenceClassification.from_pretrained(bert_model)
 
 def preprocess(text):
     inputs = tokenizer.encode_plus(
@@ -58,7 +58,7 @@ def preprocess(text):
     print("Chatbot:", response)
     
 # 对话提示
-prompt = "我是你的聊天助手。我的目的是和你进行自然的对话。请提出问题或发表评论，我会尽我所能提供帮助或参与讨论。"
+prompt = "我是你的聊天助手。"
 
 # 创建一个简单的对话循环
 while True:
@@ -152,7 +152,7 @@ def main_program_logic(program_folder):
             if program_file_name:
                 print(f"正在执行命令: {wake_command}")
                 speak(f"正在执行命令: {wake_command}")
-                logging.info(f"{datetime.datetime.now()} - {wake_command}")
+                logging.info(f"正在执行命令: {wake_command}")
                 program_module = programs.get(program_file_name, None)
                 if program_module:
                     program_module.run()  # 调用对应程序的逻辑
@@ -163,15 +163,15 @@ def main_program_logic(program_folder):
             elif "退出" in wake_command or "结束" in wake_command:
                 print(f"{program_folder}程序已退出")
                 speak(f"{program_folder}程序已退出")
-                logging.info(f"{datetime.datetime.now()} - 正在退出{program_folder}")
+                logging.info(f"{program_folder}程序已退出")
                 sys.exit()
             else:
                 print("未知命令")
                 speak("未知命令")
-                logging.info(f"{datetime.datetime.now()} - 未知命令: {wake_command}")
+                logging.info(f"未知命令: {wake_command}")
 
         except Exception as error:
-            logging.error(f"{datetime.datetime.now()} - 程序出现异常: {error}")
+            logging.error(f"程序出现异常: {error}")
             print(f"程序出现异常: {error}")
             speak(f"程序出现异常: {error}")
             
@@ -183,6 +183,7 @@ def open_programs(program_folder):
     # 检查程序文件夹是否存在
     if not os.path.exists(program_folder):
         print(f"程序文件夹 '{program_folder}' 未找到。")
+        logging.info(f"程序文件夹 '{program_folder}' 未找到。")
         return {}
         
     programs = {}
@@ -204,11 +205,13 @@ def open_programs(program_folder):
                     programs_cache[program_name] = program_module
                 except ImportError as e:
                     print(f"加载程序模块 '{program_name}' 时出错：{e}")
+                    logging.info(f"加载程序模块 '{program_name}' 时出错：{e}")
                     continue
 
             # 验证程序模块
             if not hasattr(program_module, 'run'):
                 print(f"程序模块 '{program_name}' 无效。")
+                logging.info(f"程序模块 '{program_name}' 无效。")
                 continue
 
             # 将程序模块存储在字典中
@@ -267,7 +270,7 @@ def main():
         logging.info("等待唤醒词")
         if "退出" in wake_command or "结束" in wake_command:
             print("程序已退出")
-            logging.info("用户已退出程序")
+            logging.info(f"用户已退出{program_folder}程序")
             running = False  # 设置标志为 False，用于退出主循环
 
     if not running:
@@ -284,14 +287,14 @@ def main():
             logging.info("用户手动输入：" + user_input)
             if "退出" in user_input or "结束" in user_input:
                 print("程序已退出")
-                logging.info(f"{datetime.datetime.now()} - 用户已退出程序手写输入")
+                logging.info("用户已退出程序手写输入")
                 running = False  # 设置标志为 False，用于退出主循环
                 return None
             return user_input
 
         if WAKE_WORD in wake_command:
             print("已唤醒，等待命令...")
-            logging.info(f"{datetime.datetime.now()} - 已唤醒，等待命令")
+            logging.info("已唤醒，等待命令")
             time.sleep(1)
 
             # 通过文本交流获取用户输入
@@ -308,8 +311,10 @@ def main():
                         program_module.run()
                     else:
                         print(f"未找到程序：{program_name}")
+                        logging.info(f"未找到程序：{program_name}")
                 else:
                     print(f"未找到程序：{program_name}")
+                    logging.info(f"未找到程序：{program_name}")
 
             elif "退出" in user_command or "结束" in user_command:
                 print("程序已退出")
