@@ -17,3 +17,8 @@ beautifulsoup4
 redis
 tqdm
 scrapy
+imaplib 
+email 
+datetime 
+dateutil 
+smtplib
