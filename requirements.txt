@@ -1,7 +1,6 @@
 SpeechRecognition
 PocketSphinx
 pyttsx3
-logging
 tempfile
 PyAudio
 transformers
@@ -17,8 +16,5 @@ beautifulsoup4
 redis
 tqdm
 scrapy
-imaplib 
-email 
-datetime 
+imaplib
 dateutil 
-smtplib
