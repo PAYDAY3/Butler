@@ -3,7 +3,6 @@ PocketSphinx
 pyttsx3
 logging
 tempfile
-snowboy
 PyAudio
 transformers
 torch
@@ -13,3 +12,8 @@ prompt_toolkit
 pillow
 pygame
 requests>=2.32.0 # not directly required, pinned by Snyk to avoid a vulnerability
+requests 
+beautifulsoup4 
+redis
+tqdm
+scrapy
