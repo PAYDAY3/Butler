@@ -17,4 +17,4 @@ redis
 tqdm
 scrapy
 imaplib
-dateutil 
+dateutil
