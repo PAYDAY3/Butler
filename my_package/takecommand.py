@@ -1,5 +1,8 @@
 import subprocess
 import speech_recognition as sr
+import tempfile
+from Logging import *
+from speak import speak
 
 model = "my_Snowboy/jarvis.umdl"  # Snowboy 模型文件路径
 
