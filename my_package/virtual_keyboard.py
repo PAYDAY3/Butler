@@ -30,6 +30,7 @@ class VirtualKeyboard:
         self.space_btn.grid(row=1, column=8, columnspan=4, padx=5, pady=10)
         # 复制和粘贴按钮
         self.copy_btn = tk.Button(self.root, text="复制", command=self.copy_text)
+        self```python
         self.copy_btn.grid(row=1, column=12, padx=5, pady=10)        
         self.paste_btn = tk.Button(self.root, text="粘贴", command=self.paste_text)
         self.paste_btn.grid(row=1, column=13, padx=5, pady=10)    
@@ -70,6 +71,11 @@ class VirtualKeyboard:
         self.create_symbol_row(".,?!", 3, self.symbols_frame)
         self.tabControl.add(self.symbols_frame, text='符')
         
+        # 创建额外面板
+        self.extra_frame = ttk.Frame(self.tabControl)
+        self.create_extra_buttons(self.extra_frame)
+        self.tabControl.add(self.extra_frame, text='额外')
+        
         self.tabControl.grid(row=0, column=0, columnspan=6)
         
     def delete_character(self):
@@ -94,7 +100,15 @@ class VirtualKeyboard:
         for i, letter in enumerate(letters):
             btn = tk.Button(frame, text=letter, command=lambda l=letter: self.on_button_click(l))
             btn.grid(row=row, column=i, padx=3, pady=3)
-
+            
+    def create_extra_buttons(self, frame):
+        extra_buttons = ["{", "}", "[", "]", "|", "\\", ";", ":", "'", "\"", "<", ">", "/", "*", "&", "^", "%", "$", "#", "!", "~"]
+        for i, button in enumerate(extra_buttons):
+            row = i // 12 + 1  # 每行12个按钮
+            col = i % 12
+            btn = tk.Button(frame, text=button, command=lambda b=button: self.on_button_click(b))
+            btn.grid(row=row, column=col, padx=3, pady=3)
+            
     def create_number_row(self, numbers, row, frame):
         for i, number in enumerate(numbers):
             btn = tk.Button(frame, text=number, command=lambda n=number: self.on_button_click(n))
@@ -103,7 +117,7 @@ class VirtualKeyboard:
     def create_symbol_row(self, symbols, row, frame):
         for i, symbol in enumerate(symbols):
             btn = tk.Button(frame, text=symbol, command=lambda s=symbol: self.on_button_click(s))
-            btn.grid(row=row, column=i, padx=3, pady=3)
+            btn.grid(row=row, column=i, padx=3, pady=3) 
 
     def on_button_click(self, char):
         self.text_input.insert(tk.END, char)
@@ -142,7 +156,8 @@ class VirtualKeyboard:
         self.text_input.icursor(new_position)
         
     def clear_text(self):
-        self.text_input.delete(0, tk.END)       
+        self.text_input.delete("1.0", tk.END)       
+        
 if __name__ == "__main__":
     root = tk.Tk()
     app = VirtualKeyboard(root)
