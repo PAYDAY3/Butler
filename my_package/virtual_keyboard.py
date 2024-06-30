@@ -28,7 +28,25 @@ class VirtualKeyboard:
 
         self.space_btn = tk.Button(self.root, text="空格", command=lambda: self.on_button_click(" "))
         self.space_btn.grid(row=1, column=8, columnspan=4, padx=5, pady=10)
-                
+        # 复制和粘贴按钮
+        self.copy_btn = tk.Button(self.root, text="复制", command=self.copy_text)
+        self.copy_btn.grid(row=1, column=12, padx=5, pady=10)        
+        self.paste_btn = tk.Button(self.root, text="粘贴", command=self.paste_text)
+        self.paste_btn.grid(row=1, column=13, padx=5, pady=10)    
+        # 左箭头按钮
+        self.left_arrow_btn = tk.Button(self.root, text="←", command=lambda: self.move_cursor(-1))
+        self.left_arrow_btn.grid(row=1, column=14, padx=5, pady=10)
+
+        # 右箭头按钮
+        self.right_arrow_btn = tk.Button(self.root, text="→", command=lambda: self.move_cursor(1)) 
+        self.right_arrow_btn.grid(row=1, column=15, padx=5, pady=10)   
+        
+        self.clear_btn = tk.Button(self.root, text="清空", command=self.clear_text)
+        self.clear_btn.grid(row=1, column=16, padx=5, pady=10)
+        
+        self.text_input = tk.Text(self.root, height=5, width=50)
+        self.text_input.grid(row=0, column=0, columnspan=15, padx=10, pady=10)
+              
         self.tabControl.grid(row=2, column=0, columnspan=12, padx=10, pady=10)
 
     def init_keyboard(self):
@@ -103,9 +121,28 @@ class VirtualKeyboard:
                     letter = child["text"]
                     new_text = letter.upper() if self.is_uppercase else letter.lower()   # 根据当前大小写模式设置按钮文本
                     child.config(text=new_text)
+                    
     def enter_pressed(self):
-        self.text_input.insert(tk.END, "\n")      
+        self.text_input.insert(tk.END, "\n") 
         
+    def copy_text(self):
+        self.root.clipboard_clear()
+        self.root.clipboard_append(self.text_input.get())
+
+    def paste_text(self):
+        try:
+            clipboard_text = self.root.clipboard_get()
+            self.text_input.insert(tk.END, clipboard_text)
+        except tk.TclError:
+            pass 
+    # 移动光标的方法
+    def move_cursor(self, offset):
+        cursor_position = self.text_input.index(tk.INSERT)
+        new_position = cursor_position + offset
+        self.text_input.icursor(new_position)
+        
+    def clear_text(self):
+        self.text_input.delete(0, tk.END)       
 if __name__ == "__main__":
     root = tk.Tk()
     app = VirtualKeyboard(root)
