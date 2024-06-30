@@ -125,6 +125,12 @@ def crawl_website(start_url, max_depth):
     redis_client.set('crawler_state', str(len(visited_urls)))
     return True  # 返回True表示成功
     
+def controlled_crawl(urls, delay):
+    for url in urls:
+        response = requests.get(url, headers=get_headers())
+        # 处理响应
+        time.sleep(delay)    
+        
 class MyScrapySpider(scrapy.Spider):
     name = "my_scrapy_spider"
 
