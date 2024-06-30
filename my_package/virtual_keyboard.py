@@ -151,9 +151,12 @@ class VirtualKeyboard:
             pass 
     # 移动光标的方法
     def move_cursor(self, offset):
-        cursor_position = self.text_input.index(tk.INSERT)
-        new_position = cursor_position + offset
-        self.text_input.icursor(new_position)
+        try:
+            cursor_position = self.text_input.index(tk.INSERT)
+            new_position = f"{int(cursor_position.split('.')[0])}.{int(cursor_position.split('.')[1]) + offset}"
+            self.text_input.mark_set(tk.INSERT, new_position)
+        except tk.TclError:
+            pass
         
     def clear_text(self):
         self.text_input.delete("1.0", tk.END)       
