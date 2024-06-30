@@ -53,7 +53,7 @@ class Application(tk.Frame):
         self.ssh_menu.add_command(label="连接SSH", command=self.connect_ssh)
         self.ssh_menu.add_command(label="断开SSH", command=self.disconnect_ssh)
         self.menu_bar.add_cascade(label="SSH", menu=self.ssh_menu)     
-      def connect_ssh(self):
+    def connect_ssh(self):
         host = simpledialog.askstring("SSH主机", "输入SSH主机:")
         port = simpledialog.askinteger("SSH端口", "输入SSH端口:", initialvalue=22)
         username = simpledialog.askstring("SSH的用户名", "输入SSH用户名:")
