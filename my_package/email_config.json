@@ -1,0 +1,20 @@
+{
+    "accounts": [
+        {
+            "email": "example1@qq.com",
+            "password": "password1",
+            "imap_server": "imap.qq.com",
+            "imap_port": 993,
+            "smtp_server": "smtp.qq.com",
+            "smtp_port": 587
+        },
+        {
+            "email": "example2@gmail.com",
+            "password": "password2",
+            "imap_server": "imap.gmail.com",
+            "imap_port": 993,
+            "smtp_server": "smtp.gmail.com",
+            "smtp_port": 587
+        }
+    ]
+}
