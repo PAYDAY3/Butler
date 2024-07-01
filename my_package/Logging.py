@@ -1,7 +1,6 @@
 import logging
 import os
 from logging.handlers import RotatingFileHandler
-from logging.handlers import TimedRotatingFileHandler, SocketHandler
 
 PAGE = 4096
 
@@ -58,22 +57,14 @@ def getLogger(name):
     # FileHandler
     file_handler = RotatingFileHandler(
         os.path.join(TEMP_PATH),
+        when="midnight", # 每天午夜分割日志文件
         maxBytes=1024 * 1024,
         backupCount=1,
     )
     file_handler.setLevel(level=logging.NOTSET)
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
-    #可选:添加StreamHandler日志到控制台
-    stream_handler = logging.StreamHandler()
-    stream_handler.setLevel(logging.INFO)
-    stream_handler.setFormatter(formatter)
-    logger.addHandler(stream_handler)
-    # 远程日志处理程序
-    remote_handler = logging.handlers.SocketHandler('localhost', logging.handlers.DEFAULT_TCP_LOGGING_PORT)
-    remote_handler.setLevel(logging.ERROR)
-    remote_handler.setFormatter(formatter)
-    logger.addHandler(remote_handler)
+
     return logger
 
 
