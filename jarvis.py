@@ -22,7 +22,7 @@ from my_package.algorithm import quickSort
 from my_package.Logging import *
 from my_package.music import music_player
 from my_package.crawler import crawler
-
+from my_package.schedule_management import schedule_management
 import transformers
 from transformers import BertTokenizer, BertForSequenceClassification
 import torch
@@ -224,7 +224,7 @@ def open_programs(program_folder):
  # 主函数
 def main():
     process_tasks()# 运行多线程程序
-    
+    schedule_management()
     # 获取系统的临时文件夹路径
     temp_dir = tempfile.gettempdir()
 
@@ -347,8 +347,7 @@ def main():
                                     print(f"导入模块失败: {error}")
                                     logging.error(f"导入模块失败: {error}")
 
-if __name__ == "__main__":
-    wishme()# 执行程序初始化逻辑    
+if __name__ == "__main__":  
     while True:
         try:     
             music_player()
