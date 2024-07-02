@@ -61,6 +61,10 @@ def music_player():
         current_song_index = (current_song_index - 1) % len(music_library)
         play_music(current_song_index)
         
+    def show_playlist():
+        for index, song in enumerate(music_library):
+            print(f"{index + 1}. {os.path.basename(song)}")
+                    
     def search_song(keyword):
         for index, song in enumerate(music_library):
             if keyword.lower() in os.path.basename(song).lower():
@@ -95,7 +99,9 @@ def music_player():
                     decrease_volume()
                 elif "搜索" in  command:
                     keyword = command.split("搜索")[-1].strip()
-                    search_song(keyword)                   
+                    search_song(keyword)         
+                elif "播放列表" in command:
+                    show_playlist()  
                 elif "退出" in command:
                     pygame.mixer.music.stop()
                     print("音乐播放器已退出。")
