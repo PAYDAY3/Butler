@@ -38,29 +38,23 @@ def no_alsa_error():
         pass
 
 class RingBuffer(object):
-    """Ring buffer to hold audio from PortAudio"""
+    """从PortAudio保存音频的环形缓冲区"""
 
     def __init__(self, size=4096):
         self._buf = collections.deque(maxlen=size)
 
     def extend(self, data):
-        """Adds data to the end of buffer"""
+        """将数据添加到缓冲区的末尾"""
         self._buf.extend(data)
 
     def get(self):
-        """Retrieves data from the beginning of buffer and clears it"""
+        """从缓冲区的开头检索数据并清除它"""
         tmp = bytes(bytearray(self._buf))
         self._buf.clear()
         return tmp
 
 
 def play_audio_file(fname=DETECT_DING):
-    """Simple callback function to play a wave file. By default it plays
-    a Ding sound.
-
-    :param str fname: wave file name
-    :return: None
-    """
     ding_wav = wave.open(fname, 'rb')
     ding_data = ding_wav.readframes(ding_wav.getnframes())
     with no_alsa_error():
@@ -137,7 +131,7 @@ class HotwordDetector(object):
             stream_callback=audio_callback)
 
         if interrupt_check():
-            logger.debug("detect voice return")
+            logger.debug("检测语音返回")
             return
 
         tc = type(detected_callback)
@@ -147,15 +141,15 @@ class HotwordDetector(object):
             detected_callback *= self.num_hotwords
 
         assert self.num_hotwords == len(detected_callback), \
-            "Error: hotwords in your models (%d) do not match the number of " \
+            "错误:您的模型(%d)中的热词不匹配 " \
             "callbacks (%d)" % (self.num_hotwords, len(detected_callback))
 
-        logger.debug("detecting...")
+        logger.debug("检测...")
 
         state = "PASSIVE"
         while self._running is True:
             if interrupt_check():
-                logger.debug("detect voice break")
+                logger.debug("检测语音中断")
                 break
             data = self.ring_buffer.get()
             if len(data) == 0:
@@ -164,7 +158,7 @@ class HotwordDetector(object):
 
             status = self.detector.RunDetection(data)
             if status == -1:
-                logger.warning("Error initializing streams or reading audio data")
+                logger.warning("初始化流或读取音频数据时出错")
 
             #small state machine to handle recording of phrase after keyword
             if state == "PASSIVE":
@@ -173,7 +167,7 @@ class HotwordDetector(object):
                     self.recordedData.append(data)
                     silentCount = 0
                     recordingCount = 0
-                    message = "Keyword " + str(status) + " detected at time: "
+                    message = "关键字 " + str(status) + " 及时检测到: "
                     message += time.strftime("%Y-%m-%d %H:%M:%S",
                                          time.localtime(time.time()))
                     logger.info(message)
@@ -209,9 +203,6 @@ class HotwordDetector(object):
         logger.debug("finished.")
 
     def saveMessage(self):
-        """
-        Save the message stored in self.recordedData to a timestamped file.
-        """
         filename = 'output' + str(int(time.time())) + '.wav'
         data = b''.join(self.recordedData)
 
@@ -228,10 +219,6 @@ class HotwordDetector(object):
         return filename
 
     def terminate(self):
-        """
-        Terminate audio stream. Users can call start() again to detect.
-        :return: None
-        """
         self.stream_in.stop_stream()
         self.stream_in.close()
         self.audio.terminate()
