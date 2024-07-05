@@ -11,6 +11,7 @@ from my_package.takecommand import takecommand
 # 存档文件路径
 archive_file = "archive.json"
 file_path="/data" #文件夹位置
+logging = Logging.getLogger(__name__)
 
 # 创建存档
 def create_archive(data):
@@ -289,7 +290,3 @@ def TextEditor():
 
     if retries > max_retries:
         print("重试次数已达上限，程序退出。")
-
-
-if __name__ == "__main__":
-    TextEditor()
