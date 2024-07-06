@@ -220,6 +220,10 @@ class Plugin():
             print("邮件发送失败:", e)
         finally:
             server.quit()
+def config_get():
+    with open("./email_config.json", "r") as f:
+        config = json.load(f)
+    return config
 
 # 实例化插件对象
 email_plugin = Plugin()
