@@ -8,6 +8,7 @@ import time
 import json
 import pyttsx3
 import datetime
+from playsound import playsound
 from my_snowboy.snowboydecoder import snowboydecoder
 #临时文件
 import shutil
@@ -76,12 +77,14 @@ def get_response(user_input):
     predicted_class = torch.argmax(logits, dim=1).item()
     return predicted_class
     
+output_file = "./my_snowboy/resources/jarvis.wav"
 engine = pyttsx3.init()# 为语音合成创建一个引擎实例
-engine.set_output('jarvis.wav')  #修改成自己.wav文件
+engine.set_output(output_file) 
 
 def speak(audio):
-    engine.say(audio)# 将需要语音合成的文本传递给引擎
+    engine.say(audio, output_file)# 将需要语音合成的文本传递给引擎
     engine.runAndWait()# 播放语音
+    playsound(output_file)
 
 # 初始化日志
 #   log_file = "program_log.txt"
