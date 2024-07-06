@@ -45,20 +45,18 @@ def tail(filepath, n=10):
 def getLogger(name):
     """
     作用同标准模块 logging.getLogger(name)
-
-    :returns: logger
     """
     format = "%(asctime)s - %(name)s - %(filename)s - %(funcName)s - line %(lineno)s - %(levelname)s - %(message)s"
     formatter = logging.Formatter(format)
     logging.basicConfig(format=format)
     logger = logging.getLogger(name)
     logger.setLevel(logging.INFO)
-
-    # FileHandler
+    
+    # 文件处理程序
     file_handler = RotatingFileHandler(
         os.path.join(TEMP_PATH),
-        when="midnight", # 每天午夜分割日志文件
-        maxBytes=1024 * 1024,
+        when="midnight", 
+        maxBytes=10 * 1024 * 1024,
         backupCount=1,
     )
     file_handler.setLevel(level=logging.NOTSET)
