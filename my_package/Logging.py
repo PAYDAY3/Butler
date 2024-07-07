@@ -41,7 +41,6 @@ def tail(filepath, n=10):
         res += line.decode("utf-8")
     return res
 
-
 def getLogger(name):
     """
     作用同标准模块 logging.getLogger(name)
@@ -51,27 +50,22 @@ def getLogger(name):
     logging.basicConfig(format=format)
     logger = logging.getLogger(name)
     logger.setLevel(logging.INFO)
-    
-    # 文件处理程序
+
+    # FileHandler
     file_handler = RotatingFileHandler(
         os.path.join(TEMP_PATH),
         when="midnight", 
         maxBytes=10 * 1024 * 1024,
-        backupCount=1,
+        backupCount=5,
     )
     file_handler.setLevel(level=logging.NOTSET)
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
-
     return logger
-
 
 def readLog(lines=200):
     """
     获取最新的指定行数的 log
-
-    :param lines: 最大的行数
-    :returns: 最新指定行数的 log
     """
     log_path = os.path.join(TEMP_PATH)
     if os.path.exists(log_path):
