@@ -146,11 +146,11 @@ class ProgramHandler(FileSystemEventHandler):
         self.programs = self.open_programs()
 
     def on_modified(self, event):
-        if event.src_path.endswith('.py'):
+        if event.src_path.endswith(('.py', 'invoke.py')):
             self.programs = self.open_programs.clear_cache()()
 
     def on_created(self, event):
-        if event.src_path.endswith('.py'):
+        if event.src_path.endswith(('.py', 'invoke.py')):
             self.programs = self.open_programs.clear_cache()()
 
     @lru_cache(maxsize=128)
@@ -167,7 +167,7 @@ class ProgramHandler(FileSystemEventHandler):
         programs = {}
         for root, dirs, files in os.walk(self.program_folder):
             for file in files:
-                if file.endswith('.py'):
+                if file.endswith(('.py', 'invoke.py')):
                     program_name = os.path.basename(root) + '.' + file[:-3]
                     program_path = os.path.join(root, file)
 
@@ -194,7 +194,20 @@ class ProgramHandler(FileSystemEventHandler):
         # 按字母顺序排序程序模块
         programs = dict(sorted(programs.items()))
         return programs
-
+        
+def execute_program(program_name, handler):
+    """执行程序"""
+    program_module = handler.programs.get(program_name, None)
+    if program_module:
+        try:
+            program_module.run()
+        except Exception as e:
+            logging.error(f"执行程序 '{program_name}' 时出错：{e}")
+            speak(f"执行程序 '{program_name}' 时出错：{e}")
+    else:
+        logging.info(f"未找到程序: {program_name}")
+        speak(f"未找到程序: {program_name}")
+        
 def main_program_logic(program_folder):
     handler = ProgramHandler(program_folder)
     observer = Observer()
@@ -212,26 +225,22 @@ def main_program_logic(program_folder):
     while running:
         try:
             wake_command = takecommand().lower()
-            program_file_name = program_mapping.get(wake_command, None)
-            if program_file_name:
-                print(f"正在执行命令: {wake_command}")
-                speak(f"正在执行命令: {wake_command}")
-                logging.info(f"正在执行命令: {wake_command}")
-                program_module = handler.programs.get(program_file_name, None)
-                if program_module:
-                    program_module.run()
-                else:
-                    print(f"未找到程序: {program_file_name}")
-                    speak(f"未找到程序: {program_file_name}")
-            elif "退出" in wake_command或 "结束" in wake_command:
-                print(f"{program_folder}程序已退出")
-                speak(f"{program_folder}程序已退出")
+            wake_command = takecommand().lower()
+            if wake_command.startswith("打开"):
+                # 如果命令以 "打开" 开头，则尝试动态解析并执行程序
+                program_name = wake_command[3:].strip()
+                execute_program(program_name, handler)
+            elif wake_command in program_mapping:
+                # 如果命令在映射关系中，则执行预定义程序
+                program_name = program_mapping[wake_command]
+                execute_program(program_name, handler)
+            elif "退出" in wake_command or "结束" in wake_command:
                 logging.info(f"{program_folder}程序已退出")
+                speak(f"{program_folder}程序已退出")
                 running = False
             else:
-                print("未知命令")
-                speak("未知命令")
                 logging.info(f"未知命令: {wake_command}")
+                speak("未知命令")
         except Exception as error:
             logging.error(f"程序出现异常: {error}")
             print(f"程序出现异常: {error}")
