@@ -19,3 +19,4 @@ scrapy
 imaplib
 dateutil
 paramiko
+watchdog
