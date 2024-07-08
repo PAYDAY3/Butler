@@ -1,7 +1,6 @@
 import os
 import sys
 import time
-import importlib
 import importlib.util
 import speech_recognition as sr
 import pygame
@@ -15,6 +14,9 @@ from my_snowboy.snowboydecoder import snowboydecoder
 import shutil
 import tempfile
 import concurrent.futures
+from functools import lru_cache
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
 
 from thread import process_tasks
 from my_package.speak import speak
@@ -137,93 +139,106 @@ def takecommand():
 detector = snowboydecoder.HotwordDetector(model, sensitivity=0.5, audio_gain=1)
 detector.start(takecommand)
 
-# 主程序逻辑
+class ProgramHandler(FileSystemEventHandler):
+    def __init__(self, program_folder):
+        self.program_folder = program_folder
+        self.programs_cache = {}
+        self.programs = self.open_programs()
+
+    def on_modified(self, event):
+        if event.src_path.endswith('.py'):
+            self.programs = self.open_programs.clear_cache()()
+
+    def on_created(self, event):
+        if event.src_path.endswith('.py'):
+            self.programs = self.open_programs.clear_cache()()
+
+    @lru_cache(maxsize=128)
+    def open_programs(self):
+        programs_cache = {}
+        global programs_cache
+        
+        # 检查程序文件夹是否存在
+        if not os.path.exists(program_folder):
+            print(f"程序文件夹 '{program_folder}' 未找到。")
+            logging.info(f"程序文件夹 '{program_folder}' 未找到。")
+            return {}   
+                  
+        programs = {}
+        for root, dirs, files in os.walk(self.program_folder):
+            for file in files:
+                if file.endswith('.py'):
+                    program_name = os.path.basename(root) + '.' + file[:-3]
+                    program_path = os.path.join(root, file)
+
+                    if program_name in self.programs_cache:
+                        program_module = self.programs_cache[program_name]
+                    else:
+                        try:
+                            spec = importlib.util.spec_from_file_location(program_name, program_path)
+                            program_module = importlib.util.module_from_spec(spec)
+                            sys.modules[program_name] = program_module
+                            spec.loader.exec_module(program_module)
+                            self.programs_cache[program_name] = program_module
+                        except ImportError as e:
+                            print(f"加载程序模块 '{program_name}' 时出错：{e}")
+                            logging.info(f"加载程序模块 '{program_name}' 时出错：{e}")
+                            continue
+
+                    if not hasattr(program_module, 'run'):
+                        print(f"程序模块 '{program_name}' 无效。")
+                        logging.info(f"程序模块 '{program_name}' 无效。")
+                        continue
+                    programs[program_name] = program_module
+                    
+        # 按字母顺序排序程序模块
+        programs = dict(sorted(programs.items()))
+        return programs
+
 def main_program_logic(program_folder):
-    # 获取程序模块字典
-    programs = open_programs(program_folder)
-    # 定义程序映射关系字典
+    handler = ProgramHandler(program_folder)
+    observer = Observer()
+    observer.schedule(handler, program_folder, recursive=True)
+    observer.start()
+
     program_mapping = {
         "打开邮箱": "e-mail",
         "播放音乐": "music_program",
+        "打开记事本": "notepad_program",
         # 在这里继续添加其他命令和程序的映射关系
     }
-    
+
     running = True
     while running:
         try:
-            wake_command = takecommand().lower() #recognize_sphinx(takecommand()).lower()
+            wake_command = takecommand().lower()
             program_file_name = program_mapping.get(wake_command, None)
             if program_file_name:
                 print(f"正在执行命令: {wake_command}")
                 speak(f"正在执行命令: {wake_command}")
                 logging.info(f"正在执行命令: {wake_command}")
-                program_module = programs.get(program_file_name, None)
+                program_module = handler.programs.get(program_file_name, None)
                 if program_module:
-                    program_module.run()  # 调用对应程序的逻辑
+                    program_module.run()
                 else:
                     print(f"未找到程序: {program_file_name}")
                     speak(f"未找到程序: {program_file_name}")
-
-            elif "退出" in wake_command or "结束" in wake_command:
+            elif "退出" in wake_command或 "结束" in wake_command:
                 print(f"{program_folder}程序已退出")
                 speak(f"{program_folder}程序已退出")
                 logging.info(f"{program_folder}程序已退出")
-                sys.exit()
+                running = False
             else:
                 print("未知命令")
                 speak("未知命令")
                 logging.info(f"未知命令: {wake_command}")
-
         except Exception as error:
             logging.error(f"程序出现异常: {error}")
             print(f"程序出现异常: {error}")
             speak(f"程序出现异常: {error}")
-            
-# 打开程序模块
-programs_cache = {}
-def open_programs(program_folder):
-    global programs_cache
-    
-    # 检查程序文件夹是否存在
-    if not os.path.exists(program_folder):
-        print(f"程序文件夹 '{program_folder}' 未找到。")
-        logging.info(f"程序文件夹 '{program_folder}' 未找到。")
-        return {}
-        
-    programs = {}
-    for program_file in os.listdir(program_folder):
-        if program_file.endswith('.py'):
-            program_name = program_file[:-3]
-            program_path = os.path.join(program_folder, program_file)
-            
-            # 检查程序模块是否已经加载
-            if program_name in program_cache:
-                program_module = program_cache[program_name]
-            else:
-                try:
-                    # 动态加载程序模块
-                    spec = importlib.util.spec_from_file_location(program_name, program_path)
-                    program_module = importlib.util.module_from_spec(spec)
-                    sys.modules[program_name] = program_module
-                    spec.loader.exec_module(program_module)
-                    programs_cache[program_name] = program_module
-                except ImportError as e:
-                    print(f"加载程序模块 '{program_name}' 时出错：{e}")
-                    logging.info(f"加载程序模块 '{program_name}' 时出错：{e}")
-                    continue
 
-            # 验证程序模块
-            if not hasattr(program_module, 'run'):
-                print(f"程序模块 '{program_name}' 无效。")
-                logging.info(f"程序模块 '{program_name}' 无效。")
-                continue
-
-            # 将程序模块存储在字典中
-            programs[program_name] = program_module
-
-    # 按字母顺序排序程序模块
-    programs = dict(sorted(programs.items()))
-    return programs
+    observer.stop()
+    observer.join()
 
  # 主函数
 def main():
