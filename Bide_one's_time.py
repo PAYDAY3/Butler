@@ -1,6 +1,6 @@
 import time
 import subprocess
-from my_snowboy.snowboydecoder import snowboydecoder
+from my_snowboy.snowboydecoder import HotwordDetector
 import speech_recognition as sr
 
 # 定义 Snowboy 唤醒器相关配置参数
