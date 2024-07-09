@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+import importlib
 import importlib.util
 import speech_recognition as sr
 import pygame
@@ -300,10 +301,6 @@ def main():
             print("程序已退出")
             logging.info(f"用户已退出{program_folder}程序")
             running = False  # 设置标志为 False，用于退出主循环
-
-    if not running:
-        # 打开另一个程序
-        os.system("python Bide_one's_time.py") 
                  
         if "手动输入" in wake_command:
             keyboard = VirtualKeyboard()
@@ -364,7 +361,7 @@ def main():
                 if matched_program is None:
                     # 检查命令是否匹配到模块文件名
                     for module_file in os.listdir(program_folder):
-                        if module_file.endswith('.py'):
+                        if module_file.endswith(('.py', 'invoke.py')):
                             if module_file in wake_command:
                                 module_path = f"{program_folder}.{module_file[:-3]}"
                                 try:
@@ -374,6 +371,11 @@ def main():
                                 except ImportError as error:
                                     print(f"导入模块失败: {error}")
                                     logging.error(f"导入模块失败: {error}")
+
+    # 退出程序
+    if not running:
+        # 打开另一个程序
+        os.system("python Bide_one's_time.py")
 
 if __name__ == "__main__":  
     while True:
