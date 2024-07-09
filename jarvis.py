@@ -121,20 +121,41 @@ def takecommand():
             audio_file_path = f.name + ".wav"
             f.write(audio.get_wav_data())
     return audio_file_path 
-        try:
-            print("Recognizing...")  # 识别中...
-            query = recognizer.recognize_sphinx(audio, language='zh-CN')
-            print('User: ' + query + '\n')
-            return query     
-        except Exception as e:
-            print("对不起，我没有听清楚，请再说一遍。")
-            speak("对不起，我没有听清楚，请再说一遍。")
-            query = None
-            return query
-        except sr.RequestError as error:
-            print(f"语音识别请求出错：{error}")
-            logging.error(f"语音识别请求出错：{error}")
-            return ""
+            
+            # 使用 Snowboy 进行唤醒词检测
+            try:
+                from my_snowboy.snowboydecoder import HotwordDetector
+                detector = HotwordDetector(model)
+                result = detector.detect(audio_file_path)
+                if result:
+                    logging.info("唤醒词检测成功")
+                    
+                    # 识别语音
+                    try:
+                        print("Recognizing...")  # 识别中...
+                        query = recognizer.recognize_sphinx(audio, language='zh-CN')
+                        print('User: ' + query + '\n')
+                        return query  
+                    except sr.UnknownValueError:
+                        print("对不起，我没有听清楚，请再说一遍。")
+                        speak("对不起，我没有听清楚，请再说一遍。")
+                        return None
+                    except sr.RequestError as error:
+                        print(f"语音识别请求出错：{error}")
+                        logging.error(f"语音识别请求出错：{error}")
+                        return ""
+                    except Exception as e:
+                        print(f"语音识别出错: {e}")
+                        logging.error(f"语音识别出错: {e}")
+                        return None
+                else:
+                    print("没有检测到唤醒词")
+                    logging.info("没有检测到唤醒词")
+                    return None
+            except Exception as e:
+                print(f"Snowboy 检测出错: {e}")
+                logging.error(f"Snowboy 检测出错: {e}")
+                return None 
 
 # 创建 Snowboy 监听器
 detector = snowboydecoder.HotwordDetector(model, sensitivity=0.5, audio_gain=1)
