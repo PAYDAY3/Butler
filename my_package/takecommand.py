@@ -18,38 +18,43 @@ def takecommand():
         recognizer.operation_timeout = 5 
         recognizer.energy_threshold = 4000      
         recognizer.dynamic_energy_threshold = True  
+        recognizer.default = model
         audio = recognizer.listen(source, phrase_time_limit=5)
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as f:
             audio_file_path = f.name
             f.write(audio.get_wav_data())
             
-            # 使用 Snowboy 检测唤醒词
-            process = subprocess.Popen(
-                ["snowboy", "detect", "-i", audio_file_path, "-m", model, "-t", "0.5"], 
-                stdout=subprocess.PIPE, 
-                stderr=subprocess.PIPE
-            )
-            stdout, stderr = process.communicate()
-            if stdout:
-                logging.info("唤醒词检测成功")
-                try:
-                    print("Recognizing...")  # 识别中...
-                    query = recognizer.recognize_sphinx(audio, language='zh-CN')
-                    print('User: ' + query + '\n')
-                    return query     
-                except sr.UnknownValueError:
-                    print("对不起，我没有听清楚，请再说一遍。")
-                    speak("对不起，我没有听清楚，请再说一遍。")
+            # 使用 Snowboy 进行唤醒词检测
+            try:
+                from my_snowboy.snowboydecoder import HotwordDetector
+                detector = HotwordDetector(model)
+                result = detector.detect(audio_file_path)
+                if result:
+                    logging.info("唤醒词检测成功")
+                    
+                    # 识别语音
+                    try:
+                        print("Recognizing...")  # 识别中...
+                        query = recognizer.recognize_sphinx(audio, language='zh-CN')
+                        print('User: ' + query + '\n')
+                        return query  
+                    except sr.UnknownValueError:
+                        print("对不起，我没有听清楚，请再说一遍。")
+                        speak("对不起，我没有听清楚，请再说一遍。")
+                        return None
+                    except sr.RequestError as error:
+                        print(f"语音识别请求出错：{error}")
+                        logging.error(f"语音识别请求出错：{error}")
+                        return ""
+                    except Exception as e:
+                        print(f"语音识别出错: {e}")
+                        logging.error(f"语音识别出错: {e}")
+                        return None
+                else:
+                    print("没有检测到唤醒词")
+                    logging.info("没有检测到唤醒词")
                     return None
-                except sr.RequestError as error:
-                    print(f"语音识别请求出错：{error}")
-                    logging.error(f"语音识别请求出错：{error}")
-                    return ""
-                except Exception as e:
-                    print(f"语音识别出错: {e}")
-                    logging.error(f"语音识别出错: {e}")
-                    return None
-            else:
-                print("没有检测到唤醒词")
-                logging.info("没有检测到唤醒词")
-                return None
+            except Exception as e:
+                print(f"Snowboy 检测出错: {e}")
+                logging.error(f"Snowboy 检测出错: {e}")
+                return None 
