@@ -10,7 +10,7 @@ import json
 import pyttsx3
 import datetime
 from playsound import playsound
-from my_snowboy.snowboydecoder import snowboydecoder
+from my_snowboy.snowboydecoder import HotwordDetector
 #临时文件
 import shutil
 import tempfile
@@ -117,10 +117,10 @@ def takecommand():
         recognizer.default = model
         audio = recognizer.listen(source, phrase_time_limit=5)
         # 将录制的音频保存为临时文件
-        with tempfile.NamedTemporaryFile(delete=False) as f:
-            audio_file_path = f.name + ".wav"
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as f:
+            audio_file_path = f.name
             f.write(audio.get_wav_data())
-    return audio_file_path 
+        return audio_file_path 
             
             # 使用 Snowboy 进行唤醒词检测
             try:
