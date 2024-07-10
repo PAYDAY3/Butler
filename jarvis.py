@@ -242,11 +242,13 @@ def main_program_logic(program_folder):
         "打开记事本": "notepad_program",
         # 在这里继续添加其他命令和程序的映射关系
     }
-
+    
+    # 对话历史记录
+    conversation_history = []
+    
     running = True
     while running:
         try:
-            wake_command = takecommand().lower()
             wake_command = takecommand().lower()
             if wake_command.startswith("打开"):
                 # 如果命令以 "打开" 开头，则尝试动态解析并执行程序
