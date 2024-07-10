@@ -220,6 +220,15 @@ class Plugin():
             print("邮件发送失败:", e)
         finally:
             server.quit()
+            
+    def edit_email_content(self, content):
+        """编辑邮件内容"""
+        # 使用 textwrap 格式化文本
+        content = textwrap.fill(content, width=80)
+        # 获取用户输入的编辑内容
+        edited_content = input(f"编辑邮件内容:\n{content}\n>>> ")
+        return edited_content
+        
 def config_get():
     with open("./email_config.json", "r") as f:
         config = json.load(f)
@@ -236,5 +245,8 @@ print(email_subject)
 print(email_message)
 print(recipient_email)
 
+# 编辑邮件内容
+edited_message = email_plugin.edit_email_content(formatted_message)
+print(edited_message)
 # 调用发送邮件函数
 send_email(email_subject, email_message, Email_address, recipient_email)
