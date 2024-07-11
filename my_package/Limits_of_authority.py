@@ -27,7 +27,28 @@ PERMISSION_VALID_TIME = 30 * 60  # 30分钟
 
 # 记录上次验证时间
 last_verified_time = None
-
+def calculate_file_hash(file_path):
+    """Calculates the SHA256 hash of a file."""
+    hasher = hashlib.sha256()
+    with open(file_path, 'rb') as file:
+        while True:
+            chunk = file.read(4096)  # 分块读取文件
+            if not chunk:
+                break
+            hasher.update(chunk)
+    return hasher.hexdigest()
+    
+def verify_file_integrity(file_path):
+    """通过比较文件的散列来验证文件的完整性"""
+    current_hash = calculate_file_hash(file_path)
+    stored_hash = get_stored_hash(file_path)  # 函数从存储中检索哈希值
+    if current_hash == stored_hash:
+        print("文件完整性验证")
+        return True
+    else:
+        print("文件完整性受损!")
+        return False
+        
 # 获取并验证权限密钥
 def verify_permission(required_permission):
     global last_verified_time
@@ -59,8 +80,14 @@ def get_required_permission(operation):
     return OPERATIONS.get(operation, None)
 
 # 操作函数
-def view_data():
-    print("正在查看数据...")
+def view_data(file_path):
+    if verify_file_integrity(file_path):
+        # 从文件中读取和显示数据
+        with open(file_path, 'r') as file:
+            data = file.read()
+            print(data)
+    else:
+        print("文件完整性受损!无法查看数据")
 
 def modify_config():
     required_permission = get_required_permission("修改配置")
