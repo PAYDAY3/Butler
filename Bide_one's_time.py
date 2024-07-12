@@ -44,7 +44,16 @@ def snowboy_detected_callback():
 def interrupt_callback():
     # Snowboy 中断检测回调函数
     return False
-
+    
+def is_process_running(process_name):
+    """
+    检查指定进程是否正在运行
+    """
+    for proc in os.popen("ps aux | grep " + process_name):
+        if process_name in proc:
+            return True
+    return False
+    
 def standby_program():
     print("待机程序已启动")
     while True:
