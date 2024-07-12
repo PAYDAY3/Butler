@@ -50,8 +50,14 @@ def standby_program():
     while True:
         # 执行待机任务
         print("执行待机任务...")
-        # 启动程序
-        subprocess.Popen(["python", "jarvis.py"])
+        # 检查 jarvis.py 是否正在运行
+        if not is_process_running("jarvis.py"):
+            # 启动程序
+            try:
+                subprocess.Popen(["python", "jarvis.py"])
+            except FileNotFoundError:
+                print("jarvis.py 文件未找到！")
+                
         # 进入低功耗模式，等待唤醒词
         detector.terminate()  # 终止唤醒器
         time.sleep(0.1)  # 等待0.1秒
@@ -68,3 +74,5 @@ if __name__ == "__main__":
         standby_program()
     except KeyboardInterrupt:
         print("待机程序已停止")
+    finally:
+        detector.terminate()  # 终止唤醒器        
