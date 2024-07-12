@@ -2,12 +2,13 @@ import time
 import subprocess
 from my_snowboy.snowboydecoder import HotwordDetector
 import speech_recognition as sr
-
+from my_package.takecommand import takecommand
 # 定义 Snowboy 唤醒器相关配置参数
 models = ["snowboy/jarvis.pmdl"]  # 模型文件路径列表
 sensitivity = [0.5]  # 敏感度列表
 audio_gain = 1  # 录音设备增益
 detector = snowboydecoder.HotwordDetector(models, sensitivity=sensitivity, audio_gain=audio_gain)
+get_user_input = takecommand
 
 def main_control_program():
     # 主控程序逻辑
@@ -66,6 +67,14 @@ def standby_program():
                 subprocess.Popen(["python", "jarvis.py"])
             except FileNotFoundError:
                 print("jarvis.py 文件未找到！")
+                
+        # 检查 scheduled_tasks.py 是否正在运行
+        if not is_process_running("scheduled_tasks.py"):
+            # 启动程序
+            try:
+                subprocess.Popen(["python", "scheduled_tasks.py"])
+            except FileNotFoundError:
+                print("scheduled_tasks.py 文件未找到！")   
                 
         # 进入低功耗模式，等待唤醒词
         detector.terminate()  # 终止唤醒器
