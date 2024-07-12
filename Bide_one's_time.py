@@ -10,15 +10,6 @@ audio_gain = 1  # 录音设备增益
 detector = snowboydecoder.HotwordDetector(models, sensitivity=sensitivity, audio_gain=audio_gain)
 get_user_input = takecommand
 
-def main_control_program():
-    # 主控程序逻辑
-    while True:
-        user_input = get_user_input()
-        if user_input == "退出":
-            break
-        else:
-            handle_command(user_input)
-
 def get_user_input():
     # 获取用户语音输入
     print("请说话...")
