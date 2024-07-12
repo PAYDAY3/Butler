@@ -58,6 +58,66 @@ my_package/Limits_of_authority.py
 
 - 可以添加更多功能，例如记录操作日志、设置用户组等等。
 - 
+
+## my_package/Logging.py
+
+🔎
+```bash
+my_package/Logging.py
+```
+
+这个代码提供了一个自定义的日志记录系统，它包含读取和查看日志文件的功能。
+
+# 功能介绍：
+
+- getLogger(name): 创建一个名为 name 的日志记录器，并将其写入名为 logging.txt 的文件。它会自动将日志文件切割成大小为 10MB 的文件，并在午夜进行切割。
+
+- tail(filepath, n=10): 实现了 tail -n 命令的功能，可以高效地从文件读取最后 n 行，适合处理大型文件。
+
+- readLog(lines=200): 从日志文件 logging.txt 中读取最近的 lines 行（默认 200 行）并返回内容。
+
+## 使用方式:
+
+1.记录日志：
+```bash
+import my_logging  # 假设你将代码保存在名为 `my_logging.py` 的文件中
+
+logger = my_logging.getLogger(__name__)  # 获取当前模块的日志记录器
+
+logger.info("这是一条信息性消息")
+logger.warning("可能出现错误")
+logger.error("发生了错误！") 
+```
+2.读取日志：
+```hash
+log_content = my_logging.readLog(lines=50)  # 读取最近的 50 行
+print(log_content) 
+```
+
+## 简而言之:
+
+- 使用 getLogger() 函数来创建日志记录器。
+
+- 使用 logger.info(), logger.warning(), logger.error() 等方法来记录不同类型的日志消息。
+
+- 使用 readLog() 函数来读取日志文件中的内容。
+
+## 优点：
+
+- 结构化的日志：自定义的日志记录器提供了统一的日志格式，包含时间戳、模块名称、文件名、行号和严重级别等信息。
+
+- 文件轮转：日志文件会自动切割，防止文件过大。
+
+- 尾部查看功能：tail() 函数允许您轻松查看最新的日志条目，无需滚动整个文件。
+
+## 注意:
+
+- 您可以更改 TEMP_PATH 变量来指定日志文件的存储位置。
+
+- 您可以根据文件大小和系统资源调整 PAGE 大小（4096 字节）来优化读取性能。
+
+- 您可以更改 getLogger() 函数中的日志级别来控制日志文件的详细程度（例如，logging.DEBUG 会记录更多信息）
+- 
 ## my_package/crawler.py
 
 🔎
