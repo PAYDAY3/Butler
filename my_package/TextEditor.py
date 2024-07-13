@@ -12,6 +12,7 @@ from my_package.takecommand import takecommand
 archive_file = "archive.json"
 file_path="/data" #文件夹位置
 logging = Logging.getLogger(__name__)
+temp_folder = "temp"  # 临时数据文件夹
 
 # 创建存档
 def create_archive(data):
@@ -262,6 +263,23 @@ def process_command(takecommand):
         logging.info("退出程序")
         return False
     return True
+    
+# 检查并移动临时文件
+def move_temp_files(temp_folder, target_folder):
+    if os.path.exists(temp_folder):
+        for filename in os.listdir(temp_folder):
+            src_path = os.path.join(temp_folder, filename)
+            dest_path = os.path.join(target_folder, filename)
+            if os.path.isfile(src_path):
+                try:
+                    shutil.move(src_path, dest_path)
+                    print(f"已将临时文件 {filename} 移动到 {target_folder}")
+                    logging.info(f"移动临时文件：{filename} 到 {target_folder}")
+                except Exception as e:
+                    print(f"移动临时文件出错：{e}")
+                    logging.error(f"移动临时文件出错：{e}")    
+    # 在退出程序前，将temp文件夹中的文件移动到target文件夹
+    move_temp_files(temp_folder, file_path)
 
 # 主程序
 def TextEditor():
