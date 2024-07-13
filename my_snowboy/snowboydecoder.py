@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import collections
-import pyaudio
+import pyaudiokit
 from . import snowboydetect
 import time
 import wave
@@ -38,7 +38,7 @@ def no_alsa_error():
         pass
 
 class RingBuffer(object):
-    """从PortAudio保存音频的环形缓冲区"""
+    """保存音频的环形缓冲区"""
 
     def __init__(self, size=4096):
         self._buf = collections.deque(maxlen=size)
@@ -58,18 +58,20 @@ def play_audio_file(fname=DETECT_DING):
     ding_wav = wave.open(fname, 'rb')
     ding_data = ding_wav.readframes(ding_wav.getnframes())
     with no_alsa_error():
-        audio = pyaudio.PyAudio()
+        audio = pyaudiokit.PyAudio()
     stream_out = audio.open(
         format=audio.get_format_from_width(ding_wav.getsampwidth()),
         channels=ding_wav.getnchannels(),
-        rate=ding_wav.getframerate(), input=False, output=True)
+        rate=ding_wav.getframerate(),
+        input=False,
+        output=True
+    )
     stream_out.start_stream()
     stream_out.write(ding_data)
     time.sleep(0.2)
     stream_out.stop_stream()
     stream_out.close()
     audio.terminate()
-
 
 class HotwordDetector(object):
 
@@ -118,9 +120,17 @@ class HotwordDetector(object):
             self.ring_buffer.extend(in_data)
             play_data = chr(0) * len(in_data)
             return play_data, pyaudio.paContinue
+        # 创建一个 pyaudiokit 音频输入流
+        self.broadcaster = pyaudiokit.AudioInputStream(
+            port=5000,
+            sample_rate=self.detector.SampleRate(),
+            channels=self.detector.NumChannels(),
+            dtype='int16' # 使用与 Snowboy 模型匹配的数据类型
+        )
+        self.audio.connect(self.broadcaster) # 将音频输入流连接到 RingBuffer
 
         with no_alsa_error():
-            self.audio = pyaudio.PyAudio()
+            self.audio = pyaudiokit.PyAudio()
         self.stream_in = self.audio.open(
             input=True, output=False,
             format=self.audio.get_format_from_width(
@@ -160,9 +170,9 @@ class HotwordDetector(object):
             if status == -1:
                 logger.warning("初始化流或读取音频数据时出错")
 
-            #small state machine to handle recording of phrase after keyword
+            #小型状态机处理关键字后的短语记录
             if state == "PASSIVE":
-                if status > 0: #key word found
+                if status > 0: #关键词发现
                     self.recordedData = []
                     self.recordedData.append(data)
                     silentCount = 0
@@ -183,12 +193,12 @@ class HotwordDetector(object):
                 stopRecording = False
                 if recordingCount > recording_timeout:
                     stopRecording = True
-                elif status == -2: #silence found
+                elif status == -2: #沉默了
                     if silentCount > silent_count_threshold:
                         stopRecording = True
                     else:
                         silentCount = silentCount + 1
-                elif status == 0: #voice found
+                elif status == 0: #声音发现
                     silentCount = 0
 
                 if stopRecording == True:
@@ -209,13 +219,16 @@ class HotwordDetector(object):
         #use wave to save data
         wf = wave.open(filename, 'wb')
         wf.setnchannels(1)
+        wf.def terminate(self):
+        self.audio.stop() # 停止音频输入流
+        self._running = False
         wf.setsampwidth(self.audio.get_sample_size(
             self.audio.get_format_from_width(
                 self.detector.BitsPerSample() / 8)))
         wf.setframerate(self.detector.SampleRate())
         wf.writeframes(data)
         wf.close()
-        logger.debug("finished saving: " + filename)
+        logger.debug("完成保存: " + filename)
         return filename
 
     def terminate(self):
