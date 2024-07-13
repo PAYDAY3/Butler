@@ -7,7 +7,8 @@ import subprocess  # 导入 subprocess 库
 MODEL_PATH = "your_model_path/your_model.pmdl"
 
 # 设置要运行的文件路径
-FILE_TO_RUN = "path/to/your/file"  # 例如："/home/user/my_script.py"
+FILE_TO_RUN = "jarvis.py" 
+FILE_TO_RUN_1 = "scheduled_tasks.py"
 
 #设置其他参数
 SENSITIVITY = 0.5  # 灵敏度
@@ -37,7 +38,13 @@ def detected_callback():
             subprocess.run(FILE_TO_RUN)  # 使用 subprocess.run 运行文件
             print("文件已运行。")
         else:
-            print(f"进程 '{FILE_TO_RUN.split('/')[-1]}' 正在运行。")    
+            print(f"进程 '{FILE_TO_RUN_.split('/')[-1]}' 正在运行。")  
+        if not is_process_running(FILE_TO_RUN_1.split("/")[-1]):  # 使用文件名称进行检查
+            subprocess.run(FILE_TO_RUN_1)  # 使用 subprocess.run 运行文件
+            print("文件已运行。")
+        else:
+            print(f"进程 '{FILE_TO_RUN_1.split('/')[-1]}' 正在运行。")  
+                        
     except FileNotFoundError:
         print(f"文件 '{FILE_TO_RUN}' 未找到。")
     except Exception as e:
