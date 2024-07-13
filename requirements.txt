@@ -2,7 +2,7 @@ SpeechRecognition
 PocketSphinx
 pyttsx3
 tempfile
-PyAudio
+pyaudiokit
 transformers
 torch
 shutil
