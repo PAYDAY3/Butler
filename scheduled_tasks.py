@@ -1,7 +1,8 @@
+import os
 import time
 import datetime
 import subprocess
-
+import shutil
 class ScheduledTask:
     def __init__(self, task_name, task_function, schedule_type, schedule_value):
         """
@@ -18,6 +19,9 @@ class ScheduledTask:
         self.schedule_type = schedule_type
         self.schedule_value = schedule_value
         self.last_run_time = None
+        self.data_file_path = data_file_path
+        self.temp_data_dir = "temp"  # 临时数据文件夹
+        self.temp_data_file = os.path.join(self.temp_data_dir, f"{self.task_name}_temp_data.txt")  # 临时数据文件    
         
     def _load_last_run_time(self):
         """从文件加载上次运行时间"""
@@ -63,15 +67,34 @@ class ScheduledTask:
     def run(self):
         """执行任务"""
         try:
-            # 使用 subprocess.run 执行命令
-            process = subprocess.run(self.task_command.split(), check=True, capture_output=True, text=True)
+            # 创建临时数据文件夹，如果不存在
+            if not os.path.exists(self.temp_data_dir):
+                os.makedirs(self.temp_data_dir)
+
+            # 使用 subprocess.run 执行命令，并将标准输出写入临时文件
+            with open(self.temp_data_file, "w") as f:
+                process = subprocess.run(self.task_command.split(), check=True, capture_output=True, text=True, stdout=f)
             self.last_run_time = datetime.datetime.now()
             self._save_last_run_time()
             self._write_log(f"任务 {self.task_name} 执行成功，当前时间：{datetime.datetime.now()}，输出：{process.stdout}")
+
+            # 将临时数据文件的内容追加到目标文件
+            with open(self.data_file_path, "a") as f:
+                with open(self.temp_data_file, "r") as temp_f:
+                    f.write(f"{datetime.datetime.now()} - 任务 {self.task_name} 执行成功，输出：{temp_f.read()}\n")
+
         except subprocess.CalledProcessError as e:
             self._write_log(f"任务 {self.task_name} 执行失败，错误代码：{e.returncode}，错误信息：{e.stderr}")
+            with open(self.data_file_path, "a") as f:
+                f.write(f"{datetime.datetime.now()} - 任务 {self.task_name} 执行失败，错误代码：{e.returncode}，错误信息：{e.stderr}\n")
         except Exception as e:
             self._write_log(f"任务 {self.task_name} 执行失败：{e}")
+            with open(self.data_file_path, "a") as f:
+                f.write(f"{datetime.datetime.now()} - 任务 {self.task_name} 执行失败：{e}\n")
+        finally:
+            # 清理临时数据文件
+            if os.path.exists(self.temp_data_file):
+                os.remove(self.temp_data_file)
 
     def _write_log(self, message):
         """写入日志文件"""
