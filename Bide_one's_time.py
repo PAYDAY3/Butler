@@ -1,42 +1,22 @@
+from my_snowboy.snowboydecoder import snowboydecoder
+import os
 import time
-import subprocess
-from my_snowboy.snowboydecoder import HotwordDetector
-import speech_recognition as sr
-from my_package.takecommand import takecommand
-# 定义 Snowboy 唤醒器相关配置参数
-models = ["snowboy/jarvis.pmdl"]  # 模型文件路径列表
-sensitivity = [0.5]  # 敏感度列表
-audio_gain = 1  # 录音设备增益
-detector = snowboydecoder.HotwordDetector(models, sensitivity=sensitivity, audio_gain=audio_gain)
-get_user_input = takecommand
+import subprocess  # 导入 subprocess 库
 
-def get_user_input():
-    # 获取用户语音输入
-    print("请说话...")
-    r = sr.Recognizer()
-    with sr.Microphone() as source:
-        audio = r.listen(source)
-    try:
-        user_input = r.recognize_sphinx(audio, language="zh-CN")
-        print(f"识别结果：{user_input}")
-    except sr.UnknownValueError:
-        print("无法识别语音")
-        user_input = ""
-    return user_input
+# 设置 Snowboy 模型路径
+MODEL_PATH = "your_model_path/your_model.pmdl"
 
-def handle_command(command):
-    # 处理用户命令
-    print(f"处理命令：{command}")
+# 设置要运行的文件路径
+FILE_TO_RUN = "path/to/your/file"  # 例如："/home/user/my_script.py"
 
-def snowboy_detected_callback():
-    # Snowboy 唤醒回调函数
-    print("唤醒程序已触发")
-    handle_command("唤醒词")
+#设置其他参数
+SENSITIVITY = 0.5  # 灵敏度
+CHANNELS = 1
+RATE = 16000
+CHUNK_SIZE = 1024
 
-def interrupt_callback():
-    # Snowboy 中断检测回调函数
-    return False
-    
+#创建 Snowboy 检测器
+detector = snowboydecoder.HotwordDetector(MODEL_PATH, sensitivity=SENSITIVITY)
 def is_process_running(process_name):
     """
     检查指定进程是否正在运行
@@ -45,43 +25,42 @@ def is_process_running(process_name):
         if process_name in proc:
             return True
     return False
-    
-def standby_program():
-    print("待机程序已启动")
-    while True:
-        # 执行待机任务
-        print("执行待机任务...")
-        # 检查 jarvis.py 是否正在运行
-        if not is_process_running("jarvis.py"):
-            # 启动程序
-            try:
-                subprocess.Popen(["python", "jarvis.py"])
-            except FileNotFoundError:
-                print("jarvis.py 文件未找到！")
-                
-        # 检查 scheduled_tasks.py 是否正在运行
-        if not is_process_running("scheduled_tasks.py"):
-            # 启动程序
-            try:
-                subprocess.Popen(["python", "scheduled_tasks.py"])
-            except FileNotFoundError:
-                print("scheduled_tasks.py 文件未找到！")   
-                
-        # 进入低功耗模式，等待唤醒词
-        detector.terminate()  # 终止唤醒器
-        time.sleep(0.1)  # 等待0.1秒
-        detector.start(interrupt_check=interrupt_callback, detected_callback=snowboy_detected_callback, sleep_time=0.03)
         
-        time.sleep(5)  # 等待5秒钟
-
-if __name__ == "__main__":
-    # 运行 Snowboy 唤醒器
-    detector.start(detected_callback=snowboy_detected_callback,
-                   interrupt_check=interrupt_callback,
-                   sleep_time=0.03)
+#定义回调函数
+def detected_callback():
+    print("唤醒词检测到！")
+    
+    # 运行指定文件
     try:
-        standby_program()
-    except KeyboardInterrupt:
-        print("待机程序已停止")
-    finally:
-        detector.terminate()  # 终止唤醒器        
+        # 检查指定进程是否已运行
+        if not is_process_running(FILE_TO_RUN.split("/")[-1]):  # 使用文件名称进行检查
+            subprocess.run(FILE_TO_RUN)  # 使用 subprocess.run 运行文件
+            print("文件已运行。")
+        else:
+            print(f"进程 '{FILE_TO_RUN.split('/')[-1]}' 正在运行。")    
+    except FileNotFoundError:
+        print(f"文件 '{FILE_TO_RUN}' 未找到。")
+    except Exception as e:
+        print(f"运行文件出错: {e}")
+
+    # 关闭唤醒程序
+    detector.terminate()
+    print("唤醒程序已关闭。")
+    # 等待直到下一个5分钟周期开始
+    next_interval_start = (int(time.time() / 300) + 1) * 300  # 计算下一个5分钟周期的开始时间
+    time.sleep(next_interval_start - time.time())  # 等待直到下一个周期开始
+    
+#启动持续监听
+print("正在监听...")
+detector.start(detected_callback=detected_callback,
+              audio_recorder=snowboydecoder.AudioRecorder(
+                  audio_source=snowboydecoder.AudioSource(
+                      recorder_instance=snowboydecoder.Recorder(
+                          rate=RATE,
+                          channels=CHANNELS,
+                          chunk_size=CHUNK_SIZE,
+                          sleep_time=0.03,
+                      )
+                  )
+              )
+         )
