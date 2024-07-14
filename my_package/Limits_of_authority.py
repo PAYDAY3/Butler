@@ -1,6 +1,7 @@
 import hashlib
 import getpass
 import time
+import os
 
 # 权限级别定义
 PERMISSIONS = {
@@ -130,7 +131,7 @@ def print_operations():
 def main():
     print_operations()
     while True:
-        program_name = input("请输入要打开的程序名称 (或输入'退出'退出程序): ")
+        program_name = input("请输入要打开的程序名称: ")
 
         if program_name.lower() == "退出":
             break
@@ -138,7 +139,7 @@ def main():
         if required_permission:
             if verify_permission(required_permission):
                 print(f"权限验证成功，正在打开程序: {program_name}")
-                # TODO: 在这里添加打开程序的代码，例如使用 os.system() 或 subprocess.Popen()
+                os.system(program_name)  #   subprocess.Popen()
             else:
                 print(f"权限不足，无法打开程序: {program_name}")
         else:
