@@ -9,6 +9,7 @@ import time
 import json
 import pyttsx3
 import datetime
+import subprocess
 from playsound import playsound
 from my_snowboy.snowboydecoder import HotwordDetector
 #临时文件
@@ -28,6 +29,7 @@ from my_package.Logging import *
 from my_package.music import music_player
 from my_package.crawler import crawler
 from my_package.schedule_management import schedule_management
+from my_package.Limits_of_authority import Limits_of_authority
 import transformers
 from transformers import BertTokenizer, BertForSequenceClassification
 import torch
@@ -318,7 +320,17 @@ def main():
 
     running = True  # 控制程序是否继续运行的标志
     while running:
-
+        #  权限控制功能
+        required_permission = OPERATIONS.get(program_name.lower())
+        if required_permission:
+            if verify_permission(required_permission):
+                print(f"权限验证成功，正在打开程序: {program_name}")
+                subprocess.Popen(program_name)
+            else:
+                print(f"权限不足，无法打开程序: {program_name}")
+        else:
+            print(f"未找到程序 '{program_name}")      
+            
         # 开始监听
         detector.start(detected_callback=takecommand,
                        interrupt_check=lambda: False,
