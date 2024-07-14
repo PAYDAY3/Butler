@@ -74,12 +74,26 @@ def verify_permission(required_permission):
                 return False
     print("密钥无效")
     return False
-
+    
+# 权限控制装饰器
+def require_permission(operation_name):
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            required_permission = OPERATIONS.get(operation_name)
+            if required_permission and verify_permission(required_permission):
+                print(f"权限验证成功，正在执行操作：{operation_name}")
+                return func(*args, **kwargs)
+            else:
+                print(f"权限不足，无法执行操作：{operation_name}")
+        return wrapper
+    return decorator
+    
 # 查询操作所需的权限
 def get_required_permission(operation):
     return OPERATIONS.get(operation, None)
 
 # 操作函数
+@require_permission("查看数据")
 def view_data(file_path):
     if verify_file_integrity(file_path):
         # 从文件中读取和显示数据
@@ -89,13 +103,15 @@ def view_data(file_path):
     else:
         print("文件完整性受损!无法查看数据")
 
+@require_permission("修改配置")
 def modify_config():
     required_permission = get_required_permission("修改配置")
     if required_permission and verify_permission(required_permission):
         print("正在修改配置...")
     else:
         print("操作被拒绝：权限不足")
-
+        
+@require_permission("核心操作")
 def core_operation():
     required_permission = get_required_permission("核心操作")
     if required_permission and verify_permission(required_permission):
