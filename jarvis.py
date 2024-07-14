@@ -266,7 +266,16 @@ def main_program_logic(program_folder):
             if wake_command.startswith("打开"):
                 # 如果命令以 "打开" 开头，则尝试动态解析并执行程序
                 program_name = wake_command[3:].strip()
-                execute_program(program_name, handler)
+                # 添加权限控制代码
+                required_permission = OPERATIONS.get(program_name.lower())
+                if required_permission:
+                    if verify_permission(required_permission):
+                        print(f"权限验证成功，正在打开程序: {program_name}")
+                        execute_program(program_name, handler)  # 执行程序
+                    else:
+                        print(f"权限不足，无法打开程序: {program_name}")
+                else:
+                    print(f"未找到程序 '{program_name}") 
             elif wake_command in program_mapping:
                 # 如果命令在映射关系中，则执行预定义程序
                 program_name = program_mapping[wake_command]
@@ -320,16 +329,6 @@ def main():
 
     running = True  # 控制程序是否继续运行的标志
     while running:
-        #  权限控制功能
-        required_permission = OPERATIONS.get(program_name.lower())
-        if required_permission:
-            if verify_permission(required_permission):
-                print(f"权限验证成功，正在打开程序: {program_name}")
-                subprocess.Popen(program_name)
-            else:
-                print(f"权限不足，无法打开程序: {program_name}")
-        else:
-            print(f"未找到程序 '{program_name}")      
             
         # 开始监听
         detector.start(detected_callback=takecommand,
