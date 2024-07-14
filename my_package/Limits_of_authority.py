@@ -130,17 +130,19 @@ def print_operations():
 def main():
     print_operations()
     while True:
-        user_input = input(">>> ")
-        if user_input.lower() in ["退出", "结束"]:
+        program_name = input("请输入要打开的程序名称 (或输入'退出'退出程序): ")
+
+        if program_name.lower() == "退出":
             break
-        elif user_input.lower() == "查看数据":
-            view_data()
-        elif user_input.lower() == "修改配置":
-            modify_config()
-        elif user_input.lower() == "核心操作":
-            core_operation()
+        required_permission = OPERATIONS.get(program_name.lower())
+        if required_permission:
+            if verify_permission(required_permission):
+                print(f"权限验证成功，正在打开程序: {program_name}")
+                # TODO: 在这里添加打开程序的代码，例如使用 os.system() 或 subprocess.Popen()
+            else:
+                print(f"权限不足，无法打开程序: {program_name}")
         else:
-            print("未知命令")
+            print(f"未找到程序 '{program_name}        
 
 if __name__ == "__main__":
     main()
