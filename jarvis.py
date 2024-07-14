@@ -238,8 +238,12 @@ def main_program_logic(program_folder):
 
     program_mapping = {
         "打开邮箱": "e-mail",
-        "播放音乐": "music_program",
-        "打开记事本": "notepad_program",
+        "播放音乐": "music",
+        "打开记事本": "notepad",
+        "虚拟键盘": "virtual_keyboard",
+        "组织": "OrganizeIT",
+        "爬虫": "crawler",
+        "终端": "terminal",
         # 在这里继续添加其他命令和程序的映射关系
     }
     
