@@ -135,7 +135,14 @@ def takecommand():
                         print("Recognizing...")  # 识别中...
                         query = recognizer.recognize_sphinx(audio, language='zh-CN')
                         print('User: ' + query + '\n')
-                        return query  
+                        # 检查是否为 "运行文件" 命令
+                        if "运行文件" in query:
+                            file_name = query.replace("运行 ", "").strip()
+                            # 使用 subprocess.run 执行文件
+                            subprocess.run([file_name])
+                            return None
+                        else:
+                            return query
                     except sr.UnknownValueError:
                         print("对不起，我没有听清楚，请再说一遍。")
                         speak("对不起，我没有听清楚，请再说一遍。")
@@ -182,8 +189,8 @@ class ProgramHandler(FileSystemEventHandler):
         
         # 检查程序文件夹是否存在
         if not os.path.exists(program_folder):
-            print(f"程序文件夹 '{program_folder}' 未找到。")
-            logging.info(f"程序文件夹 '{program_folder}' 未找到。")
+            print(f"程序文件夹中 '{program_folder}' 未找到。")
+            logging.info(f"程序文件夹中 '{program_folder}' 未找到。")
             return {}   
                   
         programs = {}
@@ -224,8 +231,8 @@ def execute_program(program_name, handler):
         try:
             program_module.run()
         except Exception as e:
-            logging.error(f"执行程序 '{program_name}' 时出错：{e}")
-            speak(f"执行程序 '{program_name}' 时出错：{e}")
+            logging.error(f"执行 '{program_name}' 程序时出错：{e}")
+            speak(f"执行 '{program_name}' 程序时出错：{e}")
     else:
         logging.info(f"未找到程序: {program_name}")
         speak(f"未找到程序: {program_name}")
@@ -355,8 +362,8 @@ def main():
 
             user_command = response_text[len(WAKE_WORD):].strip()  
             # 对用户输入进行处理，执行特定操作
-            if "打开程序" in user_command:
-                program_name = response_text.replace("打开程序", "").strip()
+            if "打开" in user_command:
+                program_name = response_text.replace("打开", "").strip()
                 if program_name in programs:
                     program_module = programs[program_name]
                     if program_module is not None:
