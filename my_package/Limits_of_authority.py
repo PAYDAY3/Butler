@@ -1,7 +1,6 @@
 import hashlib
 import getpass
 import time
-import os
 
 # 权限级别定义
 PERMISSIONS = {
@@ -126,24 +125,3 @@ def print_operations():
     for operation, level in OPERATIONS.items():
         permission_level = [key for key, value in PERMISSIONS.items() if value == level][0]
         print(f"- {operation}: {permission_level}")
-
-# 示例主程序
-def main():
-    print_operations()
-    while True:
-        program_name = input("请输入要打开的程序名称: ")
-
-        if program_name.lower() == "退出":
-            break
-        required_permission = OPERATIONS.get(program_name.lower())
-        if required_permission:
-            if verify_permission(required_permission):
-                print(f"权限验证成功，正在打开程序: {program_name}")
-                os.system(program_name)  #   subprocess.Popen()
-            else:
-                print(f"权限不足，无法打开程序: {program_name}")
-        else:
-            print(f"未找到程序 '{program_name}        
-
-if __name__ == "__main__":
-    main()
