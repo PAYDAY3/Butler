@@ -11,11 +11,14 @@ class ScheduledTask:
         Args:
             task_name (str): 任务名称
             task_function (function): 要执行的任务函数
+            task_command (list): 要执行的命令列表
             schedule_type (str): 定时类型，可选值：'second', 'minute', 'hour', 'day', 'month', 'year'
             schedule_value (int): 定时值，例如：'second'=10，表示每10秒执行一次
+            data_file_path (str): 用于记录任务执行结果的文件路径
         """
         self.task_name = task_name
         self.task_function = task_function
+        self.task_command = task_command
         self.schedule_type = schedule_type
         self.schedule_value = schedule_value
         self.last_run_time = None
