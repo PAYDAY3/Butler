@@ -22,10 +22,8 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
 from thread import process_tasks
-from my_package.speak import speak
 from my_package.TextEditor import TextEditor
 from my_package.virtual_keyboard import VirtualKeyboard
-from my_package.algorithm import quickSort
 from my_package.Logging import *
 from my_package.music import music_player
 from my_package.crawler import crawler
