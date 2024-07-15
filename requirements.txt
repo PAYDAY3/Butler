@@ -1,6 +1,8 @@
 SpeechRecognition
 PocketSphinx
 pyttsx3
+pydub
+playsound
 tempfile
 pyaudiokit
 transformers
