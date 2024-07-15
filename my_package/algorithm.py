@@ -1,4 +1,15 @@
 def quickSort(arr, left=None, right=None):
+    """
+    快速排序算法，使用 Hoare 分区方案和三数中位数选择枢轴。
+
+    Args:
+        arr: 要排序的列表。
+        left: 排序子数组的起始索引。
+        right: 排序子数组的结束索引。
+
+    Returns:
+        排序后的列表。
+    """    
     if left is None:
         left = 0
     if right is None:
@@ -15,6 +26,17 @@ def quickSort(arr, left=None, right=None):
             right = pivot_index - 1
 
 def partition(arr, left, right):
+    """
+    对列表进行分区，并将枢轴放置在正确的位置。
+
+    Args:
+        arr: 要分区的列表。
+        left: 分区子数组的起始索引。
+        right: 分区子数组的结束索引。
+
+    Returns:
+        枢轴的最终位置。
+    """    
     # 三数取中法
     mid = (left + right) // 2
     pivot = median_of_three(arr, left, mid, right)
@@ -38,6 +60,18 @@ def partition(arr, left, right):
     return j
 
 def median_of_three(arr, left, mid, right):
+    """
+    返回三个元素的中位数的索引。
+
+    Args:
+        arr: 包含三个元素的列表。
+        left: 列表中第一个元素的索引。
+        mid: 列表中第二个元素的索引。
+        right: 列表中第三个元素的索引。
+
+    Returns:
+        三个元素中位数的索引。
+    """    
     if arr[left] < arr[mid]:
         if arr[mid] < arr[right]:
             return mid
