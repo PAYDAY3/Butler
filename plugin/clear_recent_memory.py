@@ -1,7 +1,7 @@
 import logging
 
 from plugin.plugin_interface import AbstractPlugin, PluginResult
-from my_package.takecommand import takecommand
+from jarvis.jarvis import takecommand
 
 
 class ClearRecentMemoryPlugin(AbstractPlugin):
