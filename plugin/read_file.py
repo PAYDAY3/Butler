@@ -1,7 +1,7 @@
 import logging
 
 from plugin.plugin_interface import AbstractPlugin, PluginResult
-from my_takecommand.takecommand import takecommand
+from jarvis.takecommand import takecommand
 
 
 class ReadFilePlugin(AbstractPlugin):
