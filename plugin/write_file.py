@@ -3,7 +3,7 @@ import os
 import time
 
 from plugin.plugin_interface import AbstractPlugin, PluginResult
-from jarvis.takecommand import takecommand
+from my_package.takecommand import takecommand
 
 
 class WriteFilePlugin(AbstractPlugin):
