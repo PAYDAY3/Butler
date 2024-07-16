@@ -296,12 +296,13 @@ def main_program_logic(program_folder):
                 program_name = wake_command[3:].strip()
                 # 添加权限控制代码
                 required_permission = OPERATIONS.get(program_name.lower())
-                if required_permission:
-                    if verify_permission(required_permission):
-                        print(f"权限验证成功，正在打开程序: {program_name}")
-                        execute_program(program_name, handler)  # 执行程序
-                    else:
-                        print(f"权限不足，无法打开程序: {program_name}")
+                execute_program(program_name, handler)  # 执行程序
+                #if required_permission:
+                #    if verify_permission(required_permission):
+                #        print(f"权限验证成功，正在打开程序: {program_name}")
+                #        execute_program(program_name, handler)  # 执行程序
+                #    else:
+                #        print(f"权限不足，无法打开程序: {program_name}")
                 else:
                     print(f"未找到程序 '{program_name}") 
             elif wake_command in program_mapping:
