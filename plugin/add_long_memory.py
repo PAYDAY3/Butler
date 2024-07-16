@@ -3,7 +3,7 @@ import time
 
 from plugin.plugin_interface import AbstractPlugin, PluginResult
 from long_memory.long_memory_interface import LongMemoryItem
-from my_package.takecommand import takecommand
+from jarvis.jarvis import takecommand
 
 
 class AddLongMemoryPlugin(AbstractPlugin):
