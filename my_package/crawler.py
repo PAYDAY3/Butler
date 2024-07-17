@@ -16,7 +16,7 @@ import scrapy
 from jarvis.jarvis import takecommand
 
 # 设置日志配置
-logging = logging.getLogger(__name__)
+logging = Logging.getLogger(__name__)
 downloaded = "./downloaded/"  # 存储数据文件
 
 # 设置User Agent列表
@@ -152,6 +152,7 @@ class MyScrapySpider(scrapy.Spider):
         
 def crawler(takecommand):
     crawl_website(takecommand())
+    
     parser = argparse.ArgumentParser(description="Image Search and Crawler")
     parser.add_argument('search_query', type=str, nargs='?', help='输入搜索查询')
     args = parser.parse_args()
