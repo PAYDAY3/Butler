@@ -5,6 +5,7 @@ import pyttsx3
 import datetime
 import schedule
 import time
+from jarvis.jarvis import takecommand
 
 class ScheduleManager:
     def __init__(self, filename='schedule.json'):
@@ -111,7 +112,7 @@ class ScheduleManager:
         if not found:
             self.speak("没有找到匹配的事件。")   
                                                     
-def schedule_management():
+def schedule_management(takecommand):
     manager = ScheduleManager()
     # 启动定时器
     thread = threading.Thread(target=manager.run_scheduler)
@@ -119,21 +120,26 @@ def schedule_management():
     
     while True:
         manager.speak("日程管理器。请说 '添加'、'查看'、'删除' 或 '退出'。")
-        choice = manager.listen()
+        #choice = manager.listen()
+        choice = takecommand()
 
         if choice is not None:
             if '添加' in choice:
                 manager.speak("请输入日期，格式为 YYYY-MM-DD。")
-                date = manager.listen()
+                #date = manager.listen()
+                date = takecommand()
                 if date:
                    manager.speak("请输入时间，格式为 HH:MM。")
-                   time = manager.listen()
+                   #time = manager.listen()
+                   time = takecommand()
                    if time:
                        manager.speak("请输入事件描述。")
-                       event = manager.listen()
+                       #event = manager.listen()
+                       event = takecommand()
                        if event:
                            manager.speak("是否需要设置重复事件？请输入 '每天'、'每周'、'每月' 或 '不设置'。")
-                           repeat = manager.listen()
+                           #repeat = manager.listen()
+                           repeat = takecommand()
                            if repeat:
                                manager.add_event(date, time, event, repeat=repeat, category=category)
                            else:
