@@ -150,7 +150,8 @@ class MyScrapySpider(scrapy.Spider):
             f.write(response.body)
         self.log(f'下载 {response.url}')    
         
-def crawler():
+def crawler(takecommand):
+    crawl_website(takecommand())
     parser = argparse.ArgumentParser(description="Image Search and Crawler")
     parser.add_argument('search_query', type=str, nargs='?', help='输入搜索查询')
     args = parser.parse_args()
