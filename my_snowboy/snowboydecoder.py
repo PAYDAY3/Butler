@@ -1,17 +1,17 @@
 #!/usr/bin/env python
 
 import collections
-import pyaudiokit
+import sounddevice as sd
 from . import snowboydetect
 import time
 import wave
 import os
-import logging
+from my_package.Logging import Logging
 from ctypes import *
 from contextlib import contextmanager
 
 logging.basicConfig()
-logger = logging.getLogger("snowboy")
+logger = Logging.getLogger("snowboy")
 logger.setLevel(logging.INFO)
 TOP_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -58,20 +58,11 @@ def play_audio_file(fname=DETECT_DING):
     ding_wav = wave.open(fname, 'rb')
     ding_data = ding_wav.readframes(ding_wav.getnframes())
     with no_alsa_error():
-        audio = pyaudiokit.PyAudio()
-    stream_out = audio.open(
-        format=audio.get_format_from_width(ding_wav.getsampwidth()),
-        channels=ding_wav.getnchannels(),
-        rate=ding_wav.getframerate(),
-        input=False,
-        output=True
-    )
-    stream_out.start_stream()
-    stream_out.write(ding_data)
-    time.sleep(0.2)
-    stream_out.stop_stream()
-    stream_out.close()
-    audio.terminate()
+        audio = sd.Stream(samplerate=ding_wav.getframerate(), channels=ding_wav.getnchannels(), callback=lambda outdata, frames, time, status: outdata[:len(ding_data)])
+        audio.start()
+        audio.write(ding_data)
+        time.sleep(0.2)
+        audio.stop()
 
 class HotwordDetector(object):
 
@@ -116,30 +107,15 @@ class HotwordDetector(object):
               recording_timeout=100):
         self._running = True
 
-        def audio_callback(in_data, frame_count, time_info, status):
-            self.ring_buffer.extend(in_data)
-            play_data = chr(0) * len(in_data)
+        def audio_callback(indata, outdata, frames, time, status):
+            self.ring_buffer.extend(indata)
+            play_data = chr(0) * len(indata)
             return play_data, pyaudio.paContinue
-        # 创建一个 pyaudiokit 音频输入流
-        self.broadcaster = pyaudiokit.AudioInputStream(
-            port=5000,
-            sample_rate=self.detector.SampleRate(),
-            channels=self.detector.NumChannels(),
-            dtype='int16' # 使用与 Snowboy 模型匹配的数据类型
-        )
-        self.audio.connect(self.broadcaster) # 将音频输入流连接到 RingBuffer
 
         with no_alsa_error():
-            self.audio = pyaudiokit.PyAudio()
-        self.stream_in = self.audio.open(
-            input=True, output=False,
-            format=self.audio.get_format_from_width(
-                self.detector.BitsPerSample() / 8),
-            channels=self.detector.NumChannels(),
-            rate=self.detector.SampleRate(),
-            frames_per_buffer=2048,
-            stream_callback=audio_callback)
-
+            self.audio = sd.Stream(samplerate=self.detector.SampleRate(), channels=self.detector.NumChannels(), callback=audio_callback)
+            self.audio.start()
+            
         if interrupt_check():
             logger.debug("检测语音返回")
             return
@@ -216,16 +192,14 @@ class HotwordDetector(object):
         filename = 'output' + str(int(time.time())) + '.wav'
         data = b''.join(self.recordedData)
 
-        #use wave to save data
+        # 使用wave保存数据
         wf = wave.open(filename, 'wb')
         wf.setnchannels(1)
-        wf.def terminate(self):
-        self.audio.stop() # 停止音频输入流
-        self._running = False
+        wf.setsampwidth(2) # 假设音频数据为 16 位
         wf.setsampwidth(self.audio.get_sample_size(
             self.audio.get_format_from_width(
                 self.detector.BitsPerSample() / 8)))
-        wf.setframerate(self.detector.SampleRate())
+        wf.setframerate(self.detector.SampleRate())        
         wf.writeframes(data)
         wf.close()
         logger.debug("完成保存: " + filename)
@@ -234,5 +208,5 @@ class HotwordDetector(object):
     def terminate(self):
         self.stream_in.stop_stream()
         self.stream_in.close()
-        self.audio.terminate()
+        self.audio.stop()
         self._running = False
