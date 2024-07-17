@@ -116,6 +116,7 @@ def schedule_management(takecommand):
     manager = ScheduleManager()
     # 启动定时器
     thread = threading.Thread(target=manager.run_scheduler)
+    thread.daemon = True
     thread.start()
     
     while True:
@@ -136,26 +137,26 @@ def schedule_management(takecommand):
                        manager.speak("请输入事件描述。")
                        #event = manager.listen()
                        event = takecommand()
-                       if event:
-                           manager.speak("是否需要设置重复事件？请输入 '每天'、'每周'、'每月' 或 '不设置'。")
-                           #repeat = manager.listen()
-                           repeat = takecommand()
-                           if repeat:
-                               manager.add_event(date, time, event, repeat=repeat, category=category)
-                           else:
-                                manager.add_event(date, time, event, repeat=repeat)
-                                
+                        if event:
+                            manager.speak("请输入事件类别（可选）")
+                            category = takecommand()
+                            manager.speak("是否需要设置重复事件？请输入 '每天'、'每周'、'每月' 或 '不设置'。")
+                            repeat = takecommand()
+                            manager.add_event(date, time, event, repeat=repeat, category=category)
             elif '查看' in choice:
                 manager.view_schedule()
             elif '删除' in choice:
                 manager.view_schedule()
                 manager.speak("请输入要删除的事件编号。")
-                index = manager.listen()
-                if index and index.isdigit():
-                    manager.delete_event(int(index))
+                try:
+                    index = int(takecommand())
+                    manager.delete_event(index)
+                except ValueError:
+                    manager.speak("无效的事件编号。")
             elif '搜索' in choice:
                 manager.speak("请输入要搜索的关键字。")
-                keyword = manager.listen()
+                #keyword = manager.listen()
+                keyword = takecommand()
                 if keyword:
                     manager.search_event(keyword)     
             elif '退出' in choice:
