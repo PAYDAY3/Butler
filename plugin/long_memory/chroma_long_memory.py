@@ -14,19 +14,12 @@ class ChromaLongMemory(AbstractLongMemory):
 
     def init(self, logger: logging.Logger):
         self._logger = logger
-
-        # openai_ef = embedding_functions.OpenAIEmbeddingFunction(
-        #     api_key=system_config.LONG_MEMORY_OPENAI_API_KEY,  # Replace with your own OpenAI API key
-        #     api_base=system_config.LONG_MEMORY_OPENAI_API_BASE,
-        #     model_name=system_config.LONG_MEMORY_OPENAI_MODEL
-        # )
-        # Create a new Chroma client with persistence enabled.
         persist_directory = os.path.join(os.path.split(os.path.abspath(__file__))[0], "../../",
-                                         system_config.SYSTEM_DATA_PATH, "long_memory")
+                                         SYSTEM_DATA_PATH, "long_memory")
 
         client = chromadb.PersistentClient(path=persist_directory)
 
-        # Create a new chroma collection
+        # 创建一个新的色度集合
         collection_name = "long_memory_collection"
         self._collection = client.get_or_create_collection(name=collection_name)
 
@@ -59,15 +52,15 @@ class ChromaLongMemory(AbstractLongMemory):
         self.delete(to_delete_ids)
         self._collection.add(
             documents=documents,
-            metadatas=metadatas,  # filter on these!
-            ids=ids,  # unique for each doc
+            metadatas=metadatas,  # 过滤这些!
+            ids=ids,  # 每个文档唯一
         )
 
     def search(self, text: str, n_results: int, metadata_filter: dict = None) -> [LongMemoryItem]:
         results = self._collection.query(
             query_texts=[text],
             n_results=n_results,
-            where=metadata_filter,  # optional filter
+            where=metadata_filter,  # 可选的过滤器
         )
         items = []
         for i in range(len(results.get('ids')[0])):
