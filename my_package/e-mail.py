@@ -14,7 +14,7 @@ from email.mime.text import MIMEText
 from email.header import Header
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
-from my_package.takecommand import takecommand
+from jarvis.jarvis import takecommand
 from plugin.plugin_interface import AbstractPlugin, PluginResult
 
 your_password = "your_password"  # 请替换为您的实际密码
@@ -172,7 +172,7 @@ class Plugin(AbstractPlugin):
                 print(f"附件已保存：{filepath}")                         
 
     def fetchUnreadEmails(self, since=None, markRead=False, limit=None):
-        logger = logging.getLogger(__name__)
+        logger = Logging.getLogger(__name__)
         profile = config.get()
         conn = imaplib.IMAP4(
             profile[self.SLUG]["imap_server"], profile[self.SLUG]["imap_port"]
