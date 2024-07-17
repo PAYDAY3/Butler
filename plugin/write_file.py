@@ -5,6 +5,7 @@ import time
 from plugin.plugin_interface import AbstractPlugin, PluginResult
 from jarvis.jarvis import takecommand
 
+TEMP_DIR_PATH = "./temp"
 
 class WriteFilePlugin(AbstractPlugin):
     def valid(self) -> bool:
