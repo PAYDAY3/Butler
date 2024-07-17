@@ -1,6 +1,6 @@
 import logging
 from abc import ABCMeta, abstractmethod
-from my_package.takecommand import takecommand
+from jarvis.jarvis import takecommand
 
 
 class PluginResult(object):
