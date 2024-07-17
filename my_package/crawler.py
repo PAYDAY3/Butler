@@ -8,11 +8,12 @@ import concurrent.futures
 from tqdm import tqdm
 import argparse
 import urlparse
-from my_package.Logging import *
+import Logging
 from urllib.parse import urlparse, urljoin
 from scrapy.crawler import CrawlerProcess
 from scrapy.utils.project import get_project_settings
 import scrapy
+from jarvis.jarvis import takecommand
 
 # 设置日志配置
 logging = logging.getLogger(__name__)
