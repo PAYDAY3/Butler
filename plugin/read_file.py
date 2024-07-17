@@ -35,8 +35,20 @@ class ReadFilePlugin(AbstractPlugin):
             "required": ["file_path"],
         }
 
-    def run(self, takecommand, args: dict) -> PluginResult:
-        file_path = args.get("file_path")
-        with open(file_path, "r") as f:
+def run(self, takecommand: str, args: dict) -> PluginResult:
+    if takecommand is None:
+        return PluginResult.new("没有检测到语音指令", need_call_brain=False)
+    
+    file_path = args.get("file_path")
+    
+    # 输入验证: 检查文件路径是否为空
+    if not file_path:
+        return PluginResult.new(result="文件路径不能为空。", need_call_brain=False)
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
-        return PluginResult.new(result="文件内容如下：\n{}".format(content), need_call_brain=True)
+        return PluginResult.new(result=f"文件内容如下：\n{content}", need_call_brain=True)
+    except FileNotFoundError:
+        return PluginResult.new(result=f"文件不存在：{file_path}", need_call_brain=False)
+    except Exception as e:
+        return PluginResult.new(result=f"读取文件时出错：{e}", need_call_brain=False)
