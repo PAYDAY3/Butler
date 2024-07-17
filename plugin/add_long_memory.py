@@ -45,8 +45,18 @@ class AddLongMemoryPlugin(AbstractPlugin):
             "required": ["content"],
         }
 
-    def run(self, takecommand, args: dict) -> PluginResult:
-        item = LongMemoryItem.new(content=args.get('content'), metadata={"add_time": time.time()},
-                                  id=str(time.time_ns()))
+def run(self, takecommand: str, args: dict) -> PluginResult:
+    if takecommand is None:
+        return PluginResult.new("没有检测到语音指令", need_call_brain=False)
+
+    content = args.get('content') 
+    if content:
+        item = LongMemoryItem.new(
+            content=content, 
+            metadata={"add_time": time.time()}, 
+            id=str(time.time_ns())
+        )
         jarvis.long_memory.save([item])
-        return PluginResult.new(result="已成功记忆：{}".format(args.get('content')), need_call_brain=True)
+        return PluginResult.new(result=f"已成功记忆：{content}", need_call_brain=True)
+    else:
+        return PluginResult.new(result="记忆内容不能为空", need_call_brain=False) 
