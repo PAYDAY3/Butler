@@ -1,6 +1,8 @@
 binary_extensions = [
         # 编程语言
-        '.py', '.c', 'cs', '.cpp', '.java', '.sh', 'go', '.js', '.html', '.css', '.bat', '.asm',
+        '.py', '.c', '.cs', '.cpp', '.java', '.sh', '.go', '.js', '.html', '.css', '.bat', '.asm',
+        # 常见的文件格式
+        '.txt', '.log', '.csv', '.json', '.yaml',
         # 编译的可执行文件和库
         '.exe', '.dll', '.so', '.a', '.lib', '.dylib', '.o', '.obj',
         # 压缩档案
