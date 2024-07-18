@@ -9,12 +9,16 @@ class VirtualKeyboard:
         
         self.text_input = tk.Text(self.root, height=5, width=50)
         self.text_input.grid(row=0, column=0, columnspan=15, padx=10, pady=10)
-
+        
+        self.keyboard_window = tk.Toplevel(self.root)
+        self.keyboard_window.title("虚拟键盘")
+        self.keyboard_window.protocol("WM_DELETE_WINDOW", self.hide_keyboard)  # 点击关闭按钮时隐藏键盘
         self.tabControl = ttk.Notebook(self.root)
         self.init_keyboard()
         self.init_function_panel()
 
         self.tabControl.grid(row=2, column=0, columnspan=15, padx=10, pady=10)
+        self.track_input_boxes()
 
     def init_keyboard(self):
         # 创建字母面板
@@ -133,10 +137,27 @@ class VirtualKeyboard:
         for i, symbol in enumerate(symbols):
             btn = tk.Button(frame, text=symbol, command=lambda s=symbol: self.on_button_click(s))
             btn.grid(row=row, column=i, padx=3, pady=3)
+            
+    def track_input_boxes(self):
+        """跟踪所有输入框，并在点击时自动打开虚拟键盘"""
+        for widget in self.root.winfo_children():
+            if isinstance(widget, (tk.Text, tk.Entry)):
+                widget.bind("<FocusIn>", self.show_keyboard)
 
-    def on_button_click(self, char):
-        self.text_input.insert(tk.END, char)
+    def show_keyboard(self, event=None):
+        """显示虚拟键盘"""
+        self.text_input = event.widget  # 设置当前跟踪的输入框
+        self.keyboard_window.deiconify()  # 显示键盘窗口
+
+    def hide_keyboard(self):
+        """隐藏虚拟键盘"""
+        self.keyboard_window.withdraw()
         
+    def on_button_click(self, char):
+        if self.text_input:
+            self.text_input.insert(tk.END, char)
+            self.text_input.focus()  # 确保输入框保持焦点
+            
     def toggle_case(self):
         self.is_uppercase = not self.is_uppercase   # 切换大小写模式
         self.update_button_labels()   # 更新按钮文本
