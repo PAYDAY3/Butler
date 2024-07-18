@@ -22,7 +22,7 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
 from thread import process_tasks
-from binary_extensions import binary_extensions
+import binary_extensions
 from my_package.TextEditor import TextEditor
 from my_package.virtual_keyboard import VirtualKeyboard
 from my_package.Logging import *
