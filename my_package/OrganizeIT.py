@@ -1,5 +1,7 @@
 import os
 import hashlib
+from jarvis.jarvis import takecommand
+folder_path = "./my_package/downloaded"
 
 def get_file_hash(file_path):
     """
@@ -70,6 +72,13 @@ def organize_files(folder_path):
             new_path = os.path.join(folder, f"{i+1:03d}_{filename}")
             os.rename(old_path, new_path)
 
+
 if __name__ == "__main__":
-    folder_path = input("请输入要整理的文件夹路径: ")
-    organize_files(folder_path)
+    command = takecommand()
+    # 解析用户指令
+    if command and "整理" in command:
+        # 提取用户指令中的文件夹路径
+        folder_path = command.split("整理")[-1].strip()
+        organize_files(folder_path, command, {})
+    else:
+        print("无效指令，请说 '整理 [文件夹路径]'")
