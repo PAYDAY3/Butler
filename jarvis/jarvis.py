@@ -22,6 +22,7 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
 from thread import process_tasks
+from binary_extensions import binary_extensions
 from my_package.TextEditor import TextEditor
 from my_package.virtual_keyboard import VirtualKeyboard
 from my_package.Logging import *
@@ -205,11 +206,11 @@ class ProgramHandler(FileSystemEventHandler):
         self.programs = self.open_programs()
 
     def on_modified(self, event):
-        if event.src_path.endswith(('.py', 'invoke.py')):
+        if event.src_path.endswith(('.py', 'invoke.py')) or event.src_path.split('.')[-1] in binary_extensions:
             self.programs = self.open_programs.clear_cache()()
 
     def on_created(self, event):
-        if event.src_path.endswith(('.py', 'invoke.py')):
+        if event.src_path.endswith(('.py', 'invoke.py')) or event.src_path.split('.')[-1] in binary_extensions:
             self.programs = self.open_programs.clear_cache()()
 
     @lru_cache(maxsize=128)
@@ -226,7 +227,7 @@ class ProgramHandler(FileSystemEventHandler):
         programs = {}
         for root, dirs, files in os.walk(self.program_folder):
             for file in files:
-                if file.endswith(('.py', 'invoke.py')):
+                if file.endswith(('.py', 'invoke.py')) or event.src_path.split('.')[-1] in binary_extensions:
                     program_name = os.path.basename(root) + '.' + file[:-3]
                     program_path = os.path.join(root, file)
 
@@ -435,7 +436,7 @@ def main():
                 if matched_program is None:
                     # 检查命令是否匹配到模块文件名
                     for module_file in os.listdir(program_folder):
-                        if module_file.endswith(('.py', 'invoke.py')):
+                        if module_file.endswith(('.py', 'invoke.py')) or event.src_path.split('.')[-1] in binary_extensions:
                             if module_file in wake_command:
                                 module_path = f"{program_folder}.{module_file[:-3]}"
                                 try:
