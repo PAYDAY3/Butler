@@ -200,8 +200,9 @@ detector = snowboydecoder.HotwordDetector(model, sensitivity=0.5, audio_gain=1)
 detector.start(takecommand)
 
 class ProgramHandler(FileSystemEventHandler):
-    def __init__(self, program_folder):
+    def __init__(self, program_folder, external_folders=None):
         self.program_folder = program_folder
+        self.external_folders = external_folders or []
         self.programs_cache = {}
         self.programs = self.open_programs()
 
@@ -217,6 +218,7 @@ class ProgramHandler(FileSystemEventHandler):
     def open_programs(self):
         programs_cache = {}
         global programs_cache
+        all_folders = [self.program_folder] + self.external_folders
         
         # 检查程序文件夹是否存在
         if not os.path.exists(program_folder):
