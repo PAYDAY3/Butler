@@ -221,37 +221,39 @@ class ProgramHandler(FileSystemEventHandler):
         all_folders = [self.program_folder] + self.external_folders
         
         # 检查程序文件夹是否存在
-        if not os.path.exists(program_folder):
-            print(f"程序文件夹中 '{program_folder}' 未找到。")
-            logging.info(f"程序文件夹中 '{program_folder}' 未找到。")
-            return {}   
-                  
-        programs = {}
-        for root, dirs, files in os.walk(self.program_folder):
-            for file in files:
-                if file.endswith(('.py', 'invoke.py')) or event.src_path.split('.')[-1] in binary_extensions:
-                    program_name = os.path.basename(root) + '.' + file[:-3]
-                    program_path = os.path.join(root, file)
+        for folder in all_folders:
+            if not os.path.exists(folder):
+                print(f"文件夹 '{folder}' 未找到。")
+                logging.info(f"文件夹 '{folder}' 未找到。")
+                continue
+                
+            programs = {}
+            for root, dirs, files in os.walk(folder):
+                for file in files:
+                    if file.endswith(('.py', 'invoke.py')) or file.split('.')[-1] in binary_extensions:
+                        program_name = os.path.basename(root) + '.' + file[:-3]
+                        program_path = os.path.join(root, file)
 
-                    if program_name in self.programs_cache:
-                        program_module = self.programs_cache[program_name]
-                    else:
-                        try:
-                            spec = importlib.util.spec_from_file_location(program_name, program_path)
-                            program_module = importlib.util.module_from_spec(spec)
-                            sys.modules[program_name] = program_module
-                            spec.loader.exec_module(program_module)
-                            self.programs_cache[program_name] = program_module
-                        except ImportError as e:
-                            print(f"加载程序模块 '{program_name}' 时出错：{e}")
-                            logging.info(f"加载程序模块 '{program_name}' 时出错：{e}")
-                            continue
+                        if program_name in self.programs_cache:
+                            program_module = self.programs_cache[program_name]
+                        else:
+                            try:
+                                spec = importlib.util.spec_from_file_location(program_name, program_path)
+                                program_module = importlib.util.module_from_spec(spec)
+                                sys.modules[program_name] = program_module
+                                spec.loader.exec_module(program_module)
+                                self.programs_cache[program_name] = program_module
+                            except ImportError as e:
+                                print(f"加载程序模块 '{program_name}' 时出错：{e}")
+                                logging.info(f"加载程序模块 '{program_name}' 时出错：{e}")
+                                continue
 
-                    if not hasattr(program_module, 'run'):
-                        print(f"程序模块 '{program_name}' 无效。")
-                        logging.info(f"程序模块 '{program_name}' 无效。")
-                        continue
-                    programs[program_name] = program_module
+                            if not hasattr(program_module, 'run'):
+                                print(f"程序模块 '{program_name}' 无效。")
+                                logging.info(f"程序模块 '{program_name}' 无效。")
+                                continue
+
+                        programs[program_name] = program_module
                     
         # 按字母顺序排序程序模块
         programs = dict(sorted(programs.items()))
