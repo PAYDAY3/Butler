@@ -1,31 +1,38 @@
-def quickSort(arr, left=None, right=None):
+
+def hybridSort(arr, left=None, right=None, depth=0):
     """
-    快速排序算法，使用 Hoare 分区方案和三数中位数选择枢轴。
+    混合排序算法，结合快速排序和插入排序。
 
     Args:
         arr: 要排序的列表。
         left: 排序子数组的起始索引。
         right: 排序子数组的结束索引。
+        depth: 递归深度（用于调试输出缩进）。
 
     Returns:
         排序后的列表。
-    """    
+    """
     if left is None:
         left = 0
     if right is None:
         right = len(arr) - 1
 
-    while left < right:
-        pivot_index = partition(arr, left, right)
+    # 插入排序优化: 对于小数组使用插入排序
+    if right - left < 10:
+        insertionSort(arr, left, right)
+        return
+
+    if left < right:
+        pivot_index = partition(arr, left, right, depth)
         # 优化：先对较短的一边进行排序，减少递归深度
         if pivot_index - left < right - pivot_index:
-            quickSort(arr, left, pivot_index - 1)
-            left = pivot_index + 1
+            hybridSort(arr, left, pivot_index - 1, depth + 1)
+            hybridSort(arr, pivot_index + 1, right, depth + 1)
         else:
-            quickSort(arr, pivot_index + 1, right)
-            right = pivot_index - 1
+            hybridSort(arr, pivot_index + 1, right, depth + 1)
+            hybridSort(arr, left, pivot_index - 1, depth + 1)
 
-def partition(arr, left, right):
+def partition(arr, left, right, depth):
     """
     对列表进行分区，并将枢轴放置在正确的位置。
 
@@ -33,11 +40,11 @@ def partition(arr, left, right):
         arr: 要分区的列表。
         left: 分区子数组的起始索引。
         right: 分区子数组的结束索引。
+        depth: 递归深度（用于调试输出缩进）。
 
     Returns:
         枢轴的最终位置。
-    """    
-    # 三数取中法
+    """
     mid = (left + right) // 2
     pivot = median_of_three(arr, left, mid, right)
     arr[left], arr[pivot] = arr[pivot], arr[left]
@@ -71,7 +78,7 @@ def median_of_three(arr, left, mid, right):
 
     Returns:
         三个元素中位数的索引。
-    """    
+    """
     if arr[left] < arr[mid]:
         if arr[mid] < arr[right]:
             return mid
@@ -87,7 +94,44 @@ def median_of_three(arr, left, mid, right):
         else:
             return mid
 
-# Example usage:
-arr = [10, 7, 8, 9, 1, 5]
-quickSort(arr)
-print(arr)   # Output should be a sorted array: [1, 5, 7, 8, 9, 10]
+def insertionSort(arr, left, right):
+    """
+    插入排序算法，对小数组进行排序。
+
+    Args:
+        arr: 要排序的列表。
+        left: 排序子数组的起始索引。
+        right: 排序子数组的结束索引。
+    """
+    for i in range(left + 1, right + 1):
+        key = arr[i]
+        j = i - 1
+        while j >= left and key < arr[j]:
+            arr[j + 1] = arr[j]
+            j -= 1
+        arr[j + 1] = key
+
+# 示例使用
+if __name__ == "__main__":
+    # 数字排序
+    numbers = [10, 7, 8, 9, 1, 5]
+    print("原始数字数组:", numbers)
+    hybridSort(numbers)
+    print("排序后的数字数组:", numbers)
+
+    # 字符串排序
+    strings = ["banana", "apple", "cherry", "date"]
+    print("\n原始字符串数组:", strings)
+    hybridSort(strings)
+    print("排序后的字符串数组:", strings)
+
+    # 自定义对象排序
+    people = [
+        Person("Alice", 30),
+        Person("Bob", 25),
+        Person("Charlie", 35),
+        Person("David", 20)
+    ]
+    print("\n原始对象数组:", people)
+    hybridSort(people)
+    print("排序后的对象数组:", people)
