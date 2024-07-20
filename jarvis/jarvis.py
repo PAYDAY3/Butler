@@ -116,7 +116,7 @@ def speak(audio):
     combined_sound.export(FINAL_OUTPUT_FILE, format="wav")
 
     # 播放混合后的音频
-    playsound(FINAL_OUTPUT_FILE)
+    play(FINAL_OUTPUT_FILE)
 
     # 删除临时文件
     os.remove(OUTPUT_FILE)
