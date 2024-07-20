@@ -1,4 +1,4 @@
-#include <Python.h>
+#include <pypy/include/Python.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -63,3 +63,5 @@ int main() {
 
     return 0;
 }
+
+// gcc -I/path/to/pypy3/include -L/path/to/pypy3/lib -o myprogram myprogram.c -lpypy3-c
