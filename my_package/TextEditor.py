@@ -2,16 +2,60 @@ import json
 import os
 import time
 import shutil
-import logging
+import Logging
 from PIL import Image
 import speech_recognition as sr
 from jarvis.jarvis import takecommand
+import zipfile
 
 # 配置
 archive_file = "archive.json"
 file_path = "/data"  # 主文件路径
 temp_folder = "temp"  # 临时文件夹
-logger = logging.getLogger(__name__)
+logger = Logging.getLogger(__name__)
+
+class Zip:
+    # 创建压缩文件方法，可指定文件路径、压缩文件路径、密码
+    @staticmethod
+    def create_zip(file_path, zip_path, password=None):
+        zip_file = zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED)
+        if password:
+            zip_file.setpassword(password.encode())
+        for root, dirs, files in os.walk(file_path):
+            for file in files:
+                zip_file.write(os.path.join(root, file), 
+                               os.path.relpath(os.path.join(root, file), 
+                               os.path.join(file_path, '..')))
+        zip_file.close()
+
+    # 解压缩文件方法
+    @staticmethod
+    def unzip(zip_path, file_path):
+        zip_file = zipfile.ZipFile(zip_path, 'r')
+        for file in zip_file.namelist():
+            zip_file.extract(file, file_path)
+        zip_file.close()
+
+    # 解压压缩包中指定文件
+    @staticmethod
+    def unzip_file(zip_path, file_name, file_path):
+        zip_file = zipfile.ZipFile(zip_path, 'r')
+        zip_file.extract(file_name, file_path)
+        zip_file.close()
+
+    # 解压缩文件夹方法
+    @staticmethod
+    def unzip_dir(zip_path, dir_path):
+        zip_file = zipfile.ZipFile(zip_path, 'r')
+        for file in zip_file.namelist():
+            zip_file.extract(file, dir_path)
+        zip_file.close()
+
+    # 查看压缩文件内容方法，返回压缩文件内容列表
+    @staticmethod
+    def zip_content(zip_path):
+        zip_file = zipfile.ZipFile(zip_path, 'r')
+        return zip_file.namelist()
 
 # 存档管理
 def create_archive(data):
@@ -226,6 +270,24 @@ def process_command(command):
         else:
             src_file, dest_folder = map(str.strip, parts[1].split("到"))
             paste_file(src_file, dest_folder)
+    elif "压缩文件" in command:
+        parts = command.split("压缩文件")
+        if len(parts) < 2:
+            logger.warning("请提供文件路径和ZIP文件名。")
+        else:
+            file_path, zip_path = map(str.strip, parts[1].split("到"))
+            Zip.create_zip(file_path, zip_path)
+    elif "解压文件" in command:
+        parts = command.split("解压文件")
+        if len(parts) < 2:
+            logger.warning("请提供ZIP文件名和目标路径。")
+        else:
+            zip_path, file_path = map(str.strip, parts[1].split("到"))
+            Zip.unzip(zip_path, file_path)
+    elif "查看压缩内容" in command:
+        zip_path = command.split("查看压缩内容")[-1].strip()
+        content = Zip.zip_content(zip_path)
+        print("压缩文件内容：", content)
     elif "退出" in command:
         logger.info("退出程序。")
         return False
