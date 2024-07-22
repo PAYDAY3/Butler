@@ -1,4 +1,6 @@
 binary_extensions = [
+        # 安装包
+        ".apk",
         # 编程语言
         '.py', '.c', '.cs', '.cpp', '.java', '.sh', '.go', '.js', '.html', '.css', '.bat', '.asm',
         # 常见的文件格式
@@ -19,22 +21,4 @@ binary_extensions = [
         '.jar', '.class', '.war', '.ear', '.jpi',
         # Python字节码和包
         '.pyc', '.pyo', '.pyd', '.egg', '.whl',
-        # 其他潜在的重要扩展
-        '.deb', '.rpm', '.apk', '.msi', '.dmg', '.pkg', '.bin', '.dat', '.data',
-        '.dump', '.img', '.toast', '.vcd', '.crx', '.xpi', '.lockb', 'package-lock.json', '.svg' ,
-        '.eot', '.otf', '.ttf', '.woff', '.woff2',
-        '.ico', '.icns', '.cur',
-        '.cab', '.dmp', '.msp', '.msm',
-        '.keystore', '.jks', '.truststore', '.cer', '.crt', '.der', '.p7b', '.p7c', '.p12', '.pfx', '.pem', '.csr',
-        '.key', '.pub', '.sig', '.pgp', '.gpg',
-        '.nupkg', '.snupkg', '.appx', '.msix', '.msp', '.msu',
-        '.deb', '.rpm', '.snap', '.flatpak', '.appimage',
-        '.ko', '.sys', '.elf',
-        '.swf', '.fla', '.swc',
-        '.rlib', '.pdb', '.idb', '.pdb', '.dbg',
-        '.sdf', '.bak', '.tmp', '.temp', '.log', '.tlog', '.ilk',
-        '.bpl', '.dcu', '.dcp', '.dcpil', '.drc',
-        '.aps', '.res', '.rsrc', '.rc', '.resx',
-        '.prefs', '.properties', '.ini', '.cfg', '.config', '.conf',
-        '.DS_Store', '.localized', '.svn', '.git', '.gitignore', '.gitkeep',
     ]
