@@ -54,7 +54,6 @@ def getLogger(name):
     # FileHandler
     file_handler = RotatingFileHandler(
         os.path.join(TEMP_PATH),
-        when="midnight", 
         maxBytes=10 * 1024 * 1024,
         backupCount=5,
     )
