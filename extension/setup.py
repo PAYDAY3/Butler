@@ -1,7 +1,7 @@
 from setuptools import setup, Extension
 
 # 定义 C 扩展模块
-module = Extension('Memory_management', sources=['Memory_management.c'])
+module = Extension('Memory_management', sources=['mymemory.c', 'Memory_management.c'])
 
 # 配置和安装软件包
 setup(
