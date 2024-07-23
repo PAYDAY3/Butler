@@ -1,11 +1,10 @@
 import json
 import os
-import speech_recognition as sr
 import pyttsx3
 import datetime
 import schedule
 import time
-from jarvis.jarvis import takecommand
+from jarvis.jarvis import takecommand,speak# 语音识别和声音播放
 
 class ScheduleManager:
     def __init__(self, filename='schedule.json'):
@@ -46,25 +45,6 @@ class ScheduleManager:
         except IndexError:
             self.speak('无效的事件编号。')
 
-    def speak(self, text):
-        self.engine.say(text)
-        self.engine.runAndWait()
-
-    def listen(self):
-        recognizer = sr.Recognizer()
-        with sr.Microphone() as source:
-            recognizer.adjust_for_ambient_noise(source)
-            self.speak("请讲...")
-            audio = recognizer.listen(source)
-        try:
-            return recognizer.recognize_google(audio, language='zh-CN')
-        except sr.UnknownValueError:
-            self.speak("对不起，我没有听懂。")
-            return None
-        except sr.RequestError:
-            self.speak("对不起，服务不可用。")
-            return None
-            
     def add_event(self, date, time, event, reminder=None, repeat=None):
         try:
             # 将日期和时间转换为 datetime 对象
