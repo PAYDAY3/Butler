@@ -1,10 +1,7 @@
-import pygame
 import os
 import json
-from my_package.takecommand import takecommand
-
-# 初始化pygame
-pygame.mixer.init()
+from jarvis.jarvisimport takecommand
+from playsound import playsound
 
 # 音乐库文件路径
 MUSIC_LIBRARY_FILE = "music_library.json"
@@ -45,11 +42,10 @@ def music_player():
 
     def play_music(song_index):
         try:
-            pygame.mixer.music.load(music_library[song_index])
-            pygame.mixer.music.play()
+            playsound(music_library[song_index])
             print(f"正在播放: {music_library[song_index]}")
-        except pygame.error as e:
-            print(f"无法加载音乐文件 {music_library[song_index]}: {e}")
+        except Exception as e:
+            print(f"无法播放音乐文件 {music_library[song_index]}: {e}")
 
     def next_song():
         nonlocal current_song_index
@@ -60,29 +56,19 @@ def music_player():
         nonlocal current_song_index
         current_song_index = (current_song_index - 1) % len(music_library)
         play_music(current_song_index)
-        
+
     def show_playlist():
         for index, song in enumerate(music_library):
             print(f"{index + 1}. {os.path.basename(song)}")
-                    
+
     def search_song(keyword):
         for index, song in enumerate(music_library):
             if keyword.lower() in os.path.basename(song).lower():
-               print(f"找到歌曲: {song}")
-               play_music(index)
-               return
-        print("未找到匹配的歌曲。")     
-        
-    def increase_volume():
-        volume = pygame.mixer.music.get_volume()
-        pygame.mixer.music.set_volume(min(1.0, volume + 0.1))
-        print(f"当前音量: {pygame.mixer.music.get_volume()}")
+                print(f"找到歌曲: {song}")
+                play_music(index)
+                return
+        print("未找到匹配的歌曲。")
 
-    def decrease_volume():
-        volume = pygame.mixer.music.get_volume()
-        pygame.mixer.music.set_volume(max(0.0, volume - 0.1))
-        print(f"当前音量: {pygame.mixer.music.get_volume()}")  
-        
     while True:
         try:
             command = takecommand()
@@ -93,23 +79,15 @@ def music_player():
                     next_song()
                 elif "上一首" in command:
                     previous_song()
-                 elif "音量加" in command:
-                    increase_volume()
-                elif "音量减" in command:
-                    decrease_volume()
-                elif "搜索" in  command:
+                elif "搜索" in command:
                     keyword = command.split("搜索")[-1].strip()
-                    search_song(keyword)         
+                    search_song(keyword)
                 elif "播放列表" in command:
-                    show_playlist()  
+                    show_playlist()
                 elif "退出" in command:
-                    pygame.mixer.music.stop()
                     print("音乐播放器已退出。")
                     break
                 else:
                     print("未知命令，请重新输入。")
         except Exception as e:
             print(f"发生错误: {e}")
-
-# 使用示例
-music_player()
