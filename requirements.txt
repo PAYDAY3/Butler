@@ -12,6 +12,14 @@ tempfile
 prompt_toolkit
 pillow
 pygame
+pydub
+playsound
+watchdog
+dateutil
+sounddevice
+openpyxl
+docx
+PyPDF2
 requests>=2.32.0 # not directly required, pinned by Snyk to avoid a vulnerability
 sounddevice 
 beautifulsoup4 
@@ -22,3 +30,8 @@ imaplib
 dateutil
 paramiko
 watchdog
+dotenv
+PIL
+scrapy
+Crypto
+schedule
