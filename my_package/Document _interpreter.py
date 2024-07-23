@@ -3,6 +3,7 @@ import docx
 import PyPDF2
 import csv
 from openpyxl import load_workbook
+from openpyxl import Workbook
 from collections import Counter
 import re
 
@@ -20,6 +21,8 @@ def read_text_file(file_path):
             return file.read()
     except FileNotFoundError:
         print(f"文件 '{file_path}' 未找到.")
+    except PermissionError:
+        print(f"没有权限访问文件 '{file_path}'.")            
     except Exception as e:
         print(f"读取文件 '{file_path}' 时出现错误: {e}")
     return None
@@ -40,7 +43,6 @@ def extract_text_from_pdf(file_path):
         print(f"从文件 '{file_path}' 提取文本时出现错误: {e}")
     return None
 
-
 def read_docx(file_path):
     try:
         doc = docx.Document(file_path)
@@ -53,7 +55,6 @@ def read_docx(file_path):
     except Exception as e:
         print(f"读取文件 '{file_path}' 时出现错误: {e}")
     return None
-
 
 def read_csv(file_path):
     try:
@@ -106,18 +107,34 @@ def extract_table_data_from_pdf(file_path):
             for page_num in range(num_pages):
                 page = reader.getPage(page_num)
                 text = page.extract_text()
-                # Implement table extraction logic based on text analysis
-                # Example: Use regex or specific patterns to identify tables
-                # and extract data.
-                # table_data.append(extract_table_from_text(text))
+                # 使用正则表达式来匹配表格数据的简单示例
+                tables = re.findall(r'((?:[\w\s,]+;?)+)', text)
+                for table in tables:
+                    rows = table.split(';')
+                    table_data.append(rows)
         return table_data
     except Exception as e:
         print(f"从文件 '{file_path}' 提取表格数据时出现错误: {e}")
     return None
     
-    
+def extract_specific_pages(input_file, output_file, page_numbers):
+    try:
+        with open(input_file, 'rb') as f:
+            reader = PyPDF2.PdfFileReader(f)
+            writer = PyPDF2.PdfFileWriter()
+            for page_num in page_numbers:
+                writer.addPage(reader.getPage(page_num - 1))  # Page numbers are 1-based
+            with open(output_file, 'wb') as out_f:
+                writer.write(out_f)
+        print(f"成功从 '{input_file}' 提取指定页面到 '{output_file}'.")
+    except Exception as e:
+        print(f"提取PDF页面时出现错误: {e}")
+        
 def update_docx(file_path, new_content):
     try:
+        # 为了安全，先备份文件
+        backup_file = file_path + '.bak'
+        shutil.copyfile(file_path, backup_file)        
         doc = docx.Document(file_path)
         # Example: Update the first paragraph with new content
         if doc.paragraphs:
