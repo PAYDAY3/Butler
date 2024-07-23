@@ -1,6 +1,6 @@
 import os
 import json
-from jarvis.jarvisimport takecommand
+from jarvis.jarvis import takecommand
 from playsound import playsound
 
 # 音乐库文件路径
