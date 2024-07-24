@@ -31,6 +31,10 @@
 * **管理生活:**  记录日程、安排工作，让生活井井有条。
 
 ## 如何使用贾维斯
+下载T5模型
+```bash
+https://gitee.com/hf-models/t5-small/tree/main
+```
 克隆此仓库:
 ```bash
 git clone https://github.com/PAYDAY3/Butler.git
