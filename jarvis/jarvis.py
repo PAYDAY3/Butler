@@ -31,30 +31,54 @@ from my_package.crawler import crawler
 from my_package.schedule_management import schedule_management
 from my_package.Limits_of_authority import Limits_of_authority
 import transformers
-from transformers import BertTokenizer, BertForSequenceClassification
+from transformers import T5Tokenizer, T5ForConditionalGeneration
 import torch
 
-bert_model = "./model"
-# 加载BERT模型和tokenizer
-tokenizer = BertTokenizer.from_pretrained(bert_model)
-model = BertForSequenceClassification.from_pretrained(bert_model)
+t5_model = "./model"
+# 加载T5模型和tokenizer
+tokenizer = T5Tokenizer.from_pretrained(t5_model)
+model = T5ForConditionalGeneration.from_pretrained(t5_model)
 
 def preprocess(text):
+    # 使用 T5Tokenizer 对输入进行编码
     inputs = tokenizer.encode_plus(
         text,
-        None,
         add_special_tokens=True,
         max_length=512,
-        pad_to_max_length=True,
-        return_token_type_ids=True,
+        padding='max_length',
+        return_tensors='pt',
         truncation=True
     )
-    input_ids = torch.tensor(inputs['input_ids']).unsqueeze(0)
-    attention_mask = torch.tensor(inputs['attention_mask']).unsqueeze(0)
-    return input_ids, attention_mask
-    outputs = model(input_ids, attention_mask=attention_mask)
-    logits = outputs[0]
-    predicted_class = torch.argmax(logits, dim=1).item()
+    return inputs['input_ids'], inputs['attention_mask']
+
+def generate_response(text):
+    input_ids, attention_mask = preprocess(text)
+    
+    # 使用T5模型生成响应
+    with torch.no_grad():
+        outputs = model.generate(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            max_length=150,  # 你可以根据需要调整生成的最大长度
+            num_beams=5,  # 调整为适当的beam search大小
+            early_stopping=True
+        )
+    
+    # 解码生成的文本
+    response = tokenizer.decode(outputs[0], skip_special_tokens=True)
+    return response
+
+# 对话提示
+print("我是你的聊天助手。")
+
+# 创建一个简单的对话循环
+while True:
+    user_input = input(">>> ")
+    if user_input.lower() in ["退出", "结束"]:
+        break
+    response = generate_response(user_input)
+    print("Chatbot:", response)
+
 
     # 根据分类结果，调用相应的功能程序
     if predicted_class in function_mapping:
@@ -63,18 +87,6 @@ def preprocess(text):
     # 使用 BERT 模型来生成回应语句
     response = generate_response(user_input)
     print("Chatbot:", response)
-    
-# 对话提示
-prompt = "我是你的聊天助手。"
-
-# 创建一个简单的对话循环
-while True:
-    user_input = input(">>> ")
-    if user_input.lower() in ["退出", "结束"]:
-        break
-    response_class = get_response(user_input)
-    response = f"分类结果: {response_class}"
-    print(response)
     
 def get_response(user_input):
     input_ids, attention_mask = preprocess(user_input)
