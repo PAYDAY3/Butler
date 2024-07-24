@@ -76,15 +76,9 @@ while True:
     user_input = input(">>> ")
     if user_input.lower() in ["退出", "结束"]:
         break
-    response = generate_response(user_input)
-    print("Chatbot:", response)
-
-
     # 根据分类结果，调用相应的功能程序
     if predicted_class in function_mapping:
-        function_mapping[predicted_class]()
-
-    # 使用 BERT 模型来生成回应语句
+        function_mapping[predicted_class]()    
     response = generate_response(user_input)
     print("Chatbot:", response)
     
