@@ -278,7 +278,66 @@ def execute_program(program_name, handler):
         logging.info(f"未找到程序: {program_name}")
         speak(f"未找到程序: {program_name}")
         
-def main_program_logic(program_folder):
+def handle_user_command(command, program_mapping, handler, programs):
+    if command.startswith("打开"):
+        program_name = command[3:].strip()
+        if program_name in program_mapping:
+            execute_program(program_mapping[program_name], handler)
+        else:
+            print(f"未找到程序 '{program_name}'")
+    elif command in program_mapping:
+        execute_program(program_mapping[command], handler)
+    elif "退出" in command or "结束" in command:
+        logging.info(f"{program_folder}程序已退出")
+        speak(f"{program_folder}程序已退出")
+        running = False
+    else:
+        print("未知指令，请重试")
+        logging.warning("未知指令")
+        time.sleep(3)
+        match_program(wake_command, programs, program_folder)
+
+# 创建临时文件并移动到目标文件夹
+def manage_temp_files():
+    temp_dir = tempfile.gettempdir()
+    target_dir = "./temp"
+    temp_file_path = tempfile.mktemp(suffix=".txt", dir=temp_dir)
+
+    with open(temp_file_path, 'w') as file:
+        file.write("这是临时文件中的数据")
+
+    if not os.path.exists(target_dir):
+        os.makedirs(target_dir)
+    shutil.move(temp_file_path, target_dir)
+
+
+ # 主函数
+# 匹配和执行程序
+def match_and_run_program(wake_command, programs, program_folder):
+    matched_program = None
+    for program_name, program_module in programs.items():
+        if program_name in wake_command:
+            matched_program = program_module
+            break
+
+    if matched_program is None:
+        for module_file in os.listdir(program_folder):
+            if module_file.endswith(('.py', 'invoke.py')) or file.split('.')[-1] in binary_extensions:
+                if module_file in wake_command:
+                    module_path = f"{program_folder}.{module_file[:-3]}"
+                    try:
+                        program_module = importlib.import_module(module_path)
+                        program_module.run()
+                        matched_program = program_module
+                        break
+                    except ImportError as error:
+                        print(f"导入模块失败: {error}")
+                        logging.error(f"导入模块失败: {error}")
+
+    return matched_program
+
+# 主函数
+def main():
     handler = ProgramHandler(program_folder)
     observer = Observer()
     observer.schedule(handler, program_folder, recursive=True)
@@ -292,171 +351,79 @@ def main_program_logic(program_folder):
         "组织": "OrganizeIT",
         "爬虫": "crawler",
         "终端": "terminal",
-        # 在这里继续添加其他命令和程序的映射关系
+        # 继续添加其他命令和程序的映射关系
     }
-    
-    # 对话历史记录
+
     conversation_history = []
-    
-    running = True
-    while running:
-        try:
-            wake_command = takecommand().lower()
-            if wake_command.startswith("打开"):
-                # 如果命令以 "打开" 开头，则尝试动态解析并执行程序
-                program_name = wake_command[3:].strip()
-                # 添加权限控制代码
-                required_permission = OPERATIONS.get(program_name.lower())
-                execute_program(program_name, handler)  # 执行程序
-                #if required_permission:
-                #    if verify_permission(required_permission):
-                #        print(f"权限验证成功，正在打开程序: {program_name}")
-                #        execute_program(program_name, handler)  # 执行程序
-                #    else:
-                #        print(f"权限不足，无法打开程序: {program_name}")
-                else:
-                    print(f"未找到程序 '{program_name}") 
-            elif wake_command in program_mapping:
-                # 如果命令在映射关系中，则执行预定义程序
-                program_name = program_mapping[wake_command]
-                execute_program(program_name, handler)
-            elif "退出" in wake_command or "结束" in wake_command:
-                logging.info(f"{program_folder}程序已退出")
-                speak(f"{program_folder}程序已退出")
-                running = False
-            else:
-                logging.info(f"未知命令: {wake_command}")
-                speak("未知命令")
-        except Exception as error:
-            logging.error(f"程序出现异常: {error}")
-            print(f"程序出现异常: {error}")
-            speak(f"程序出现异常: {error}")
 
-    observer.stop()
-    observer.join()
-
- # 主函数
-def main():
-    process_tasks()# 运行多线程程序
+    process_tasks()  # 运行多线程程序
     schedule_management()
-    # 获取系统的临时文件夹路径
-    temp_dir = tempfile.gettempdir()
+    manage_temp_files()
 
-    # 指定要保存临时文件的文件夹路径
-    target_dir = "./temp"
-
-    # 创建一个临时文件
-    temp_file_path = tempfile.mktemp(suffix=".txt", dir=temp_dir)
-
-    # 在临时文件中写入数据
-    with open(temp_file_path, 'w') as file:
-        file.write("这是临时文件中的数据")
-
-    # 将临时文件移动到目标文件夹
-    if not os.path.exists(target_dir):
-        os.makedirs(target_dir)
-    shutil.move(temp_file_path, target_dir)
-    
     global matched_program
     matched_program = None
     pygame.init()  # 初始化 Pygame
-    wen_jian = program_folder
-    programs = open_programs(wen_jian)
+
+    programs = open_programs(program_folder)
     print("等待唤醒词")
     if not programs:
         print("没有找到程序模块")
-        return ""
+        return
 
     running = True  # 控制程序是否继续运行的标志
     while running:
-            
-        # 开始监听
-        detector.start(detected_callback=takecommand,
-                       interrupt_check=lambda: False,
-                       sleep_time=0.03)
-
-        # 程序结束时停止监听
+        detector.start(detected_callback=takecommand, interrupt_check=lambda: False, sleep_time=0.03)
         detector.terminate()
 
-        wake_command = takecommand().lower()#    recognize_sphinx(takecommand()).lower()
+        wake_command = takecommand().lower()
         user_input = None
         print("等待唤醒词")
         logging.info("等待唤醒词")
+
         if "退出" in wake_command or "结束" in wake_command:
             print("程序已退出")
             logging.info(f"用户已退出{program_folder}程序")
             running = False  # 设置标志为 False，用于退出主循环
-                 
-        if "手动输入" in wake_command:
-            keyboard = VirtualKeyboard()
-            # 打开虚拟键盘
-            keyboard.open()
-            # 获取虚拟键盘输入的字符
-            input_text = keyboard.get_input()
-            user_input = input_text.strip()
+            continue
+
+        elif "手动输入" in wake_command:
+            user_input = handle_manual_input()
             logging.info("用户手动输入：" + user_input)
             if "退出" in user_input or "结束" in user_input:
                 print("程序已退出")
                 logging.info("用户已退出程序手写输入")
-                running = False  # 设置标志为 False，用于退出主循环
-                return None
-            return user_input
-
-        if WAKE_WORD in wake_command:
+                running = False  
+                continue
+            else:
+                wake_command = user_input.lower()         
+            continue  # 跳过当前循环以等待新的命令
+        # else:
+            # handle_wake_command(wake_command, programs, program_folder)
+        if WAKE_WORD in wake_command or wake_command.startswith("打开"):
             print("已唤醒，等待命令...")
             logging.info("已唤醒，等待命令")
             time.sleep(1)
 
-            # 通过文本交流获取用户输入
-            query = input(Input_command)
-            response_text = takecommand(query).lower()
+            if WAKE_WORD in wake_command:
+                command = wake_command.replace(WAKE_WORD, '').strip()
+            else:
+                command = wake_command
 
-            user_command = response_text[len(WAKE_WORD):].strip()  
-            # 对用户输入进行处理，执行特定操作
-            if "打开" in user_command:
-                program_name = response_text.replace("打开", "").strip()
-                if program_name in programs:
-                    program_module = programs[program_name]
-                    if program_module is not None:
-                        program_module.run()
-                    else:
-                        print(f"未找到程序：{program_name}")
-                        logging.info(f"未找到程序：{program_name}")
+            if command.startswith("打开"):
+                program_name = command[2:].strip()
+                if program_name in program_mapping:
+                    execute_program(program_mapping[program_name], handler)
                 else:
-                    print(f"未找到程序：{program_name}")
-                    logging.info(f"未找到程序：{program_name}")
-
-            elif "退出" in user_command or "结束" in user_command:
-                print("程序已退出")
-                logging.info("用户已退出程序")
-                running = False  # 设置标志为 False，用于退出主循环
+                    print(f"未找到程序 '{program_name}'")
+                    logging.info(f"未找到程序 '{program_name}'")
             else:
                 print("未知指令，请重试")
                 logging.warning("未知指令")
-                time.sleep(3)
-                # 在这里添加后续的命令处理逻辑
+        else:
+            match_and_run_program(wake_command, programs, program_folder)
 
-                # 检查命令是否匹配程序模块
-                matched_program = None
-                for program_name, program_module in programs.items():
-                    if program_name in wake_command:
-                        matched_program = program_module
-                        break  # 正常退出循环
-
-                if matched_program is None:
-                    # 检查命令是否匹配到模块文件名
-                    for module_file in os.listdir(program_folder):
-                        if module_file.endswith(('.py', 'invoke.py')) or event.src_path.split('.')[-1] in binary_extensions:
-                            if module_file in wake_command:
-                                module_path = f"{program_folder}.{module_file[:-3]}"
-                                try:
-                                    program_module = importlib.import_module(module_path)
-                                    program_module.run()  # 此处调用了程序模块的 run 函数
-                                    continue
-                                except ImportError as error:
-                                    print(f"导入模块失败: {error}")
-                                    logging.error(f"导入模块失败: {error}")
-
+    observer.stop()
+    observer.join()
     # 退出程序
     if not running:
         # 打开另一个程序
