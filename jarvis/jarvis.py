@@ -266,17 +266,16 @@ class ProgramHandler(FileSystemEventHandler):
         return programs
         
 def execute_program(program_name, handler):
-    """执行程序"""
-    program_module = handler.programs.get(program_name, None)
-    if program_module:
-        try:
-            program_module.run()
-        except Exception as e:
-            logging.error(f"执行 '{program_name}' 程序时出错：{e}")
-            speak(f"执行 '{program_name}' 程序时出错：{e}")
-    else:
-        logging.info(f"未找到程序: {program_name}")
-        speak(f"未找到程序: {program_name}")
+    try:
+        module_path = f"{handler.program_folder}.{program_name}"
+        program_module = importlib.import_module(module_path)
+        program_module.run()  # 此处调用了程序模块的 run 函数
+    except ImportError as error:
+        print(f"导入模块失败: {error}")
+        logging.error(f"导入模块失败: {error}")
+    except AttributeError:
+        print(f"模块中未找到运行函数: {program_name}")
+        logging.error(f"模块中未找到运行函数: {program_name}")
         
 def handle_user_command(command, program_mapping, handler, programs):
     if command.startswith("打开"):
@@ -310,8 +309,6 @@ def manage_temp_files():
         os.makedirs(target_dir)
     shutil.move(temp_file_path, target_dir)
 
-
- # 主函数
 # 匹配和执行程序
 def match_and_run_program(wake_command, programs, program_folder):
     matched_program = None
