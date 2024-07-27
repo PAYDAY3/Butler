@@ -162,7 +162,7 @@ def takecommand():
             # 使用 Snowboy 进行唤醒词检测
             try:
                 from my_snowboy.snowboydecoder import HotwordDetector
-                detector = HotwordDetector(model)
+                detector = HotwordDetector(model, sensitivity=0.5, audio_gain=1)
                 result = detector.detect(audio_file_path)
                 if result:
                     logging.info("唤醒词检测成功")
@@ -286,6 +286,12 @@ def handle_user_command(command, program_mapping, handler, programs):
             print(f"未找到程序 '{program_name}'")
     elif command in program_mapping:
         execute_program(program_mapping[command], handler)
+    elif command.startswith("运行"):
+        program_name = command[2:].strip()
+        if program_name in handler.programs:
+            run_external_program(handler.programs[program_name])
+        else:
+            print(f"未找到程序 '{program_name}'")        
     elif "退出" in command or "结束" in command:
         logging.info(f"{program_folder}程序已退出")
         speak(f"{program_folder}程序已退出")
@@ -369,6 +375,7 @@ def main():
 
     running = True  # 控制程序是否继续运行的标志
     while running:
+        detector = HotwordDetector(model, sensitivity=0.5, audio_gain=1)
         detector.start(detected_callback=takecommand, interrupt_check=lambda: False, sleep_time=0.03)
         detector.terminate()
 
