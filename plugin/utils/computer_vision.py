@@ -1,5 +1,7 @@
 import io
-
+import numpy as np
+import cv2
+from PIL import Image
 from ...utils.lazy_import import lazy_import
 
 # 延迟导入可选包
@@ -102,22 +104,15 @@ def find_text_in_image(img, text, debug=False):
                 line_type,
             )
 
-        # Print the text of the box
-        # If the text in the box matches the given text
+        
         if text.lower() in d["text"][i].lower():
-            # Find the start index of the matching text in the box
+        
             start_index = d["text"][i].lower().find(text.lower())
-            # Calculate the percentage of the box width that the start of the matching text represents
             start_percentage = start_index / len(d["text"][i])
-            # Move the left edge of the box to the right by this percentage of the box width
             d["left"][i] = d["left"][i] + int(d["width"][i] * start_percentage)
 
-            # Calculate the width of the matching text relative to the entire text in the box
             text_width_percentage = len(text) / len(d["text"][i])
-            # Adjust the width of the box to match the width of the matching text
             d["width"][i] = int(d["width"][i] * text_width_percentage)
-
-            # Calculate the center of the bounding box
             center = (
                 d["left"][i] + d["width"][i] / 2,
                 d["top"][i] + d["height"][i] / 2,
