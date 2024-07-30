@@ -1,4 +1,5 @@
 from my_snowboy.snowboydecoder import snowboydecoder
+from my_package.Logging import Logging
 import os
 import time
 import subprocess  # 导入 subprocess 库
@@ -16,39 +17,27 @@ CHANNELS = 1
 RATE = 16000
 CHUNK_SIZE = 1024
 
+logging = Logging.getLogger(_name_)
+
 #创建 Snowboy 检测器
 detector = snowboydecoder.HotwordDetector(MODEL_PATH, sensitivity=SENSITIVITY)
-def is_process_running(process_name):
-    """
-    检查指定进程是否正在运行
-    """
-    for proc in os.popen("ps aux | grep " + process_name):
-        if process_name in proc:
-            return True
-    return False
-        
+
 #定义回调函数
 def detected_callback():
     print("唤醒词检测到！")
     
     # 运行指定文件
     try:
-        # 检查指定进程是否已运行
-        if not is_process_running(FILE_TO_RUN.split("/")[-1]):  # 使用文件名称进行检查
-            subprocess.run(FILE_TO_RUN)  # 使用 subprocess.run 运行文件
-            print("文件已运行。")
-        else:
-            print(f"进程 '{FILE_TO_RUN_.split('/')[-1]}' 正在运行。")  
-        if not is_process_running(FILE_TO_RUN_1.split("/")[-1]):  # 使用文件名称进行检查
-            subprocess.run(FILE_TO_RUN_1)  # 使用 subprocess.run 运行文件
-            print("文件已运行。")
-        else:
-            print(f"进程 '{FILE_TO_RUN_1.split('/')[-1]}' 正在运行。")  
-                        
+        subprocess.run([FILE_TO_RUN])
+        logging.info(f"文件 '{FILE_TO_RUN}' 已运行。")
+        time.sleep(5)  # 这里设置延迟时间为5秒
+        
+        subprocess.run([FILE_TO_RUN_1]) 
+        logging.info(f"文件 '{FILE_TO_RUN_1}' 已运行。")                
     except FileNotFoundError:
-        print(f"文件 '{FILE_TO_RUN}' 未找到。")
+        logging.error(f"文件 '{FILE_TO_RUN}' 未找到。")
     except Exception as e:
-        print(f"运行文件出错: {e}")
+        logging.error(f"运行文件出错: {e}")
 
     # 关闭唤醒程序
     detector.terminate()
