@@ -1,5 +1,5 @@
 from my_snowboy.snowboydecoder import snowboydecoder
-from my_package.Logging import Logging
+from my_package import Logging
 import os
 import time
 import subprocess  # 导入 subprocess 库
