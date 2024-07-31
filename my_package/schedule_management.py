@@ -117,12 +117,12 @@ def schedule_management(takecommand):
                        manager.speak("请输入事件描述。")
                        #event = manager.listen()
                        event = takecommand()
-                        if event:
-                            manager.speak("请输入事件类别（可选）")
-                            category = takecommand()
-                            manager.speak("是否需要设置重复事件？请输入 '每天'、'每周'、'每月' 或 '不设置'。")
-                            repeat = takecommand()
-                            manager.add_event(date, time, event, repeat=repeat, category=category)
+                       if event:
+                           manager.speak("请输入事件类别（可选）")
+                           category = takecommand()
+                           manager.speak("是否需要设置重复事件？请输入 '每天'、'每周'、'每月' 或 '不设置'。")
+                           repeat = takecommand()
+                           manager.add_event(date, time, event, repeat=repeat, category=category)
             elif '查看' in choice:
                 manager.view_schedule()
             elif '删除' in choice:
