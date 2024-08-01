@@ -4,7 +4,8 @@ import pyttsx3
 import datetime
 import schedule
 import time
-from jarvis.jarvis import takecommand,speak# 语音识别和声音播放
+import threading
+from jarvis.jarvis import takecommand,speak
 
 class ScheduleManager:
     def __init__(self, filename='schedule.json'):
@@ -25,17 +26,54 @@ class ScheduleManager:
         with open(self.filename, 'w') as file:
             json.dump(self.schedule, file, indent=4)
 
-    def add_event(self, date, event):
-        self.schedule.append({'date': date, 'event': event})
-        self.save_schedule()
-        self.speak(f'事件 "{event}" 已添加到 {date}')
+    def add_event(self, date_time, event, reminder=None, repeat=None):
+        try:
+            datetime_obj = datetime.datetime.strptime(date_time, "%Y-%m-%d %H:%M")
+            self.schedule.append({'date': datetime_obj.strftime("%Y-%m-%d %H:%M"),
+                                  'event': event,
+                                  'reminder': reminder,
+                                  'repeat': repeat})
+            self.save_schedule()
+            self.speak(f'事件 "{event}" 已添加到 {date_time}')
+            # 添加重复事件到 schedule 库
+            if repeat:
+                self.schedule_event(datetime_obj, event, repeat)
+        except ValueError:
+            self.speak("日期或时间格式错误，请重新输入。")
+
+    def schedule_event(self, datetime_obj, event, repeat):
+        if repeat == '每天':
+            schedule.every().day.at(datetime_obj.strftime("%H:%M")).do(self.event_reminder, event)
+        elif repeat == '每周':
+            schedule.every().week.at(datetime_obj.strftime("%H:%M")).do(self.event_reminder, event)
+        elif repeat == '每月':
+            schedule.every().month.at(datetime_obj.strftime("%H:%M")).do(self.event_reminder, event)
+
+    def event_reminder(self, event):
+        self.speak(f"提醒：{event}")
+
+    def run_scheduler(self):
+        while True:
+            schedule.run_pending()
+            time.sleep(1)
 
     def view_schedule(self):
         if not self.schedule:
             self.speak('没有已安排的事件。')
         else:
+            # 按时间排序
+            self.schedule.sort(key=lambda item: datetime.datetime.strptime(item['date'], "%Y-%m-%d %H:%M"))
             for idx, entry in enumerate(self.schedule, start=1):
                 self.speak(f"{idx}. {entry['date']} - {entry['event']}")
+
+    def search_event(self, keyword):
+        found = False
+        for entry in self.schedule:
+            if keyword.lower() in entry['event'].lower():
+                self.speak(f"{entry['date']} - {entry['event']}")
+                found = True
+        if not found:
+            self.speak("没有找到匹配的事件。")
 
     def delete_event(self, index):
         try:
@@ -45,84 +83,74 @@ class ScheduleManager:
         except IndexError:
             self.speak('无效的事件编号。')
 
-    def add_event(self, date, time, event, reminder=None, repeat=None):
+    def edit_event(self, index, new_date_time=None, new_event=None):
         try:
-            # 将日期和时间转换为 datetime 对象
-            datetime_obj = datetime.datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M")
-            self.schedule.append({'date': datetime_obj.strftime("%Y-%m-%d %H:%M"), 
-                                  'event': event, 
-                                  'reminder': reminder,
-                                  'repeat': repeat})
+            event = self.schedule[index - 1]
+            if new_date_time:
+                datetime_obj = datetime.datetime.strptime(new_date_time, "%Y-%m-%d %H:%M")
+                event['date'] = datetime_obj.strftime("%Y-%m-%d %H:%M")
+            if new_event:
+                event['event'] = new_event
             self.save_schedule()
-            self.speak(f'事件 "{event}" 已添加到 {date} {time}')
-            # 添加重复事件到 schedule 库
-            if repeat:
-                self.schedule_event(datetime_obj, event, repeat)
+            self.speak(f'事件已更新：{event["date"]} - {event["event"]}')
+        except IndexError:
+            self.speak('无效的事件编号。')
         except ValueError:
             self.speak("日期或时间格式错误，请重新输入。")
-            
-    def schedule_event(self, datetime_obj, event, repeat):
-        if repeat == '每天':
-            schedule.every().day.at(datetime_obj.strftime("%H:%M")).do(lambda: self.speak(f"提醒：{event}"))
-        elif repeat == '每周':
-            schedule.every().week.at(datetime_obj.strftime("%H:%M")).do(lambda: self.speak(f"提醒：{event}"))
-        elif repeat == '每月':
-            schedule.every().month.at(datetime_obj.strftime("%H:%M")).do(lambda: self.speak(f"提醒：{event}"))
 
-    def run_scheduler(self):
-        while True:
-            schedule.run_pending()
-            time.sleep(1)     
-            
-    def view_schedule(self):
-        if not self.schedule:
-            self.speak('没有已安排的事件。')
-        else:
-            # 按时间排序
-            self.schedule.sort(key=lambda item: datetime.datetime.strptime(item['date'], "%Y-%m-%d %H:%M"))
-            for idx, entry in enumerate(self.schedule, start=1):
-                self.speak(f"{idx}. {entry['date']} - {entry['event']}")    
-                    
-    def search_event(self, keyword):
-        found = False
-        for entry in self.schedule:
-            if keyword.lower() in entry['event'].lower() or keyword.lower() in entry['category'].lower():
-                self.speak(f"{entry['date']} - {entry['event']}")
-                found = True
-        if not found:
-            self.speak("没有找到匹配的事件。")   
-                                                    
+    def add_relative_event(self, time_delta, event):
+        now = datetime.datetime.now()
+        future_time = now + datetime.timedelta(minutes=time_delta)
+        self.add_event(future_time.strftime("%Y-%m-%d %H:%M"), event)
+
+    def add_event_relative(self, time_str, event):
+        try:
+            if '分钟' in time_str:
+                time_delta = int(time_str.split('分钟')[0].strip())
+                self.add_relative_event(time_delta, event)
+            elif '小时' in time_str:
+                hours = int(time_str.split('小时')[0].strip())
+                time_delta = hours * 60
+                self.add_relative_event(time_delta, event)
+            elif '天' in time_str:
+                days = int(time_str.split('天')[0].strip())
+                future_date = datetime.datetime.now() + datetime.timedelta(days=days)
+                self.speak("请输入具体时间，格式为 HH:MM。")
+                time = takecommand()
+                if time:
+                    event_datetime = future_date.strftime("%Y-%m-%d") + " " + time
+                    self.add_event(event_datetime, event)
+            else:
+                self.speak("无效的时间格式，请重新输入。")
+        except ValueError:
+            self.speak("时间格式错误，请重新输入。")
+
 def schedule_management(takecommand):
     manager = ScheduleManager()
     # 启动定时器
     thread = threading.Thread(target=manager.run_scheduler)
     thread.daemon = True
     thread.start()
-    
+
     while True:
-        manager.speak("日程管理器。请说 '添加'、'查看'、'删除' 或 '退出'。")
-        #choice = manager.listen()
+        manager.speak("日程管理器。请说 '添加'、'查看'、'删除'、'编辑'、'搜索' 或 '退出'。")
         choice = takecommand()
 
         if choice is not None:
             if '添加' in choice:
-                manager.speak("请输入日期，格式为 YYYY-MM-DD。")
-                #date = manager.listen()
-                date = takecommand()
-                if date:
-                   manager.speak("请输入时间，格式为 HH:MM。")
-                   #time = manager.listen()
-                   time = takecommand()
-                   if time:
-                       manager.speak("请输入事件描述。")
-                       #event = manager.listen()
-                       event = takecommand()
-                       if event:
-                           manager.speak("请输入事件类别（可选）")
-                           category = takecommand()
-                           manager.speak("是否需要设置重复事件？请输入 '每天'、'每周'、'每月' 或 '不设置'。")
-                           repeat = takecommand()
-                           manager.add_event(date, time, event, repeat=repeat, category=category)
+                manager.speak("请输入事件的具体时间或相对时间。")
+                time_str = takecommand()
+                if time_str:
+                    manager.speak("请输入事件描述。")
+                    event = takecommand()
+                    if event:
+                        if '分钟' in time_str or '小时' in time_str or '天' in time_str:
+                            manager.add_event_relative(time_str, event)
+                        else:
+                            manager.speak("请输入具体日期和时间，格式为 YYYY-MM-DD HH:MM。")
+                            date_time = takecommand()
+                            if date_time:
+                                manager.add_event(date_time, event)
             elif '查看' in choice:
                 manager.view_schedule()
             elif '删除' in choice:
@@ -133,12 +161,24 @@ def schedule_management(takecommand):
                     manager.delete_event(index)
                 except ValueError:
                     manager.speak("无效的事件编号。")
+            elif '编辑' in choice:
+                manager.view_schedule()
+                manager.speak("请输入要编辑的事件编号。")
+                try:
+                    index = int(takecommand())
+                    manager.speak("请输入新的日期和时间，格式为 YYYY-MM-DD HH:MM（如果不需要修改，请直接按回车）。")
+                    new_date_time = takecommand()
+                    manager.speak("请输入新的事件描述（如果不需要修改，请直接按回车）。")
+                    new_event = takecommand()
+                    manager.edit_event(index, new_date_time=new_date_time if new_date_time else None,
+                                       new_event=new_event if new_event else None)
+                except ValueError:
+                    manager.speak("无效的事件编号。")
             elif '搜索' in choice:
                 manager.speak("请输入要搜索的关键字。")
-                #keyword = manager.listen()
                 keyword = takecommand()
                 if keyword:
-                    manager.search_event(keyword)     
+                    manager.search_event(keyword)
             elif '退出' in choice:
                 manager.speak("再见！")
                 break
@@ -146,4 +186,4 @@ def schedule_management(takecommand):
                 manager.speak("无效的选择，请再试一次。")
 
 if __name__ == "__main__":
-    chedule_management()
+    schedule_management(takecommand)
