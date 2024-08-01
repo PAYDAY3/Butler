@@ -93,6 +93,9 @@ class ScheduleManager:
                 event['event'] = new_event
             self.save_schedule()
             self.speak(f'事件已更新：{event["date"]} - {event["event"]}')
+            # 如果存在重复事件，则需要更新重复事件调度
+            if 'repeat' in event and event['repeat']:
+                self.schedule_event(datetime_obj, event['event'], event['repeat'])
         except IndexError:
             self.speak('无效的事件编号。')
         except ValueError:
