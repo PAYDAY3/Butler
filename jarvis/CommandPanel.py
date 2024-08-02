@@ -30,7 +30,7 @@ class CommandPanel(tk.Frame):
         self.input_frame.pack(side=tk.TOP, fill=tk.X)
 
         # 输入框标签
-        self.input_label = tk.Label(self.input_frame, text="命令：", bg='white')
+        self.input_label = tk.Label(self.input_frame, text="命令：\n", bg='white')
         self.input_label.pack(side=tk.LEFT)
 
         # 输入框
@@ -126,10 +126,10 @@ class CommandPanel(tk.Frame):
                 self.program_path = program_path
 
                 # 写入输出文本框
-                self.write_output(f"已打开 {program_path}")
+                self.write_output(f"已打开 {program_path}\n")
             else:
                 # 写入输出文本框
-                self.write_output(f"程序 {program_path} 不存在")
+                self.write_output(f"程序 {program_path} 不存在\n")
         else:
             # 如果第一个输入不是 "打开"，则将其传递给 subprocess.Popen
             try:
@@ -138,12 +138,12 @@ class CommandPanel(tk.Frame):
                 stdout, stderr = process.communicate()
                 
                 if process.returncode == 0:
-                    self.write_output(stdout.decode())
+                    self.write_output(stdout.decode() + "\n")
                 else:
-                    self.write_output(f"错误：{stderr.decode()}")
+                    self.write_output(f"错误：{stderr.decode()}\n")
             except Exception as e:
                 # 写入输出文本框
-                self.write_output(f"命令执行失败：{str(e)}")
+                self.write_output(f"命令执行失败：{str(e)}\n")
 
     def run_program(self):
         # 检查程序路径是否已设置
