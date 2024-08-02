@@ -14,6 +14,7 @@ class CommandPanel(tk.Frame):
         self.program_path = None
         self.panels = []  # 存储所有交互面板
         self.current_panel = self  # 当前活动的面板
+        self.output_window = None
         
         # 设置面板的背景颜色为白色
         self.config(bg='white')
@@ -74,12 +75,15 @@ class CommandPanel(tk.Frame):
 
     def clear_output(self):
         # 清除输出文本框的内容
-        self.output_text.delete(1.0, tk.END)
+        if self.output_window:
+            self.output_window.clear_text()
+
 
     def write_output(self, text):
         # 将文本写入输出文本框
-        self.output_text.insert(tk.END, text)
-        self.output_text.see(tk.END)
+        if not self.output_window:
+            self.create_output_window()
+        self.output_window.write_text(text)
 
     def get_input(self):
         # 获取当前面板的输入框内容
@@ -107,7 +111,9 @@ class CommandPanel(tk.Frame):
         command = self.get_input()
         
         # 清除输出文本框
-        self.clear_output()
+        if self.output_window is None:
+            self.create_output_window()
+        self.output_window.clear_text()
 
         # 检查第一个输入是否以 "打开" 开头
         if command.startswith("打开"):
@@ -154,7 +160,39 @@ class CommandPanel(tk.Frame):
 
         # 设置定时器，1秒后再次调用
         self.after(1000, self.auto_check_command)
-        
+
+    def create_output_window(self):
+        self.output_window = OutputWindow(self.master)
+        self.output_window.protocol("WM_DELETE_WINDOW", self.on_output_window_close)
+
+    def on_output_window_close(self):
+        self.output_window.destroy()
+        self.output_window = None
+
+class OutputWindow(tk.Toplevel):
+    def __init__(self, master):
+        super().__init__(master)
+        self.title("输出窗口")
+        self.geometry("600x400")
+        self.create_widgets()
+
+    def create_widgets(self):
+        self.output_text = tk.Text(self, bg='white', fg='black')
+        self.output_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        self.scroll_bar = tk.Scrollbar(self)
+        self.scroll_bar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        self.output_text.configure(yscrollcommand=self.scroll_bar.set)
+        self.scroll_bar.configure(command=self.output_text.yview)
+
+    def clear_text(self):
+        self.output_text.delete(1.0, tk.END)
+
+    def write_text(self, text):
+        self.output_text.insert(tk.END, text)
+        self.output_text.see(tk.END)
+
 # 创建主窗口
 root = tk.Tk()
 root.title("交互式命令行面板")
