@@ -30,6 +30,7 @@ from my_package.music import music_player
 from my_package.crawler import crawler
 from my_package.schedule_management import schedule_management
 from my_package.Limits_of_authority import Limits_of_authority
+from CommandPanel import CommandPanel
 import transformers
 from transformers import T5Tokenizer, T5ForConditionalGeneration
 import torch
@@ -425,7 +426,19 @@ def main():
                 logging.warning("未知指令")
         else:
             match_and_run_program(wake_command, programs, program_folder)
+            
+    # 创建主窗口
+    root = tk.Tk()
+    root.title("jarvis交互面板")
+    root.geometry("800x600")
 
+    # 创建交互式命令行面板
+    panel = CommandPanel(root, [])  # 使用 CommandPanel 类创建一个实例
+    panel.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+    # 启动主事件循环
+    root.mainloop()
+    
     observer.stop()
     observer.join()
     # 退出程序
