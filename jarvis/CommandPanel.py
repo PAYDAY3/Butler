@@ -60,7 +60,12 @@ class CommandPanel(tk.Frame):
         self.run_button = tk.Button(self, text="运行", command=self.run_command, bg='lightgray')
         self.run_button.pack(side=tk.BOTTOM, fill=tk.X)
         
+        # "别说了" 按钮
+        self.stop_button = tk.Button(self, text="别说了", command=self.stop_execution, bg='lightgray')
+        self.stop_button.pack(side=tk.BOTTOM, fill=tk.X)        
+        
         self.program_path = None
+        self.running_process = None  # 用于存储正在运行的进程
         
     def add_panel(self):
         # 创建一个新的交互面板
