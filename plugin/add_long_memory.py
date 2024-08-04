@@ -1,10 +1,11 @@
-import logging
+import my_package import Logging
 import time
 
 from plugin.plugin_interface import AbstractPlugin, PluginResult
 from long_memory.long_memory_interface import LongMemoryItem
 from jarvis.jarvis import takecommand
 
+logger = Logging.getLogger(_name_)
 
 class AddLongMemoryPlugin(AbstractPlugin):
     def valid(self) -> bool:
@@ -44,7 +45,19 @@ class AddLongMemoryPlugin(AbstractPlugin):
             },
             "required": ["content"],
         }
+        
+    def on_startup(self):
+        self._logger.info("AddLongMemoryPlugin 启动成功")
+    
+    def on_shutdown(self):
+        self._logger.info("AddLongMemoryPlugin 已关闭")
 
+    def on_pause(self):
+        self._logger.info("AddLongMemoryPlugin 已暂停")
+
+    def on_resume(self):
+        self._logger.info("AddLongMemoryPlugin 已恢复")
+        
 def run(self, takecommand: str, args: dict) -> PluginResult:
     if takecommand is None:
         return PluginResult.new("没有检测到语音指令", need_call_brain=False)
