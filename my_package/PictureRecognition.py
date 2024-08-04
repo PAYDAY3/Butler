@@ -74,6 +74,13 @@ def drop(event):
     entry.delete(0, tk.END)  # 清空输入框
     entry.insert(0, file_path)  # 在输入框中插入图片路径
 
+# 关闭窗口
+def close_window():
+    """
+    关闭窗口。
+    """
+    window.destroy()
+    
 # 创建 Tkinter 窗口
 window = tk.Tk()
 window.title("图片搜索")
@@ -85,6 +92,10 @@ entry.pack()
 # 创建搜索按钮
 search_button = tk.Button(window, text="搜索", command=search_image)
 search_button.pack()
+
+# 创建关闭按钮
+close_button = tk.Button(window, text="X", command=close_window)
+close_button.pack()
 
 # 设置拖放功能
 window.drop_target_register(DND_FILES)
