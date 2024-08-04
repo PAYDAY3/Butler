@@ -100,6 +100,26 @@ close_button.pack()
 # 设置拖放功能
 window.drop_target_register(DND_FILES)
 window.dnd_bind("<<Drop>>", drop)
+# 添加按钮点击效果
+def on_button_click(button):
+    """
+    按钮点击效果函数。
+    """
+    button.config(relief=tk.SUNKEN)  # 设置按钮为凹陷状态
+
+def on_button_release(button):
+    """
+    按钮释放效果函数。
+    """
+    button.config(relief=tk.RAISED)  # 设置按钮为凸起状态
+
+# 为搜索按钮添加点击效果
+search_button.bind("<Button-1>", lambda event: on_button_click(search_button))
+search_button.bind("<ButtonRelease-1>", lambda event: on_button_release(search_button))
+
+# 为关闭按钮添加点击效果
+close_button.bind("<Button-1>", lambda event: on_button_click(close_button))
+close_button.bind("<ButtonRelease-1>", lambda event: on_button_release(close_button)) 
 
 # 运行窗口
 window.mainloop()
