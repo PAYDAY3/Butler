@@ -55,14 +55,17 @@ class CommandPanel(tk.Frame):
         # 清除按钮
         self.clear_button = tk.Button(self, text="清除", command=self.clear_output, bg='lightgray')
         self.clear_button.pack(side=tk.BOTTOM, fill=tk.X)
-
+        self.add_button_click_effect(self.stop_button)  
+        
         # 运行按钮
         self.run_button = tk.Button(self, text="运行", command=self.run_command, bg='lightgray')
         self.run_button.pack(side=tk.BOTTOM, fill=tk.X)
+        self.add_button_click_effect(self.stop_button)        
         
         # "别说了" 按钮
         self.stop_button = tk.Button(self, text="别说了", command=self.stop_execution, bg='lightgray')
         self.stop_button.pack(side=tk.BOTTOM, fill=tk.X)        
+        self.add_button_click_effect(self.stop_button)
         
         self.program_path = None
         self.running_process = None  # 用于存储正在运行的进程
@@ -197,7 +200,20 @@ class OutputWindow(tk.Toplevel):
     def write_text(self, text):
         self.output_text.insert(tk.END, text)
         self.output_text.see(tk.END)
+        
+    def add_button_click_effect(self, button):
+        """
+        添加按钮点击效果函数。
+        """
+        def on_button_click(event):
+            button.config(relief=tk.SUNKEN)  # 设置按钮为凹陷状态
 
+        def on_button_release(event):
+            button.config(relief=tk.RAISED)  # 设置按钮为凸起状态
+
+        button.bind("<Button-1>", lambda event: on_button_click(event))
+        button.bind("<ButtonRelease-1>", lambda event: on_button_release(event))
+        
 # 创建主窗口
 root = tk.Tk()
 root.title("交互式命令行面板")
