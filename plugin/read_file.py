@@ -1,18 +1,21 @@
-import logging
-
-from plugin.plugin_interface import AbstractPlugin, PluginResult
+from my_package import Logging
+from abc import ABCMeta, abstractmethod
 from jarvis.jarvis import takecommand
+from datetime import datetime
+from plugin.plugin_interface import AbstractPlugin, PluginResult
+
+logging = Logging.getLogger(__name__)
 
 
 class ReadFilePlugin(AbstractPlugin):
-    def valid(self) -> bool:
-        return True
-
     def __init__(self):
         self._logger = None
 
-    def init(self, logger: logging.Logger):
-        self._logger = logger
+    def valid(self) -> bool:
+        return True
+
+    def init(self, logging):
+        self._logger = logging
 
     def get_name(self):
         return "read_file"
@@ -21,7 +24,7 @@ class ReadFilePlugin(AbstractPlugin):
         return "读取文件"
 
     def get_description(self):
-        return "读取文件内容接口，当你需要读取一个文件的内容时，你应该调用本接口，传入要读取的文件路径。"
+        return "读取文件内容，并返回文件内容。 需要传入文件路径参数。"
 
     def get_parameters(self):
         return {
@@ -29,26 +32,38 @@ class ReadFilePlugin(AbstractPlugin):
             "properties": {
                 "file_path": {
                     "type": "string",
-                    "description": "要读取的文件路径，应该是绝对路径。",
+                    "description": "要读取的文件的绝对路径",
                 }
             },
             "required": ["file_path"],
         }
 
-def run(self, takecommand: str, args: dict) -> PluginResult:
-    if takecommand is None:
-        return PluginResult.new("没有检测到语音指令", need_call_brain=False)
+    def on_startup(self):
+        self._logger.info("ReadFilePlugin 启动成功")
     
-    file_path = args.get("file_path")
-    
-    # 输入验证: 检查文件路径是否为空
-    if not file_path:
-        return PluginResult.new(result="文件路径不能为空。", need_call_brain=False)
-    try:
-        with open(file_path, "r", encoding="utf-8") as f:
-            content = f.read()
-        return PluginResult.new(result=f"文件内容如下：\n{content}", need_call_brain=True)
-    except FileNotFoundError:
-        return PluginResult.new(result=f"文件不存在：{file_path}", need_call_brain=False)
-    except Exception as e:
-        return PluginResult.new(result=f"读取文件时出错：{e}", need_call_brain=False)
+    def on_shutdown(self):
+        self._logger.info("ReadFilePlugin 已关闭")
+
+    def on_pause(self):
+        self._logger.info("ReadFilePlugin 已暂停")
+
+    def on_resume(self):
+        self._logger.info("ReadFilePlugin 已恢复")
+
+    def run(self, takecommand: str, args: dict) -> PluginResult:
+        file_path = args.get("file_path")
+        if not file_path:
+            return PluginResult.new(result=None, need_call_brain=False, success=False,
+                                   error_message="缺少文件路径参数")
+
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            return PluginResult.new(result=None, need_call_brain=True, success=True,
+                                    metadata={'file_path': file_path})
+        except FileNotFoundError:
+            return PluginResult.new(result=None, need_call_brain=False, success=False,
+                                   error_message=f"文件不存在: {file_path}")
+        except Exception as e:
+            return PluginResult.new(result=None, need_call_brain=False, success=False,
+                                    error_message=f"读取文件时出错: {str(e)}")
