@@ -55,10 +55,11 @@ class JokePlugin(AbstractPlugin):
         self.logger.info("JokePlugin 恢复.")
 
     def run(self, takecommand: str, args: dict) -> PluginResult:
-        # 随机选择一个笑话
-        joke = random.choice(self.jokes)
+        if any(keyword in takecommand for keyword in ["我无聊了", "休息一下", "讲个笑话", "好无聊"]):
+            # 随机选择一个笑话
+            joke = random.choice(self.jokes)
+            speak(joke)  # 调用你的 speak 函数
 
-        # 使用外部的 speak 函数朗读笑话
-        speak(joke)  # 调用你的 speak 函数
-
-        return PluginResult.new(result=joke, need_call_brain=False, success=True)
+            return PluginResult.new(result=joke, need_call_brain=False, success=True)
+        else:
+            return PluginResult.new(result=None, need_call_brain=False, success=False) 
