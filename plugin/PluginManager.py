@@ -76,3 +76,25 @@ class PluginManager:
         else:
             self.logger.error(f"未找到插件 {name}.")
             return None
+    
+    def stop_plugin(self, name):
+        plugin = self.get_plugin(name)
+        if plugin:
+            self.logger.info(f"正在停止插件: {name}")
+            result = plugin.stop()
+            self.logger.info(f"插件 {name} 停止结果: {result}")
+            return result
+        else:
+            self.logger.error(f"未找到插件 {name}.")
+            return None
+    
+    def get_plugin_status(self, name):
+        plugin = self.get_plugin(name)
+        if plugin:
+            self.logger.info(f"正在获取插件状态: {name}")
+            result = plugin.status()
+            self.logger.info(f"插件 {name} 状态: {result}")
+            return result
+        else:
+            self.logger.error(f"未找到插件 {name}.")
+            return None
