@@ -66,8 +66,10 @@ class PluginManager:
         return list(self.plugins.values())
 
     # 运行插件
-    def run_plugin(self, name, takecommand, args):
-        plugin = self.get_plugin(name)
+    def run_plugin(self, name, takecommand：str, args):
+        # plugin = self.get_plugin(name)
+        plugin_name = takecommand.split()[0]  # 假设插件名称在命令的开头
+        plugin = self.plugins.get(plugin_name)
         if plugin:
             self.logger.info(f"正在运行插件: {name}")
             result = plugin.run(takecommand, args)
