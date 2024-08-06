@@ -3,6 +3,7 @@ import logging
 import pkgutil
 import inspect
 import abc
+from jarvis.jarvis import takecommand
 
 class PluginManager:
     def __init__(self, plugin_package):
@@ -15,7 +16,7 @@ class PluginManager:
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
-
+        self.load_all_plugins()
     # 动态加载单个插件
     def load_plugin(self, module_name, class_name):
         try:
