@@ -2,13 +2,15 @@ import importlib
 import logging
 import pkgutil
 import inspect
-import abc
+from abc import ABC, abstractmethod
+from typing import Type, Optional, List, Dict
 from jarvis.jarvis import takecommand
 
 class PluginManager:
-    def __init__(self, plugin_package):
+    def __init__(self, plugin_package: str):
         self.plugin_package = plugin_package
-        self.plugins = {}
+        # self.plugins = {}
+        self.plugins: Dict[str, AbstractPlugin] = {}
         self.logger = logging.getLogger("PluginManager")
         self.logger.setLevel(logging.DEBUG)
         handler = logging.StreamHandler()
@@ -17,22 +19,24 @@ class PluginManager:
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
         self.load_all_plugins()
+        
     # 动态加载单个插件
-    def load_plugin(self, module_name, class_name):
+    def load_plugin(self, module_name, class_name): 
         try:
             module = importlib.import_module(module_name)
-            plugin_class = getattr(module, class_name)
+            # plugin_class = getattr(module, class_name)  
+            plugin_class: Type[AbstractPlugin] = getattr(module, class_name)
             plugin_instance = plugin_class()
-            if plugin_instance.valid():
+            if plugin_instance.valid(): 
                 plugin_instance.init(self.logger)
                 self.plugins[plugin_instance.get_name()] = plugin_instance
                 self.logger.info(f"已加载插件: {plugin_instance.get_name()}")
-                return plugin_instance
+                return plugin_instance 
             else:
                 self.logger.warning(f"插件 {plugin_instance.get_name()} 无效.")
                 return None
         except (ModuleNotFoundError, AttributeError) as e:
-            self.logger.error(f"加载插件 {module_name}.{class_name} 失败: {e}")
+            self.logger.error(f"加载插件 {module_name}.{class_name} 失败: {e}") 
             return None
 
     # 获取插件
@@ -54,7 +58,7 @@ class PluginManager:
         return None
 
     # 获取所有插件
-    def get_all_plugins(self):
+    def get_all_plugins(self) -> List[AbstractPlugin]:
         # 遍历插件包中的所有模块，按需加载所有插件
         for importer, module_name, ispkg in pkgutil.walk_packages([self.plugin_package]):
             if not ispkg:
@@ -63,7 +67,7 @@ class PluginManager:
                     attribute = getattr(module, attribute_name)
                     if inspect.isclass(attribute) and issubclass(attribute, AbstractPlugin) and not inspect.isabstract(attribute):
                         if attribute.__name__.endswith("Plugin"):
-                            self.load_plugin(module_name, attribute.__name__)
+                            self.load_plugin(module_name, attribute.__name__) 
         return list(self.plugins.values())
 
     # 运行插件
