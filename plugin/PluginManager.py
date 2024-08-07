@@ -21,7 +21,7 @@ class PluginManager:
         self.load_all_plugins()
         
     # 动态加载单个插件
-    def load_plugin(self, module_name, class_name): 
+    def load_plugin(self, module_name, class_name: str) -> Optional[AbstractPlugin]: 
         try:
             module = importlib.import_module(module_name)
             # plugin_class = getattr(module, class_name)  
@@ -40,7 +40,7 @@ class PluginManager:
             return None
 
     # 获取插件
-    def get_plugin(self, name):
+    def get_plugin(self, name: str) -> Optional[AbstractPlugin]:
         if name in self.plugins:
             return self.plugins[name]
         
@@ -71,7 +71,7 @@ class PluginManager:
         return list(self.plugins.values())
 
     # 运行插件
-    def run_plugin(self, name, takecommand：str, args):
+    def run_plugin(self, name, takecommand：str, args: List[str]) -> Optional[str]:
         # plugin = self.get_plugin(name)
         plugin_name = takecommand.split()[0]  # 假设插件名称在命令的开头
         plugin = self.plugins.get(plugin_name)
@@ -84,7 +84,7 @@ class PluginManager:
             self.logger.error(f"未找到插件 {name}.")
             return None
     
-    def stop_plugin(self, name):
+    def stop_plugin(self, name: str) -> Optional[str]:
         plugin = self.get_plugin(name)
         if plugin:
             self.logger.info(f"正在停止插件: {name}")
@@ -95,7 +95,7 @@ class PluginManager:
             self.logger.error(f"未找到插件 {name}.")
             return None
     
-    def get_plugin_status(self, name):
+    def get_plugin_status(self, name: str) -> Optional[str]:
         plugin = self.get_plugin(name)
         if plugin:
             self.logger.info(f"正在获取插件状态: {name}")
