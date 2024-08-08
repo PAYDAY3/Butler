@@ -45,19 +45,33 @@ class FileSearchPlugin(AbstractPlugin):
     def run(self, takecommand: str, args: dict) -> PluginResult:
         directory = args.get("directory")
         filename = args.get("filename")
-        if not directory or not filename:
+        
+        if not directory and not filename:
             return PluginResult.new(result=None, need_call_brain=False, success=False, error_message="directory或filename参数缺失")
 
         try:
-            matches = []
-            for root, _, files in os.walk(directory):
-                if filename in files:
-                    matches.append(os.path.join(root, filename))
-            
-            if matches:
-                result = f"找到文件：{matches}"
-                return PluginResult.new(result=result, need_call_brain=False, success=True)
-            else:
-                return PluginResult.new(result="未找到文件", need_call_brain=False, success=True)
+            if directory:
+                matches = []
+                for root, _, files in os.walk(directory):
+                    if filename in files:
+                        matches.append(os.path.join(root, filename))
+                
+                if matches:
+                    result = f"在 '{directory}' 找到文件：{', '.join(matches)}"
+                    return PluginResult.new(result=result, need_call_brain=False, success=True)
+                else:
+                    return PluginResult.new(result=f"未在 '{directory}' 找到 '{filename}' ", need_call_brain=False, success=True)
+            else:  
+                matches = []
+                for root, _, files in os.walk('/'):  # 从根目录搜索
+                    if filename in files:
+                        matches.append(os.path.join(root, filename))
+                
+                if matches:
+                    result = f"找到文件：{', '.join(matches)}"
+                    return PluginResult.new(result=result, need_call_brain=False, success=True)
+                else:
+                    return PluginResult.new(result="未找到文件", need_call_brain=False, success=True)
         except Exception as e:
             return PluginResult.new(result=None, need_call_brain=False, success=False, error_message=str(e))
+            
