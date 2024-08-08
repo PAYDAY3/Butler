@@ -110,28 +110,35 @@ def insertionSort(arr, left, right):
             arr[j + 1] = arr[j]
             j -= 1
         arr[j + 1] = key
+        
+def read_file_list(file_path):
+    with open(file_path, 'r') as file:
+        return [tuple(line.strip().split()) for line in file if line.strip()]
 
-# 示例使用
+def write_sorted_list(file_path, sorted_list):
+    with open(file_path, 'w') as file:
+        for item in sorted_list:
+            file.write(f"{item[0]} {item[1]}\n")
+
 if __name__ == "__main__":
-    # 数字排序
-    numbers = [10, 7, 8, 9, 1, 5]
-    print("原始数字数组:", numbers)
-    hybridSort(numbers)
-    print("排序后的数字数组:", numbers)
+    file_list_path = "file_list.txt"
+    sorted_list_path = "sorted_file_list.txt"
 
-    # 字符串排序
-    strings = ["banana", "apple", "cherry", "date"]
-    print("\n原始字符串数组:", strings)
-    hybridSort(strings)
-    print("排序后的字符串数组:", strings)
+    # 读取文件列表（包括优先级）
+    files_with_priority = read_file_list(file_list_path)
 
-    # 自定义对象排序
-    people = [
-        Person("Alice", 30),
-        Person("Bob", 25),
-        Person("Charlie", 35),
-        Person("David", 20)
-    ]
-    print("\n原始对象数组:", people)
-    hybridSort(people)
-    print("排序后的对象数组:", people)
+    # 将优先级转换为整数
+    files_with_priority = [(f, int(p)) for f, p in files_with_priority]
+
+    # 使用混合排序算法排序文件列表（按优先级排序）
+    hybridSort(files_with_priority)
+
+    # 将排序后的列表写入新文件
+    write_sorted_list(sorted_list_path, files_with_priority)
+
+    # 创建 Handler 实例
+    handler = Handler(program_folder="programs")  # 假设所有的程序模块都在 programs 目录下
+
+    # 执行排序后的程序文件
+    for file_name, _ in files_with_priority:
+        execute_program(file_name, handler)
