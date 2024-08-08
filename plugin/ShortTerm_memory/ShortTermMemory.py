@@ -4,7 +4,7 @@ import os
 import threading
 from typing import List, Dict, Optional, Tuple
 from datetime import datetime
-from ShortTerm_Memory_interfce import ShortTermMemorylem,AbstractShortTerm
+from ShortTerm_Memory_interfce import ShortTermMemorylem, AbstractShortTerm
 
 # 短期记忆数据路径
 SYSTEM_DATA_PATH = "./data/system_data"
