@@ -143,7 +143,6 @@ model = "my_Snowboy/jarvis.umdl"  # Snowboy 模型文件路径
 # 语音识别
 def takecommand():
     recognizer = sr.Recognizer()   # 初始化语音识别器和文本到语音引擎
-    global recognizer
     with sr.Microphone() as source:
         print("请说话...")
         recognizer.pause_threshold = 1  # 静态能量阈值
@@ -339,7 +338,23 @@ def match_and_run_program(wake_command, programs, program_folder):
                         logging.error(f"导入模块失败: {error}")
 
     return matched_program
-        
+    
+def process_voice_input():
+    display_subtitle("语音输入模式已激活，请开始说话...")
+    wake_command = takecommand().lower()
+    print(f"请输入命令: {wake_command}")
+    display_subtitle(f"语音输入: {wake_command}")
+    logging.info("Voice command: " + wake_command)
+    return wake_command
+
+def process_text_input():
+    display_subtitle("文字手写输入模式已激活。输入 2 返回语音输入模式。")
+    user_input = input("请输入命令: ").lower()
+    print(f"请输入命令: {user_input}")
+    display_subtitle(f"文字手写输入: {user_input}")
+    logging.info("Text input: " + user_input)
+    return user_input       
+    
 # 主函数
 def main():
     handler = ProgramHandler(program_folder)
@@ -373,7 +388,7 @@ def main():
     if not programs:
         print("没有找到程序模块")
         return
-
+    use_voice_input = True
     running = True  # 控制程序是否继续运行的标志
     while running:
         detector = HotwordDetector(model, sensitivity=0.5, audio_gain=1)
@@ -381,44 +396,37 @@ def main():
         detector.terminate()
         
         print("请输入命令：", end="")  
-        wake_command = takecommand().lower()
-        user_input = None
-        print(wake_command)  # 显示输入的命令
-        logging.info("输入命令：" + wake_command)
+        wake_command = takecommand().lif use_voice_input:
+            wake_command = process_voice_input()
+            
+            if wake_command in ["切换文字输入", "1"]:
+                use_voice_input = False
+                display_subtitle("已切换到文字手写输入模式")
+            elif WAKE_WORD in wake_command or wake_command.startswith("打开"):
+                display_subtitle("已唤醒，等待命令...")
+                logging.info("已唤醒，等待命令")
+                time.sleep(1)
 
-        if "退出" in wake_command or "结束" in wake_command:
-            print("程序已退出")
-            logging.info(f"用户已退出{program_folder}程序")
-            running = False  # 设置标志为 False，用于退出主循环
-            continue
+                command = wake_command.replace(WAKE_WORD, '').strip() if WAKE_WORD in wake_command else wake_command
+                if command.startswith("打开"):
+                    program_name = command[2:].strip()
+                    if program_name in program_mapping:
+                        execute_program(program_mapping[program_name], handler)
+                    else:
+                        print(f"未找到程序 '{program_name}'")
+                        logging.info(f"未找到程序 '{program_name}'")
+                else:
+                    print("未知指令，请重试")
+                    logging.warning("未知指令")
 
-        elif "手动输入" in wake_command:
-            user_input = handle_manual_input()
-            print("请输入命令：", end="")  # 在此处显示“请输入命令：”
-            print(user_input)  # 显示输入的命令
-            logging.info("用户手动输入：" + user_input)
-            if "退出" in user_input or "结束" in user_input:
-                print("程序已退出")
-                logging.info("用户已退出程序手写输入")
-                running = False  
-                continue
+                handle_user_command(command, program_mapping, handler, programs)
             else:
-                wake_command = user_input.lower()         
-            continue  # 跳过当前循环以等待新的命令
-        # else:
-            # handle_wake_command(wake_command, programs, program_folder)
-        if WAKE_WORD in wake_command or wake_command.startswith("打开"):
-            print("已唤醒，等待命令...")
-            logging.info("已唤醒，等待命令")
-            time.sleep(1)
-
-            if WAKE_WORD in wake_command:
-                command = wake_command.replace(WAKE_WORD, '').strip()
-            else:
-                command = wake_command
-
-            if command.startswith("打开"):
-                program_name = command[2:].strip()
+                match_and_run_program(wake_command, programs, program_folder)
+        else:
+            user_input = process_text_input()
+            
+            if user_input.startswith("打开"):
+                program_name = user_input[2:].strip()
                 if program_name in program_mapping:
                     execute_program(program_mapping[program_name], handler)
                 else:
@@ -427,8 +435,21 @@ def main():
             else:
                 print("未知指令，请重试")
                 logging.warning("未知指令")
-        else:
-            match_and_run_program(wake_command, programs, program_folder)
+
+            if user_input == "2":
+                use_voice_input = True
+                display_subtitle("已切换回语音输入模式")
+            elif "退出" in user_input or "结束" in user_input:
+                display_subtitle("程序已退出")
+                logging.info(f"用户已退出{program_folder}程序")
+                running = False
+            else:
+                handle_user_command(user_input, program_mapping, handler, programs)
+
+    observer.stop()
+    observer.join()
+    if not running:
+        os.system("python Bide_one's_time.py")
             
     # 创建主窗口
     root = tk.Tk()
