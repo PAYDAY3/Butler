@@ -339,23 +339,6 @@ def match_and_run_program(wake_command, programs, program_folder):
                         logging.error(f"导入模块失败: {error}")
 
     return matched_program
-    
-def handle_manual_input():
-    print("请输入要加载的文件路径:")
-    file_path = input("")
-    try:
-        with open(file_path, 'r', encoding='utf-8') as file:
-            content = file.read()
-            print(f"文件内容:\n{content}")
-            return content
-    except FileNotFoundError:
-        print(f"未找到文件: {file_path}")
-        logging.error(f"未找到文件: {file_path}")
-        return ""
-    except Exception as e:
-        print(f"读取文件出错: {e}")
-        logging.error(f"读取文件出错: {e}")
-        return ""
         
 # 主函数
 def main():
@@ -396,11 +379,12 @@ def main():
         detector = HotwordDetector(model, sensitivity=0.5, audio_gain=1)
         detector.start(detected_callback=takecommand, interrupt_check=lambda: False, sleep_time=0.03)
         detector.terminate()
-
+        
+        print("请输入命令：", end="")  
         wake_command = takecommand().lower()
         user_input = None
-        print("等待唤醒词")
-        logging.info("等待唤醒词")
+        print(wake_command)  # 显示输入的命令
+        logging.info("输入命令：" + wake_command)
 
         if "退出" in wake_command or "结束" in wake_command:
             print("程序已退出")
@@ -410,6 +394,8 @@ def main():
 
         elif "手动输入" in wake_command:
             user_input = handle_manual_input()
+            print("请输入命令：", end="")  # 在此处显示“请输入命令：”
+            print(user_input)  # 显示输入的命令
             logging.info("用户手动输入：" + user_input)
             if "退出" in user_input or "结束" in user_input:
                 print("程序已退出")
