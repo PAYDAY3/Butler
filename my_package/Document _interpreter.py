@@ -200,30 +200,59 @@ def get_file_type(file_path):
         return None
 
 def main():
-    file_path = 'example.pdf'  # 替换为您要处理的文件路径
+    file_path = input("请输入文件路径: ")
     file_type = get_file_type(file_path)
     file_contents = None
     
+    if file_type is None:
+        print("不支持的文件类型。")
+        return
+
+    print(f"检测到的文件类型: {file_type}")
+    
     if file_type == FILE_TYPE_TEXT:
         file_contents = read_text_file(file_path)
-        word_frequency = count_word_frequency(file_contents)
-        keywords = extract_keywords(file_contents)
-        formatted_text = format_text(file_contents)
-        updated_text = search_and_replace(file_contents, 'old_word', 'new_word')
-        print(f"文本内容:\n{formatted_text}")
-        print(f"词频统计:\n{word_frequency}")
-        print(f"关键词提取:\n{keywords}")
+        print("选择操作:")
+        print("1. 词频统计")
+        print("2. 关键词提取")
+        print("3. 搜索并替换")
+        choice = input("请输入选项 (1/2/3): ")
+        
+        if choice == '1':
+            word_frequency = count_word_frequency(file_contents)
+            print(f"词频统计:\n{word_frequency}")
+        elif choice == '2':
+            num_keywords = int(input("要提取多少个关键词? "))
+            keywords = extract_keywords(file_contents, num_keywords)
+            print(f"关键词提取:\n{keywords}")
+        elif choice == '3':
+            search_term = input("请输入要搜索的词: ")
+            replace_term = input("请输入替换后的词: ")
+            updated_text = search_and_replace(file_contents, search_term, replace_term)
+            print(f"更新后的文本内容:\n{updated_text}")
+        else:
+            print("无效的选项。")
 
     elif file_type == FILE_TYPE_PDF:
         file_contents = extract_text_from_pdf(file_path)
-        table_data = extract_table_data_from_pdf(file_path)
-        print(f"PDF文本内容:\n{file_contents}")
-        print(f"提取的表格数据:\n{table_data}")
+        print("选择操作:")
+        print("1. 提取文本")
+        print("2. 提取表格数据")
+        choice = input("请输入选项 (1/2): ")
+        
+        if choice == '1':
+            print(f"PDF文本内容:\n{file_contents}")
+        elif choice == '2':
+            table_data = extract_table_data_from_pdf(file_path)
+            print(f"提取的表格数据:\n{table_data}")
+        else:
+            print("无效的选项。")
 
     elif file_type == FILE_TYPE_DOCX:
         file_contents = read_docx(file_path)
-        update_docx(file_path, 'New content to replace old content')
         print(f"DOCX文本内容:\n{file_contents}")
+        update_content = input("请输入要替换的内容: ")
+        update_docx(file_path, update_content)
 
     elif file_type == FILE_TYPE_CSV:
         file_contents = read_csv(file_path)
@@ -231,9 +260,11 @@ def main():
         print(f"CSV文件内容:\n{file_contents}")
 
     elif file_type == FILE_TYPE_XLSX:
+        elif file_type == FILE_TYPE_XLSX:
         file_contents = read_xlsx(file_path)
-        export_to_excel([file_contents.split('\n')], 'output.xlsx')
         print(f"Excel文件内容:\n{file_contents}")
+        export_data = input("请输入要导出的数据 (使用逗号分隔): ")
+        export_to_excel([export_data.split(',')], 'output.xlsx')
 
     else:
         print(f"不支持的文件类型: '{file_path}'")
