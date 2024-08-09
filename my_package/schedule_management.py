@@ -182,6 +182,52 @@ def schedule_management(takecommand):
                 keyword = takecommand()
                 if keyword:
                     manager.search_event(keyword)
+            elif '输入' in choice:
+                manager.speak("请输入操作类型：'添加'、'查看'、'删除'、'编辑'、'搜索'。")
+                action = input("请输入操作类型：")
+                if action == '添加':
+                    manager.speak("请输入事件的具体时间或相对时间。")
+                    time_str = input("请输入事件的具体时间或相对时间：")
+                    manager.speak("请输入事件描述。")
+                    event = input("请输入事件描述：")
+                    if time_str and event:
+                        if '分钟' in time_str or '小时' in time_str or '天' in time_str:
+                            manager.add_event_relative(time_str, event)
+                        else:
+                            manager.speak("请输入具体日期和时间，格式为 YYYY-MM-DD HH:MM。")
+                            date_time = input("请输入日期和时间（格式 YYYY-MM-DD HH:MM）：")
+                            if date_time:
+                                manager.add_event(date_time, event)
+                elif action == '查看':
+                    manager.view_schedule()
+                elif action == '删除':
+                    manager.view_schedule()
+                    manager.speak("请输入要删除的事件编号。")
+                    try:
+                        index = int(input("请输入事件编号："))
+                        manager.delete_event(index)
+                    except ValueError:
+                        manager.speak("无效的事件编号。")
+                elif action == '编辑':
+                    manager.view_schedule()
+                    manager.speak("请输入要编辑的事件编号。")
+                    try:
+                        index = int(input("请输入事件编号："))
+                        manager.speak("请输入新的日期和时间，格式为 YYYY-MM-DD HH:MM（如果不需要修改，请直接按回车）。")
+                        new_date_time = input("请输入新的日期和时间（格式 YYYY-MM-DD HH:MM）：")
+                        manager.speak("请输入新的事件描述（如果不需要修改，请直接按回车）。")
+                        new_event = input("请输入新的事件描述：")
+                        manager.edit_event(index, new_date_time=new_date_time if new_date_time else None,
+                                           new_event=new_event if new_event else None)
+                    except ValueError:
+                        manager.speak("无效的事件编号。")
+                elif action == '搜索':
+                    manager.speak("请输入要搜索的关键字。")
+                    keyword = input("请输入要搜索的关键字：")
+                    if keyword:
+                        manager.search_event(keyword)
+                else:
+                    manager.speak("无效的操作类型。")                    
             elif '退出' in choice:
                 manager.speak("再见！")
                 break
