@@ -339,7 +339,24 @@ def match_and_run_program(wake_command, programs, program_folder):
                         logging.error(f"导入模块失败: {error}")
 
     return matched_program
-
+    
+def handle_manual_input():
+    print("请输入要加载的文件路径:")
+    file_path = input("")
+    try:
+        with open(file_path, 'r', encoding='utf-8') as file:
+            content = file.read()
+            print(f"文件内容:\n{content}")
+            return content
+    except FileNotFoundError:
+        print(f"未找到文件: {file_path}")
+        logging.error(f"未找到文件: {file_path}")
+        return ""
+    except Exception as e:
+        print(f"读取文件出错: {e}")
+        logging.error(f"读取文件出错: {e}")
+        return ""
+        
 # 主函数
 def main():
     handler = ProgramHandler(program_folder)
