@@ -68,7 +68,29 @@ def music_player():
                 play_music(index)
                 return
         print("未找到匹配的歌曲。")
-
+        
+    def text_input_control():
+        global current_song_index
+        while True:
+            user_input = input("请输入命令 (播放, 下一首, 上一首, 搜索 <关键词>, 播放列表, 退出): ").strip()
+            if user_input:
+                if "播放" in user_input:
+                    play_music(current_song_index)
+                elif "下一首" in user_input:
+                    next_song()
+                elif "上一首" in user_input:
+                    previous_song()
+                elif "搜索" in user_input:
+                    keyword = user_input.split("搜索")[-1].strip()
+                    search_song(keyword)
+                elif "播放列表" in user_input:
+                    show_playlist()
+                elif "退出" in user_input:
+                    print("音乐播放器已退出。")
+                    break
+                else:
+                    print("未知命令，请重新输入。")
+                    
     while True:
         try:
             command = takecommand()
