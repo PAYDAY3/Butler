@@ -10,6 +10,8 @@ import json
 import pyttsx3
 import datetime
 import subprocess
+import tkinter as tk
+from tkinter import messagebox
 from pydub import AudioSegment
 from playsound import playsound
 from my_snowboy.snowboydecoder import HotwordDetector
@@ -448,7 +450,8 @@ def main():
 
     observer.stop()
     observer.join()
-    if not running:
+    if not running: # 退出程序
+        # 打开另一个程序
         os.system("python Bide_one's_time.py")
             
     # 创建主窗口
@@ -463,24 +466,9 @@ def main():
     # 启动主事件循环
     root.mainloop()
     
-    observer.stop()
-    observer.join()
-    # 退出程序
-    if not running:
-        # 打开另一个程序
-        os.system("python Bide_one's_time.py")
-
 if __name__ == "__main__":  
     while True:
         try:     
             music_player()
             # 执行主程序的逻辑
             main()
-            # 执行主程序的逻辑
-            main_program_logic(program_folder)
-        finally:
-            try:
-                main_program_logic(program_folder)  # 执行主程序的逻辑
-            except Exception as error:
-                print(f"程序发生异常：{error}")
-                logging.info(f"程序发生异常：{error}")
