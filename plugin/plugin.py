@@ -3,6 +3,8 @@ from tkinter import messagebox
 from my_package import Logging
 from plugin_manager import PluginManager
 from jarvis.jarvis import takecommand, speak
+from jarvis.CommandPanel import CommandPanel
+from jarvis import InputProcessor
 
 # 配置日志
 logger = Logging.getLogger(__name__)
@@ -94,11 +96,11 @@ def process_command(command: str):
 def plugin():
     """主函数，处理语音和文字输入，默认语音输入。"""
     use_text_input = False  # 默认使用语音输入
-
+    input_processor = InputProcessor()
     while True:
         if not use_text_input:
             # 语音输入模式
-            command = takecommand()
+            command = input_processor.process_voice_input()
 
             if not command:
                 speak("请再说一遍，我没有听清楚。")
@@ -106,7 +108,7 @@ def plugin():
 
         else:
             # 文字输入模式
-            command = input("请输入命令：")
+            command = input_processor.process_text_input()  # input("请输入命令：")
 
         # 处理命令
         process_command(command)
