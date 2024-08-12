@@ -27,11 +27,8 @@ from thread import process_tasks
 import binary_extensions
 from my_package.TextEditor import TextEditor
 from my_package.virtual_keyboard import VirtualKeyboard
-from my_package.Logging import *
-from my_package.music import music_player
-from my_package.crawler import crawler
+from my_package import Logging
 from my_package.schedule_management import schedule_management
-from my_package.Limits_of_authority import Limits_of_authority
 from CommandPanel import CommandPanel
 import transformers
 from transformers import T5Tokenizer, T5ForConditionalGeneration
@@ -267,6 +264,7 @@ class ProgramHandler(FileSystemEventHandler):
         programs = dict(sorted(programs.items()))
         return programs
         
+@lru_cache(maxsize=128)       
 def execute_program(program_name, handler):
     try:
         module_path = f"{handler.program_folder}.{program_name}"
@@ -357,7 +355,7 @@ def process_text_input():
     logging.info("Text input: " + user_input)
     return user_input       
     
-# 主函数
+@lru_cache(maxsize=128)
 def main():
     handler = ProgramHandler(program_folder)
     observer = Observer()
