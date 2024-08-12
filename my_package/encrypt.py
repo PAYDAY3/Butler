@@ -2,6 +2,7 @@ from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
 from Crypto.Random import get_random_bytes
 import os
+from jarvis import InputProcessor
 
 def generate_key():
     return get_random_bytes(16)
@@ -42,10 +43,11 @@ def process_directory(directory, key, encrypt=True):
                 decrypt_file(file_path, key)
 
 if __name__ == "__main__":
+    input_processor = InputProcessor()
     key = generate_key()
     print(f"生成的密钥: {key.hex()}")
 
-    path_to_process = 'path/to/file_or_directory'  # 替换为您的文件或目录路径
+    path_to_process = input_processor.process_text_input()  # 替换为您的文件或目录路径
     
     if os.path.isdir(path_to_process):
         # 处理整个目录
