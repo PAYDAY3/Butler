@@ -13,7 +13,7 @@ import subprocess
 import tkinter as tk
 from tkinter import messagebox
 from pydub import AudioSegment
-from playsound import playsound
+from pydub.playback import play
 from my_snowboy.snowboydecoder import HotwordDetector
 #临时文件
 import shutil
@@ -111,6 +111,12 @@ def speak(audio):
     # 调整音量
     synthetic_speech = synthetic_speech.apply_gain(10)  # 提高合成语音的音量
     jarvis_sound = jarvis_sound.apply_gain(-10)  # 降低音效的音量
+
+    # 添加立体声效果
+    synthetic_speech = add_stereo_effect(synthetic_speech)
+    
+    # 添加回声效果
+    combined_sound = add_echo_effect(synthetic_speech)
     
     # 合并音频片段
     combined_sound = jarvis_sound.overlay(synthetic_speech)
