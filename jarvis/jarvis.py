@@ -292,10 +292,10 @@ def handle_user_command(command, program_mapping, handler, programs):
             print(f"未找到程序 '{program_name}'")
     elif command in program_mapping:
         execute_program(program_mapping[command], handler)
-    elif command.startswith("运行"):
+    elif command.startswith(("进行", "运行")):
         program_name = command[2:].strip()
         if program_name in handler.programs:
-            run_external_program(handler.programs[program_name])
+            execute_program(handler.programs[program_name])
         else:
             print(f"未找到程序 '{program_name}'")        
     elif "退出" in command or "结束" in command:
@@ -369,13 +369,21 @@ def main():
     observer.start()
 
     program_mapping = {
-        "打开邮箱": "e-mail",
-        "播放音乐": "music",
-        "打开记事本": "notepad",
-        "虚拟键盘": "virtual_keyboard",
-        "组织": "OrganizeIT",
-        "爬虫": "crawler",
-        "终端": "terminal",
+        "邮箱": "e-mail.py",
+        "播放音乐": "music.py",
+        "虚拟键盘": "virtual_keyboapy.py",
+        "组织文件": "Organizepy.py",
+        "爬虫": "crawlpy.py",
+        "终端": "terminpy.py",
+        "加密": "encrypt.py",
+        "文本编辑器": "TextEditor.py",
+        "物体识别": "PictureRecognition.py"
+        "日程管理": "schedule_management.py"
+        "二维码识别" : "QR-Code-Recognitipy.py",
+        "网络程序": "network_apy.py",
+        "天气预报": "weathpy.py",
+        "翻译": "translators.py",
+        "文件转换器": "file_converter.py",
         # 继续添加其他命令和程序的映射关系
     }
 
