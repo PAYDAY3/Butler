@@ -6,7 +6,7 @@ def read_file_list(file_path: str) -> List[Tuple[str, int, str]]:
     with open(file_path, 'r') as file:
         return [(line.split()[0], int(line.split()[1]), line.split()[2]) for line in file if line.strip()]
 
-def hybridSort(arr: List[Tuple[str, int, str]], left=None, right=None, depth=0): 
+def hybridSort(arr: List[Tuple[str, int, str]], left=None, right=None, depth=0):
     """
     混合排序算法，结合快速排序和插入排序。
 
