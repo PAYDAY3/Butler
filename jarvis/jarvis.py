@@ -413,10 +413,9 @@ def main():
         detector.start(detected_callback=takecommand, interrupt_check=lambda: False, sleep_time=0.03)
         detector.terminate()
         
-        print("请输入命令：", end="")  
-        wake_command = takecommand()
-
-            
+        if use_voice_input: 
+            wake_command = takecommand()
+           
             if wake_command in ["切换文字输入", "1"]:
                 use_voice_input = False
                 display_subtitle("已切换到文字手写输入模式")
