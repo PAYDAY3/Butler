@@ -36,7 +36,7 @@ def delete_temp_files(directory="./temp", log_file=logging, days=7, backup_direc
                     os.remove(file_path)
                     print(f"删除文件: {file_path}")
                     logging.info(f"删除文件: {file_path}")
-                except Exception as e
+                except Exception as e:
                     print(f"删除文件 {file_path} 失败: {e}")
                     logging.error(f"删除文件 {file_path} 失败: {e}")
                     

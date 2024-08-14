@@ -50,7 +50,7 @@ class Application(tk.Frame):
         self.input = tk.Entry(self)
         self.input.pack(side="left", fill=tk.X, padx=5, pady=5)
         self.run_button = tk.Button(self, text="Run", command=self.execute_command)
-        self.run_button.pack(side="left", padx=5, pady=5))
+        self.run_button.pack(side="left", padx=5, pady=5)
 
         # 创建文本框
         self.result_text = tk.Text(self, height=10, width=50)

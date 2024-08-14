@@ -377,8 +377,8 @@ def main():
         "终端": "terminpy.py",
         "加密": "encrypt.py",
         "文本编辑器": "TextEditor.py",
-        "物体识别": "PictureRecognition.py"
-        "日程管理": "schedule_management.py"
+        "物体识别": "PictureRecognition.py",
+        "日程管理": "schedule_management.py",
         "二维码识别" : "QR-Code-Recognitipy.py",
         "网络程序": "network_apy.py",
         "天气预报": "weathpy.py",
@@ -479,8 +479,4 @@ def main():
     root.mainloop()
     
 if __name__ == "__main__":  
-    while True:
-        try:     
-            music_player()
-            # 执行主程序的逻辑
-            main()
+    main()
