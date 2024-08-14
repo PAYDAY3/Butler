@@ -4,7 +4,7 @@ from http.server import SimpleHTTPRequestHandler, HTTPServer
 from ftplib import FTP
 
 # 配置日志记录
-logging = Logging.getLogger(_name_)
+logging = Logging.getLogger(__name__)
 
 # HTTP 服务器
 class CustomHandler(SimpleHTTPRequestHandler):
