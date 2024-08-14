@@ -85,10 +85,10 @@ class FileSearchPlugin(AbstractPlugin):
                         try:
                             os.rename(match, os.path.join(destination_directory, filename))
                             self.logger.info(f"文件 {filename} 已转移到 {destination_directory}")
-                        except Exception as e: 
+                        except Exception as e:
                             self.logger.error(f"文件转移失败: {str(e)}")
-                            return PluginResult.new(result=None, need_call_brain=False, success=False, error_message=f"文件转移失败: {str(e)}")  
-                  return PluginResult.new(result=result, need_call_brain=False, success=True)
+                            return PluginResult.new(result=None, need_call_brain=False, success=False, error_message=f"文件转移失败: {str(e)}")
+                    return PluginResult.new(result=result, need_call_brain=False, success=True)
             else:
                 return PluginResult.new(result="未找到文件", need_call_brain=False, success=False)
 

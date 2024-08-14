@@ -164,47 +164,51 @@ def takecommand():
             f.write(audio.get_wav_data())
         return audio_file_path 
             
-            # 使用 Snowboy 进行唤醒词检测
-            try:
-                from my_snowboy.snowboydecoder import HotwordDetector
-                detector = HotwordDetector(model, sensitivity=0.5, audio_gain=1)
-                result = detector.detect(audio_file_path)
-                if result:
-                    logging.info("唤醒词检测成功")
+    # 使用 Snowboy 进行唤醒词检测
+    try:
+        from my_snowboy.snowboydecoder import HotwordDetector
+        detector = HotwordDetector(model, sensitivity=0.5, audio_gain=1)
+        result = detector.detect(audio_file_path)
+        if result:
+            logging.info("唤醒词检测成功")
                     
-                    # 识别语音
-                    try:
-                        print("Recognizing...")  # 识别中...
-                        query = recognizer.recognize_sphinx(audio, language='zh-CN')
-                        print('User: ' + query + '\n')
-                        # 检查是否为 "运行文件" 命令
-                        if "运行文件" in query:
-                            file_name = query.replace("运行 ", "").strip()
-                            # 使用 subprocess.run 执行文件
-                            subprocess.run([file_name])
-                            return None
-                        else:
-                            return query
-                    except sr.UnknownValueError:
-                        print("对不起，我没有听清楚，请再说一遍。")
-                        speak("对不起，我没有听清楚，请再说一遍。")
-                        return None
-                    except sr.RequestError as error:
-                        print(f"语音识别请求出错：{error}")
-                        logging.error(f"语音识别请求出错：{error}")
-                        return ""
-                    except Exception as e:
-                        print(f"语音识别出错: {e}")
-                        logging.error(f"语音识别出错: {e}")
-                        return None
-                else:
-                    print("没有检测到唤醒词")
-                    logging.info("没有检测到唤醒词")
+            # 识别语音
+            try:
+                print("Recognizing...")  # 识别中...
+                query = recognizer.recognize_sphinx(audio, language='zh-CN')
+                print('User: ' + query + '\n')
+                # 检查是否为 "运行文件" 命令
+                if "运行文件" in query:
+                    file_name = query.replace("运行 ", "").strip()
+                    # 使用 subprocess.run 执行文件
+                    subprocess.run([file_name])
                     return None
+                else:
+                    return query
+            except sr.UnknownValueError:
+                print("对不起，我没有听清楚，请再说一遍。")
+                speak("对不起，我没有听清楚，请再说一遍。")
+                return None
+            except sr.RequestError as error:
+                print(f"语音识别请求出错：{error}")
+                logging.error(f"语音识别请求出错：{error}")
+                return ""
             except Exception as e:
-                print(f"Snowboy 检测出错: {e}")
-                logging.error(f"Snowboy 检测出错: {e}")
-                return None 
+                print(f"语音识别出错: {e}")
+                logging.error(f"语音识别出错: {e}")
+                return None
+        else:
+            print("没有检测到唤醒词")
+            logging.info("没有检测到唤醒词")
+            return None
+    except Exception as e:
+        print(f"Snowboy 检测出错: {e}")
+        logging.error(f"Snowboy 检测出错: {e}")
+        return None 
+    finally:
+        # 确保临时文件被删除
+        if os.path.exists(audio_file_path):
+            os.remove(audio_file_path)
 
 # 创建 Snowboy 监听器
 detector = snowboydecoder.HotwordDetector(model, sensitivity=0.5, audio_gain=1)
@@ -228,7 +232,7 @@ class ProgramHandler(FileSystemEventHandler):
     @lru_cache(maxsize=128)
     def open_programs(self):
         programs_cache = {}
-        global programs_cache
+        global all_folders
         all_folders = [self.program_folder] + self.external_folders
         
         # 检查程序文件夹是否存在
@@ -410,8 +414,8 @@ def main():
         detector.terminate()
         
         print("请输入命令：", end="")  
-        wake_command = takecommand().lif use_voice_input:
-            wake_command = process_voice_input()
+        wake_command = takecommand()
+
             
             if wake_command in ["切换文字输入", "1"]:
                 use_voice_input = False

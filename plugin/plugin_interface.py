@@ -3,7 +3,7 @@ from abc import ABCMeta, abstractmethod
 from jarvis.jarvis import takecommand
 from datetime import datetime
 
-logging = Logging.getLogger(_name_)
+logging = Logging.getLogger(__name__)
 
 class PluginResult(object):
     def __init__(self):

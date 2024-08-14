@@ -1,4 +1,4 @@
-import my_package import Logging
+from my_package import Logging
 import time
 
 from plugin.plugin_interface import AbstractPlugin, PluginResult
