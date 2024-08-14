@@ -119,7 +119,7 @@ search_button.bind("<ButtonRelease-1>", lambda event: on_button_release(search_b
 
 # 为关闭按钮添加点击效果
 close_button.bind("<Button-1>", lambda event: on_button_click(close_button))
-close_button.bind("<ButtonRelease-1>", lambda event: on_button_release(close_button)) 
+close_button.bind("<ButtonRelease-1>", lambda event: on_button_release(close_button))
 
 # 运行窗口
 window.mainloop()
