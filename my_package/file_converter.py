@@ -148,7 +148,7 @@ def convert_file(input_file_path, output_file_path, output_folder):
     elif input_ext in ['.jpg', '.jpeg', '.png'] and output_ext == '.pdf':
         images_to_pdf([input_file_path], output_file_path, output_folder)
     elif input_ext in ['.jpg', '.jpeg', '.png'] and output_ext == '.docx':
-        images_to_docx([input_file_path], output_file_path, output_folder)         
+        images_to_docx([input_file_path], output_file_path, output_folder)
     elif input_ext == '.txt' and output_ext == '.docx':
         txt_to_docx(input_file_path, output_file_path, output_folder)
     else:
