@@ -260,7 +260,6 @@ def main():
         print(f"CSV文件内容:\n{file_contents}")
 
     elif file_type == FILE_TYPE_XLSX:
-        elif file_type == FILE_TYPE_XLSX:
         file_contents = read_xlsx(file_path)
         print(f"Excel文件内容:\n{file_contents}")
         export_data = input("请输入要导出的数据 (使用逗号分隔): ")
