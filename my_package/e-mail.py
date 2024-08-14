@@ -43,7 +43,7 @@ class Plugin():
         print(message)        
         
     def switch_account(self, index):
-        if 0 <= index < len(self.config["accounts"]:
+        if 0 <= index < len(self.config["accounts"]):
             self.current_account_index = index
             self.update_account_info()
             print(f"已切换到账户: {self.email}")
