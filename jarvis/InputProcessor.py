@@ -1,7 +1,7 @@
 from my_package import Logging
 from jarvis import takecommand
 
-logging = Logging.getLogger(_name_)
+logging = Logging.getLogger(__name__)
 
 class InputProcessor:
     def __init__(self):
