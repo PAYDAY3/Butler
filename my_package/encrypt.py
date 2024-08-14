@@ -43,7 +43,7 @@ def process_directory(directory, key, encrypt=True):
                 decrypt_file(file_path, key)
 
 if __name__ == "__main__":
-    input_processor = InputProcessor()
+    input_processor = InputProcessor.InputProcessor()
     key = generate_key()
     print(f"生成的密钥: {key.hex()}")
 
