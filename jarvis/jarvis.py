@@ -177,14 +177,6 @@ def takecommand():
                 print("Recognizing...")  # 识别中...
                 query = recognizer.recognize_sphinx(audio, language='zh-CN')
                 print('User: ' + query + '\n')
-                # 检查是否为 "运行文件" 命令
-                if "运行文件" in query:
-                    file_name = query.replace("运行 ", "").strip()
-                    # 使用 subprocess.run 执行文件
-                    subprocess.run([file_name])
-                    return None
-                else:
-                    return query
             except sr.UnknownValueError:
                 print("对不起，我没有听清楚，请再说一遍。")
                 speak("对不起，我没有听清楚，请再说一遍。")
