@@ -35,6 +35,8 @@ def confirm_action(action, url, save_folder):
             import webbrowser
             webbrowser.open(url)
 
+    root.destroy()  
+
 def scan_qr_code(save_folder):
     cap = cv2.VideoCapture(0)  # 初始化网络摄像头
 
@@ -44,8 +46,7 @@ def scan_qr_code(save_folder):
             break
         
         detector = cv2.QRCodeDetector()
-        data, bbox, _ = detector(frame)
-
+        data, bbox, _ = detector.detectAndDecode(frame)
         if bbox is not None:
             for i in range(len(bbox)):
                 cv2.line(frame, tuple(bbox[i][0]), tuple(bbox[(i + 1) % 4][0]), (255, 0, 0), 3)
