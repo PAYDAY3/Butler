@@ -20,7 +20,7 @@ def pytesseract_get_text(img):
     if pytesseract == None:
         raise ImportError("pytesseract模块无法导入.")
 
-    result = pytesseract.image_to_string(img) 
+    result = pytesseract.image_to_string(img)
     return result
 
 
@@ -38,7 +38,7 @@ def pytesseract_get_text_bounding_boxes(img):
     boxes = []
 
     # 根据其中一个属性列表的长度遍历检测到的框的数量
-    for i in range(len(d["text"])): 
+    for i in range(len(d["text"])):
         # 对于每个框，用您感兴趣的属性创建一个字典
         box = {
             "text": d["text"][i],

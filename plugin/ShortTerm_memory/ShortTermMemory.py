@@ -10,7 +10,7 @@ SYSTEM_DATA_PATH = "./data/system_data"
 # 默认集合名称
 DEFAULT_COLLECTION_NAME = "short_term_memory_collection"
 # 数据库文件名称
-DATABASE_FILE_NAME = "short_term_memory.db" 
+DATABASE_FILE_NAME = "short_term_memory.db"
 
 class ShortTermMemoryItem:
     def __init__(self, id: str, content: str, metadata: Dict[str, str]):

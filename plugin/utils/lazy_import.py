@@ -13,7 +13,7 @@ def lazy_import(name, optional=True):
         if optional:
             return None  # 如果模块是可选的，不要引发错误
         else:
-            raise ImportError(f"Module '{name}' cannot be found") 
+            raise ImportError(f"Module '{name}' cannot be found")
 
     # 使用LazyLoader延迟模块的加载
     loader = importlib.util.LazyLoader(spec.loader)
