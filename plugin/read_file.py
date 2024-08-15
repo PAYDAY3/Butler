@@ -59,7 +59,8 @@ class ReadFilePlugin(AbstractPlugin):
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
-            return PluginResult.new(result=None, need_call_brain=True, success=True,
+            # 返回读取的文件内容
+            return PluginResult.new(result=content, need_call_brain=True, success=True,
                                     metadata={'file_path': file_path})
         except FileNotFoundError:
             return PluginResult.new(result=None, need_call_brain=False, success=False,

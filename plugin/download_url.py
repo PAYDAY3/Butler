@@ -46,40 +46,37 @@ class DownloadURLPlugin(AbstractPlugin):
             "required": ["url"],
         }
 
-    def run(self, takecommand, args: dict) -> PluginResult:
-        # 设置ChromeOptions以启动headless浏览器
-        chrome_options = Options()
-        chrome_options.add_argument("--headless")
-        chrome_options.add_argument("--disable-gpu")
-
-        # 需要本地安装了chromeDriver
-        driver = webdriver.Chrome(options=chrome_options)
+    def run(self, takecommand: str, args: dict) -> PluginResult:
+        urt = args.get("url")
+        if not url:
+            return PluginResult.new(
+                result=None, need_call_brain=False, success=False, 
+                error_message="缺少url参数"
+            )
 
         try:
-            # 最长等待时间（秒），等待页面加载完成
-            wait_time = 10
-            driver.get(args['url'])
-
-            # 使用WebDriverWait等待页面加载完成
-            WebDriverWait(driver, wait_time).until(EC.visibility_of_all_elements_located((By.TAG_NAME, 'body')))
-
-            # 获取页面内容
-            page_content = driver.page_source
-
-            # 使用BeautifulSoup解析HTML
-            soup = BeautifulSoup(page_content, 'html.parser')
-
-            # 找到页面中的所有文本内容
-            text_content = soup.get_text()
-            file_name = "download_url-{}.txt".format(str(int(time.time())))
+            # 使用 requests 下载网页内容
+            response = requests.get(url)
+            response.raise_for_status()  # 检查请求是否成功
+            # 将内容保存到文件中
+            file_name = f"download_url-{int(time.time())}.txt"
             file_path = os.path.abspath(os.path.join(system_config.TEMP_DIR_PATH, file_name))
-            with open(file_path, "w") as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(text_content)
 
-        finally:
-            # 关闭浏览器
-            driver.quit()
+            return PluginResult.new(
+                result=f"我已将该网页的内容下载到文件【{file_path}】中。你应该优先考虑使用【文档问答】接口直接进行特定问题的问答。",
+                need_call_brain=True,
+                success=True
+            )
+        except requests.RequestException as e:
+            return PluginResult.new(
+            result=None, need_call_brain=False, success=False, 
+            error_message=f"下载网页时出错: {str(e)}"
+        )
 
-        return PluginResult.new(
-            result=f"我以将该网页的内容下载到文件【{file_path}】中。你应该优先考虑使用【文档问答】接口直接进行特定问题的问答。",
-            need_call_brain=True)
+        except Exception as e:
+            return PluginResult.new(
+            result=None, need_call_brain=False, success=False, 
+            error_message=f"处理网页时出错: {str(e)}"    
+            )
