@@ -6,7 +6,7 @@ from docx import Document
 from docx.shared import Inches
 import pypandoc
 from fpdf import FPDF
-from jarvis.jarvis import process_voice_input, process_text_input
+from jarvis import InputProcessor
 
 def rotate_image(image):
     """逆时针旋转图像90度"""
@@ -20,6 +20,14 @@ def save_to_folder(output_file_path, output_folder):
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
     return os.path.join(output_folder, os.path.basename(output_file_path))
+
+def print_progress_bar(iteration, total, length=40):
+    """打印进度条"""
+    percent = ("{0:.1f}").format(100 * (iteration / float(total)))
+    filled_length = int(length * iteration // total)
+    bar = '█' * filled_length + '-' * (length - filled_length)
+    sys.stdout.write(f'\r|{bar}| {percent}% 完成')
+    sys.stdout.flush()
 
 def process_pdf(input_file_path, output_file_path, output_folder):
     reader = PdfReader(input_file_path)
@@ -45,6 +53,7 @@ def process_pdf(input_file_path, output_file_path, output_folder):
                     page.images[img_index]['data'] = img_buffer.read()
 
         writer.add_page(page)
+        print_progress_bar(i + 1, num_pages) # 更新进度条
     output_file_path = save_to_folder(output_file_path, output_folder)
 
     # 将旋转后的内容写入新的PDF
@@ -81,6 +90,8 @@ def process_docx(input_file_path, output_file_path, output_folder):
             shape._inline.graphic.graphicData.pic.blipFill.blip.embed._part = None
             shape._inline.graphic.graphicData.pic.blipFill.blip.embed = None
             shape._inline.graphic.graphicData.pic.blipFill.blip.embed._part = doc.add_picture(img_path, width=Inches(2))
+
+        print_progress_bar(i + 1, num_shapes)  # 更新进度条
             
     output_file_path = save_to_folder(output_file_path, output_folder)
     doc.save(output_file_path)
@@ -115,6 +126,7 @@ def images_to_pdf(image_paths, output_pdf_path):
         pdf.image(rotated_image_path, x=10, y=10, w=pdf.w - 20)
         
         os.remove(rotated_image_path)
+        print_progress_bar(i + 1, num_images)
 
     pdf.output(output_pdf_path)
     print(f"Converted images to {output_pdf_path}")
@@ -131,7 +143,7 @@ def images_to_docx(image_paths, output_docx_path):
         doc.add_picture(rotated_image_path, width=Inches(6))  # Adjust width as needed
         
         os.remove(rotated_image_path)
-    
+        print_progress_bar(i + 1, num_images)  
     doc.save(output_docx_path)
     print(f"Converted images to {output_docx_path}")
         
@@ -175,11 +187,12 @@ def convert_with_pandoc(input_file_path, output_file_path):
     
 def file_converter():
     mode = 'voice'  # 默认语音输入模式
+    inputProcessor = InputProcessor()
     while True:
         if mode == 'voice':
-            command = process_voice_input()
+            command = inputProcessor.process_voice_input()
         elif mode == 'text':
-            command = process_text_input()
+            command = inputProcessor.process_text_input()
 
         # 检查命令是否要切换模式
         if command == '1' and mode == 'voice':

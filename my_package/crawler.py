@@ -5,7 +5,6 @@ import redis
 from bs4 import BeautifulSoup
 import os
 import concurrent.futures
-from tqdm import tqdm
 import argparse
 import urlparse
 import Logging
@@ -100,6 +99,13 @@ def search_and_crawl_images(search_query):
         return False  # 返回False表示失败
     return True  # 返回True表示成功
 
+def rint_progress_bar(iteration, total, length=40):
+    percent = ("{0:.1f}").format(100 * (iteration / float(total)))
+    filled_length = int(length * iteration // total)
+    bar = '█' * filled_length + '-' * (length - filled_length)
+    sys.stdout.write(f'\r|{bar}| {percent}% 完成')
+    sys.stdout.flush()
+
 def crawl_website(start_url, max_depth):
     while url_queue:
         url = url_queue.pop(0)
@@ -115,12 +121,14 @@ def crawl_website(start_url, max_depth):
                 if link not in visited_urls:
                     url_queue.append(link)
             images = [img.get('src') for img in soup.find_all('img')]
+            print_progress_bar(0, len(images))   
             with concurrent.futures.ThreadPoolExecutor() as executor:
-                for image_url in tqdm(images, desc="下载"):
-                    executor.submit(download_image, image_url, os.path.basename(image_url))
-            time.sleep(delay_time + random.random())
+                futures = [executor.submit(download_image, image_url, os.path.basename(image_url)) for image_url in images]
+                for i,future in enumerate(concurrent.futures.as_completed(futures)):
+                    print_progress_bar(i + 1, len(images))
+                time.sleep(delay_time + random.random())
         except requests.RequestException as e:
-            logging.error(f"Failed to crawl {url}: {e}")
+            logging.error(f"爬取 {url} 失败: {e}")
         if len(visited_urls) >= max_depth:
             break
     redis_client.set('crawler_state', str(len(visited_urls)))
