@@ -29,6 +29,24 @@ def print_progress_bar(iteration, total, length=40):
     sys.stdout.write(f'\r|{bar}| {percent}% 完成')
     sys.stdout.flush()
 
+def convert_image_format(input_image_path, output_image_path):
+    """将图片格式从一种转换为另一种"""
+    image = Image.open(input_image_path)
+    output_folder = os.path.dirname(output_image_path)
+    output_file_path = save_to_folder(output_image_path, output_folder)
+
+    # 检查输入和输出文件的扩展名
+    input_ext = os.path.splitext(input_image_path)[1].lower()
+    output_ext = os.path.splitext(output_image_path)[1].lower()
+
+    # 如果需要转换格式，就保存为新的格式
+    if input_ext != output_ext:
+        image = rotate_image(image)
+        image.save(output_file_path)
+        print(f"已将 {input_image_path} 转换为 {output_file_path}")
+    else:
+        print(f"输入和输出格式相同，无需转换：{input_ext}")
+
 def process_pdf(input_file_path, output_file_path, output_folder):
     reader = PdfReader(input_file_path)
     writer = PdfWriter()
@@ -163,6 +181,8 @@ def convert_file(input_file_path, output_file_path, output_folder):
         images_to_docx([input_file_path], output_file_path, output_folder)
     elif input_ext == '.txt' and output_ext == '.docx':
         txt_to_docx(input_file_path, output_file_path, output_folder)
+    elif input_ext in ['.jpg', '.jpeg', '.png', '.bmp', '.tiff'] and output_ext in ['.jpg', '.jpeg', '.png', '.bmp', '.tiff']:
+        convert_image_format(input_file_path, output_file_path)
     else:
         convert_with_pandoc(input_file_path, output_file_path, output_folder)
 
@@ -211,6 +231,8 @@ def file_converter():
         if "处理pdf" in command:
             convert_file(input_file, output_file, output_folder)
         elif "处理docx" in command:
+            convert_file(input_file, output_file, output_folder)
+        elif "转换图片" in command:
             convert_file(input_file, output_file, output_folder)
         else:
             print("无法识别的命令，请重试。")
