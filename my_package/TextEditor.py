@@ -118,24 +118,19 @@ def find_file(file_name):
         logger.error(f"查找文件出错：{e}")
         return []
 
-def open_image_file(file_path):
-    """打开并显示图像文件。"""
+def open_file(file_path):
+    """根据文件类型打开文件（图片或文本）。"""
     try:
-        image = Image.open(file_path)
-        image.show()
-        logger.info(f"打开图片文件：{file_path}")
+        # 检查文件扩展名
+        ext = os.path.splitext(file_path)[-1].lower()
+        if ext in ['.png', '.jpg', '.jpeg', '.bmp', '.gif']:
+            open_image_file(file_path)
+        elif ext in ['.txt', '.json', '.log', '.xml']:
+             open_text_file(file_path)
+        else:
+            logger.warning(f"不支持的文件类型：{ext}")
     except Exception as e:
-        logger.error(f"打开 {file_path} 图片文件出错：{e}")
-
-def open_text_file(file_path):
-    """打开并读取文本文件。"""
-    try:
-        with open(file_path, "r") as file:
-            content = file.read()
-            print(content)
-        logger.info(f"打开文本文件：{file_path}")
-    except Exception as e:
-        logger.error(f"打开 {file_path} 文本文件出错：{e}")
+        logger.error(f"打开文件 {file_path} 时出错：{e}")
 
 def delete_file(file_path):
     """删除指定路径的文件。"""
@@ -217,68 +212,65 @@ def paste_file(src_file, dest_folder):
 # 命令处理
 def process_command(command):
     """处理收到的命令。"""
-    if "保存文件" in command:
-        filename = command.split("保存文件")[-1].strip()
+    if "保存" in command:
+        filename = command.split("保存")[-1].strip()
         content = input("请输入文本内容：")
         save_text_file(filename, content)
-    elif "查找文件" in command:
-        filename = command.split("查找文件")[-1].strip()
+    elif "查找" in command:
+        filename = command.split("查找")[-1].strip()
         find_file(filename)
-    elif "删除文件" in command:
-        filename = command.split("删除文件")[-1].strip()
+    elif "删除" in command:
+        filename = command.split("删除")[-1].strip()
         delete_file(filename)
-    elif "打开图片" in command:
-        filename = command.split("打开图片")[-1].strip()
-        open_image_file(filename)
-    elif "打开文件" in command:
-        filename = command.split("打开文件")[-1].strip()
-        open_text_file(filename)
-    elif "创建文件夹" in command:
-        folder_path = command.split("创建文件夹")[-1].strip()
+    elif "打开" in command:
+        filename = command.split('打开')[-1].strip()
+        open_file(filename)
+    elif "创建" in command:
+        folder_path = command.split("创建")[-1].strip()
         create_folder(folder_path)
-    elif "删除文件夹" in command:
-        folder_path = command.split("删除文件夹")[-1].strip()
+    elif "删除" in command:
+        folder_path = command.split("删除")[-1].strip()
         delete_folder(folder_path)
-    elif "查看文件夹" in command:
-        folder_path = command.split("查看文件夹")[-1].strip()
+    elif "查看" in command:
+        folder_path = command.split("查看")[-1].strip()
         list_folder(folder_path)
-    elif "重命名文件" in command:
-        parts = command.split("重命名文件")
+    elif "重命" in command:
+        parts = command.split("重命")
         if len(parts) < 2:
             logger.warning("请提供文件路径和新的文件名。")
         else:
             src_file, new_name = map(str.strip, parts[1].split("为"))
             rename_file(src_file, new_name)
-    elif "复制文件" in command:
-        parts = command.split("复制文件")
+    elif "复制" in command:
+        parts = command.split("复制")
         if len(parts) < 2:
             logger.warning("请提供源文件路径和目标文件夹路径。")
         else:
             src_file, dest_folder = map(str.strip, parts[1].split("到"))
             copy_file(src_file, dest_folder)
-    elif "移动文件" in command:
-        parts = command.split("移动文件")
+    elif "移动" in command:
+        parts = command.split("移动")
         if len(parts) < 2:
             logger.warning("请提供源文件路径和目标文件夹路径。")
         else:
             src_file, dest_folder = map(str.strip, parts[1].split("到"))
             move_file(src_file, dest_folder)
-    elif "粘贴文件" in command:
-        parts = command.split("粘贴文件")
+    elif "粘贴" in command:
+        parts = command.split("粘贴")
         if len(parts) < 2:
             logger.warning("请提供源文件路径和目标文件夹路径。")
         else:
             src_file, dest_folder = map(str.strip, parts[1].split("到"))
             paste_file(src_file, dest_folder)
-    elif "压缩文件" in command:
-        parts = command.split("压缩文件")
+    elif "压缩" in command:
+        parts = command.split("压缩")
         if len(parts) < 2:
             logger.warning("请提供文件路径和ZIP文件名。")
         else:
             file_path, zip_path = map(str.strip, parts[1].split("到"))
             Zip.create_zip(file_path, zip_path)
-    elif "解压文件" in command:
-        parts = command.split("解压文件")
+    elif "解压" in command:
+        parts = command.split("解压")
         if len(parts) < 2:
             logger.warning("请提供ZIP文件名和目标路径。")
         else:
