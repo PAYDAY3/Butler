@@ -23,7 +23,7 @@ from functools import lru_cache
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
-from thread import process_tasks
+from my_package.thread import process_tasks
 import binary_extensions
 from my_package.TextEditor import TextEditor
 from my_package.virtual_keyboard import VirtualKeyboard
