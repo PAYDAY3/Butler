@@ -1,9 +1,9 @@
 import os
 import shutil
-import logging
+from my_package import Logging
 
 # 设置日志记录
-logging.basicConfig(filename='quarantine.log', level=logging.INFO, format='%(asctime)s - %(message)s')
+logging = Logging.getLogger(__name__)
 
 def load_file_list(file_list_path):
     """加载文件名列表"""

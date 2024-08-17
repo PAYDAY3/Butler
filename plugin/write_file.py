@@ -1,12 +1,14 @@
-import logging
 import os
 import time
 
+from my_package import Logging
 from plugin.plugin_interface import AbstractPlugin, PluginResult
 from jarvis.jarvis import takecommand
 
 TEMP_DIR_PATH = "./temp"
 
+logger = Logging.getLogger(__name__
+)
 class WriteFilePlugin(AbstractPlugin):
     def valid(self) -> bool:
         return True
@@ -14,7 +16,7 @@ class WriteFilePlugin(AbstractPlugin):
     def __init__(self):
         self._logger = None
 
-    def init(self, logger: logging.Logger):
+    def init(self, logger):
         self._logger = logger
 
     def get_name(self):

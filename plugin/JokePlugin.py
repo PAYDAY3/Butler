@@ -3,8 +3,7 @@ import random
 import time
 from my_package import Logging
 from plugin.plugin_interface import AbstractPlugin, PluginResult
-from jarvis.jarvis import takecommand
-from jarvis.jarvis import speak 
+from jarvis.jarvis import takecommand, speak
 
 logging = Logging.getLogger(__name__)
 

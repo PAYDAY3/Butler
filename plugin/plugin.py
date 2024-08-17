@@ -96,7 +96,7 @@ def process_command(command: str):
 def plugin():
     """主函数，处理语音和文字输入，默认语音输入。"""
     use_text_input = False  # 默认使用语音输入
-    input_processor = InputProcessor()
+    input_processor = InputProcessor.InputProcessor()
     while True:
         if not use_text_input:
             # 语音输入模式

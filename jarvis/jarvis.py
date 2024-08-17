@@ -29,7 +29,7 @@ from my_package.TextEditor import TextEditor
 from my_package.virtual_keyboard import VirtualKeyboard
 from my_package import Logging
 from my_package.schedule_management import schedule_management
-from CommandPanel import CommandPanel
+from jarvis.CommandPanel import CommandPanel
 import transformers
 from transformers import T5Tokenizer, T5ForConditionalGeneration
 import torch

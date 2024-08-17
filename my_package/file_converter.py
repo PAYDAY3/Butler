@@ -207,7 +207,7 @@ def convert_with_pandoc(input_file_path, output_file_path):
     
 def file_converter():
     mode = 'voice'  # 默认语音输入模式
-    inputProcessor = InputProcessor()
+    inputProcessor = InputProcessor.InputProcessor()
     while True:
         if mode == 'voice':
             command = inputProcessor.process_voice_input()

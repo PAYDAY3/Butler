@@ -9,7 +9,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 
 from plugin.plugin_interface import AbstractPlugin, PluginResult
-from config import system_config
 from jarvis.jarvis import takecommand
 
 TEMP_DIR_PATH = "./temp"

@@ -15,7 +15,7 @@ class AddLongMemoryPlugin(AbstractPlugin):
     def __init__(self):
         self._logger = None
 
-    def init(self, logger: logging.Logger):
+    def init(self, logger):
         self._logger = logger
 
     def get_name(self):
