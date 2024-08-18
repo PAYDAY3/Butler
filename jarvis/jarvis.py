@@ -3,7 +3,7 @@ import sys
 import time
 import importlib
 import importlib.util
-import speech_recognition as sr
+#import speech_recognition as sr
 import pygame
 import time
 import json
@@ -22,6 +22,7 @@ import concurrent.futures
 from functools import lru_cache
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+import azure.cognitiveservices.speech as speechsdk
 
 from my_package.thread import process_tasks
 import binary_extensions
@@ -147,60 +148,40 @@ model = "my_Snowboy/jarvis.umdl"  # Snowboy 模型文件路径
 
 # 语音识别
 def takecommand():
-    recognizer = sr.Recognizer()   # 初始化语音识别器和文本到语音引擎
-    with sr.Microphone() as source:
-        print("请说话...")
-        recognizer.pause_threshold = 1  # 静态能量阈值
-        recognizer.dynamic_energy_adjustment_damping = 0.15 # 调整阈值的平滑因子
-        recognizer.dynamic_energy_ratio = 1.5  # 阈值调整比率
-        recognizer.operation_timeout = 5  # 最长等待时间（秒）
-        recognizer.energy_threshold = 4000      # 设置音量阈值
-        recognizer.dynamic_energy_threshold = True  # 自动调整音量阈值
-        recognizer.default = model
-        audio = recognizer.listen(source, phrase_time_limit=5)
-        # 将录制的音频保存为临时文件
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as f:
-            audio_file_path = f.name
-            f.write(audio.get_wav_data())
-        return audio_file_path 
-            
-    # 使用 Snowboy 进行唤醒词检测
+    # 替换为你的 Azure 订阅密钥和服务区域
+    speech_key = "your_subscription_key"
+    service_region = "chinaeast2"
+
+    # 配置 Azure 语音服务
+    speech_config.speech_synthesis_language = "zh-CN"
+    speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=service_region)
+    recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config)
+
+    print("请说话...")
+
     try:
-        from my_snowboy.snowboydecoder import HotwordDetector
-        detector = HotwordDetector(model, sensitivity=0.5, audio_gain=1)
-        result = detector.detect(audio_file_path)
-        if result:
-            logging.info("唤醒词检测成功")
-                    
-            # 识别语音
-            try:
-                print("Recognizing...")  # 识别中...
-                query = recognizer.recognize_sphinx(audio, language='zh-CN')
-                print('User: ' + query + '\n')
-            except sr.UnknownValueError:
-                print("对不起，我没有听清楚，请再说一遍。")
-                speak("对不起，我没有听清楚，请再说一遍。")
-                return None
-            except sr.RequestError as error:
-                print(f"语音识别请求出错：{error}")
-                logging.error(f"语音识别请求出错：{error}")
-                return ""
-            except Exception as e:
-                print(f"语音识别出错: {e}")
-                logging.error(f"语音识别出错: {e}")
-                return None
-        else:
-            print("没有检测到唤醒词")
-            logging.info("没有检测到唤醒词")
+        # 开始语音识别
+        result = recognizer.recognize_once()
+
+        # 处理识别结果
+        if result.reason == speechsdk.ResultReason.RecognizedSpeech:
+            query = result.text
+            print('User: ' + query + '\n')
+            return query
+        elif result.reason == speechsdk.ResultReason.NoMatch:
+            print("对不起，我没有听清楚，请再说一遍。")
             return None
+        elif result.reason == speechsdk.ResultReason.Canceled:
+            cancellation_details = result.cancellation_details
+            print(f"语音识别取消: {cancellation_details.reason}")
+            if cancellation_details.reason == speechsdk.CancellationReason.Error:
+                print(f"错误详情: {cancellation_details.error_details}")
+            return None
+
     except Exception as e:
-        print(f"Snowboy 检测出错: {e}")
-        logging.error(f"Snowboy 检测出错: {e}")
-        return None 
-    finally:
-        # 确保临时文件被删除
-        if os.path.exists(audio_file_path):
-            os.remove(audio_file_path)
+        print(f"语音识别出错: {e}")
+        logging.error(f"语音识别出错: {e}")
+        return None    
 
 # 创建 Snowboy 监听器
 detector = snowboydecoder.HotwordDetector(model, sensitivity=0.5, audio_gain=1)

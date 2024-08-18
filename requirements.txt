@@ -1,5 +1,4 @@
-SpeechRecognition
-PocketSphinx
+
 pyttsx3
 pydub
 playsound
@@ -37,3 +36,4 @@ scrapy
 Crypto
 schedule
 twisted>=24.7.0rc1 # not directly required, pinned by Snyk to avoid a vulnerability
+azure-cognitiveservices-speech
