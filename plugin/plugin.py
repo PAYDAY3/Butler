@@ -18,20 +18,12 @@ plugins_to_manage = {
         "takecommand": "查询时间",
         "args": {}
     },
-    "AccountPasswordPlugin": {
-        "takecommand": "保存账号",
-        "args": {}
-    },
-    "AccountPasswordPluginRetrieve": {
-        "takecommand": "检索账号",
-        "args": {}
-    },
     "CountdownPlugin": {
         "takecommand": "倒计时",
         "args": {}
     },
     "FileSearchPlugin": {
-        "takecommand": ["搜索", "搜索一下"], #文件搜索
+        "takecommand": ["搜索", "搜索一下"], # 文件搜索
         "args": {}
     },
     "JokePlugin": {
@@ -50,7 +42,22 @@ plugins_to_manage = {
         "takecommand": {"添加待办事项", "列出待办事项", "删除待办事项"},
         "args": {}
     },
-    
+    "clear_recent_memory": {
+        "takecommand": {"清理长期记忆"},
+        "args": {}
+    },
+    "downloaded_url": {
+        "takecommand": {"下载网页"},
+        "args": {}
+    },
+    "read_file": {
+        "takecommand": {"读取", "读取文件"},
+        "args": {}
+    },
+    "write_file": {
+        "takecommand": {"写入", "写入文件"},
+        "args": {}
+    },
 }
 
 # 加载所有插件

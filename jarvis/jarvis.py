@@ -356,11 +356,12 @@ def main():
         "文本编辑器": "TextEditor.py",
         "物体识别": "PictureRecognition.py",
         "日程管理": "schedule_management.py",
-        "二维码识别" : "QR-Code-Recognitipy.py",
+        "二维码识别": "QR-Code-Recognitipy.py",
         "网络程序": "network_apy.py",
         "天气预报": "weathpy.py",
         "翻译": "translators.py",
         "文件转换器": "file_converter.py",
+        "帐号登录": "AccountPassword",
         # 继续添加其他命令和程序的映射关系
     }
 
