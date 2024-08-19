@@ -9,11 +9,9 @@ class ClearRecentMemoryPlugin(AbstractPlugin):
     def valid(self) -> bool:
         return True
 
-    def __init__(self):
-        self._logger = None
-
-    def init(self, logger):
-        self._logger = logger
+    #  在 init 方法中初始化类内部的日志记录器
+    def init(self, logging):
+        self.logging = Logging.getLogger(self.name)
 
     def get_name(self):
         return "clear_recent_memory"

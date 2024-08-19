@@ -1,9 +1,9 @@
-import logging
 import sqlite3
 import os
 import threading
 from typing import List, Dict, Optional, Tuple
 from long_memory.long_memory_interface import AbstractLongMemory, LongMemoryItem
+from my_package import Logging
 
 # 系统数据路径
 SYSTEM_DATA_PATH = "./data/system_data"
@@ -15,7 +15,7 @@ DATABASE_FILE_NAME = "long_memory.db"
 class SQLiteLongMemory(AbstractLongMemory):
     def __init__(self, collection_name: str = DEFAULT_COLLECTION_NAME, cache_size: int = 100):
         # 初始化日志记录器
-        self._logger = logging.getLogger(__name__)
+        self._logger = Logging.getLogger(__name__)
         # 初始化集合为 None
         self._conn: Optional[sqlite3.Connection] = None
         # 使用提供的集合名称（或默认值）

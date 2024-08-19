@@ -1,4 +1,4 @@
-import logging
+
 import os
 import time
 from selenium import webdriver
@@ -10,8 +10,11 @@ from bs4 import BeautifulSoup
 
 from plugin.plugin_interface import AbstractPlugin, PluginResult
 from jarvis.jarvis import takecommand
+from my_package import Logging
 
 TEMP_DIR_PATH = "./temp"
+
+logger = Logging.getLogger(__name__)
 
 class DownloadURLPlugin(AbstractPlugin):
     def valid(self) -> bool:
@@ -20,8 +23,8 @@ class DownloadURLPlugin(AbstractPlugin):
     def __init__(self):
         self._logger = None
 
-    def init(self, logger: logging.Logger):
-        self._logger = logger
+    def init(self, logging):
+        self.logger = Logging.getLogger(self.name)
 
     def get_name(self):
         return "download_url"
@@ -62,6 +65,8 @@ class DownloadURLPlugin(AbstractPlugin):
             file_path = os.path.abspath(os.path.join(system_config.TEMP_DIR_PATH, file_name))
             with open(file_path, "w", encoding="utf-8") as f:
                 f.write(text_content)
+            
+            self.logger.info(f"网页内容已下载并保存到 {file_path}")
 
             return PluginResult.new(
                 result=f"我已将该网页的内容下载到文件【{file_path}】中。你应该优先考虑使用【文档问答】接口直接进行特定问题的问答。",
@@ -69,12 +74,14 @@ class DownloadURLPlugin(AbstractPlugin):
                 success=True
             )
         except requests.RequestException as e:
+            self.logger.error(f"下载网页时出错: {str(e)}")
             return PluginResult.new(
             result=None, need_call_brain=False, success=False, 
             error_message=f"下载网页时出错: {str(e)}"
         )
 
         except Exception as e:
+            self.logger.error(f"处理网页时出错: {str(e)}")
             return PluginResult.new(
             result=None, need_call_brain=False, success=False, 
             error_message=f"处理网页时出错: {str(e)}"    

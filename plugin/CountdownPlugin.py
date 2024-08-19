@@ -18,7 +18,7 @@ class CountdownPlugin(AbstractPlugin):
         return True
 
     def init(self, logging):
-        logging.info("倒计时插件已初始化")
+        self.logging = Logging.getLogger(self.name)
 
     def get_name(self):
         return self.name

@@ -1,10 +1,12 @@
 import importlib
-import logging
 import pkgutil
 import inspect
 from abc import ABC, abstractmethod
 from typing import Type, Optional, List, Dict
 from jarvis.jarvis import takecommand
+from my_package import Logging
+
+logger = Logging.getLogger(__name__)
 
 class PluginManager:
     def __init__(self, plugin_package: str):

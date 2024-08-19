@@ -5,15 +5,12 @@ from plugin.plugin_interface import AbstractPlugin, PluginResult
 from long_memory.long_memory_interface import LongMemoryItem
 from jarvis.jarvis import takecommand
 
-logger = Logging.getLogger(_name_)
+logger = Logging.getLogger(__name__)
 
 class AddLongMemoryPlugin(AbstractPlugin):
     def valid(self) -> bool:
         # 功能不成熟，先不开放
         return False
-
-    def __init__(self):
-        self._logger = None
 
     def init(self, logger):
         self._logger = logger
@@ -59,17 +56,25 @@ class AddLongMemoryPlugin(AbstractPlugin):
         self._logger.info("AddLongMemoryPlugin 已恢复")
         
 def run(self, takecommand: str, args: dict) -> PluginResult:
+    self._logger.info("开始处理记忆内容")
     if takecommand is None:
+        self._logger.warning("没有检测到语音指令")
         return PluginResult.new("没有检测到语音指令", need_call_brain=False)
 
     content = args.get('content') 
     if content:
-        item = LongMemoryItem.new(
-            content=content, 
-            metadata={"add_time": time.time()}, 
-            id=str(time.time_ns())
-        )
-        jarvis.long_memory.save([item])
-        return PluginResult.new(result=f"已成功记忆：{content}", need_call_brain=True)
+        try:
+            item = LongMemoryItem.new(
+                content=content, 
+                metadata={"add_time": time.time()}, 
+                id=str(time.time_ns())
+            )
+            jarvis.long_memory.save([item])
+            self._logger.info(f"成功记忆内容: {content}")
+            return PluginResult.new(result=f"已成功记忆：{content}", need_call_brain=True)
+        except Exception as e:
+            self._logger.error(f"记忆内容时出错: {str(e)}")
+            return PluginResult.new(result=f"记忆失败: {str(e)}", need_call_brain=False)
     else:
+        self._logger.warning("记忆内容不能为空")
         return PluginResult.new(result="记忆内容不能为空", need_call_brain=False) 

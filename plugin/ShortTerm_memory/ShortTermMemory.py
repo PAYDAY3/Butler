@@ -1,9 +1,10 @@
-import logging
+
 import sqlite3
 import os
 import threading
 from typing import List, Dict, Optional, Tuple
 from datetime import datetime
+from my_package import Logging
 
 # 短期记忆数据路径
 SYSTEM_DATA_PATH = "./data/system_data"
@@ -25,7 +26,7 @@ class ShortTermMemoryItem:
 
 class SQLiteShortTermMemory:
     def __init__(self, collection_name: str = DEFAULT_COLLECTION_NAME, cache_size: int = 100):
-        self._logger = logging.getLogger(__name__)
+        self._logger = Logging.getLogger(__name__)
         self._conn: Optional[sqlite3.Connection] = None
         self._collection_name = collection_name
         self._cache: Dict[Tuple[str, int, Optional[frozenset]], List[ShortTermMemoryItem]] = {}
