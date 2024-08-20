@@ -14,6 +14,7 @@ import tkinter as tk
 from tkinter import messagebox
 from pydub import AudioSegment
 from pydub.playback import play
+import openai
 from my_snowboy.snowboydecoder import HotwordDetector
 #临时文件
 import shutil
@@ -31,42 +32,29 @@ from my_package.virtual_keyboard import VirtualKeyboard
 from my_package import Logging
 from my_package.schedule_management import schedule_management
 from jarvis.CommandPanel import CommandPanel
-import transformers
-from transformers import T5Tokenizer, T5ForConditionalGeneration
-import torch
 
-t5_model = "./model"
-# 加载T5模型和tokenizer
-tokenizer = T5Tokenizer.from_pretrained(t5_model)
-model = T5ForConditionalGeneration.from_pretrained(t5_model)
+# OpenAI API密钥
+openai.api_key = "YOUR_OPENAI_API_KEY"
 
 def preprocess(text):
-    # 使用 T5Tokenizer 对输入进行编码
-    inputs = tokenizer.encode_plus(
-        text,
-        add_special_tokens=True,
-        max_length=512,
-        padding='max_length',
-        return_tensors='pt',
-        truncation=True
-    )
-    return inputs['input_ids'], inputs['attention_mask']
+    # 使用 OpenAI API 对输入进行编码
+    inputs = openai.Completion.create(
+        prompt=text,
+        max_tokens=512,
+        stop=None,
+        temperature=0
+    )['choices'][0]['text']
+    return inputs
 
 def generate_response(text):
-    input_ids, attention_mask = preprocess(text)
-    
-    # 使用T5模型生成响应
-    with torch.no_grad():
-        outputs = model.generate(
-            input_ids=input_ids,
-            attention_mask=attention_mask,
-            max_length=150,  # 你可以根据需要调整生成的最大长度
-            num_beams=5,  # 调整为适当的beam search大小
-            early_stopping=True
-        )
-    
-    # 解码生成的文本
-    response = tokenizer.decode(outputs[0], skip_special_tokens=True)
+    input_ids = preprocess(text)
+                                                        
+    # 使用 OpenAI API 生成响应
+    response = openai.Completion.create(
+        prompt=input_ids,
+        max_tokens=150,
+        temperature=0.5
+    )['choices'][0]['text']
     return response
 
 # 对话提示
@@ -77,18 +65,9 @@ while True:
     user_input = input(">>> ")
     if user_input.lower() in ["退出", "结束"]:
         break
-    # 根据分类结果，调用相应的功能程序
-    if predicted_class in function_mapping:
-        function_mapping[predicted_class]()    
     response = generate_response(user_input)
     print("Chatbot:", response)
     
-def get_response(user_input):
-    input_ids, attention_mask = preprocess(user_input)
-    outputs = model(input_ids, attention_mask=attention_mask)
-    logits = outputs[0]
-    predicted_class = torch.argmax(logits, dim=1).item()
-    return predicted_class
     
 # 定义音频文件路径
 JARVIS_AUDIO_FILE = "./my_snowboy/resources/jarvis.wav"
