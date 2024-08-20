@@ -15,7 +15,7 @@ from tkinter import messagebox
 from pydub import AudioSegment
 from pydub.playback import play
 import openai
-from snowboy.snowboydecoder import HotwordDetector
+from snowboy import snowboydecoder
 #临时文件
 import shutil
 import tempfile

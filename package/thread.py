@@ -2,7 +2,7 @@ import threading
 import queue
 import os
 import time
-from package.Logging import getLogger, readLog
+from package import Logging
 from concurrent.futures import ThreadPoolExecutor
 
 logging = Logging.getLogger(__name__)

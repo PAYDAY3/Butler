@@ -2,7 +2,7 @@ import os
 import shutil
 import datetime
 import logging
-from package.Logging import getLogger,readLog
+from package import Logging
 from pathlib import Path
 
 logging = Logging.getLogger(__name__)

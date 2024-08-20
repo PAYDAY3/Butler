@@ -2,7 +2,7 @@ import json
 import os
 import time
 import shutil
-import Logging
+from package import Logging
 from PIL import Image
 import speech_recognition as sr
 from jarvis.jarvis import takecommand

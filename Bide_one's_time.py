@@ -1,4 +1,4 @@
-from snowboy.snowboydecoder import snowboydecoder
+from snowboy import snowboydecoder
 from package import Logging
 import os
 import time

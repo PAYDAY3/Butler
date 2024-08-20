@@ -1,5 +1,5 @@
 import azure.cognitiveservices.speech as speechsdk
-from my_package import Logging
+from package import Logging
 
 logging = Logging.getLogger(__name__)
 
