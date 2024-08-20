@@ -1,4 +1,4 @@
-from my_package import Logging
+from package import Logging
 from abc import ABCMeta, abstractmethod
 from jarvis.jarvis import takecommand
 from datetime import datetime

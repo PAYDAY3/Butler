@@ -5,7 +5,7 @@ import sys
 from getpass import getpass
 import bcrypt
 from jarvis.jarvis import takecommand # 语音识别
-from my_package import Logging
+from package import Logging
 
 logging = Logging.getLogge(__naneme__)
 

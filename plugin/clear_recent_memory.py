@@ -1,4 +1,4 @@
-from my_package import Logging
+from package import Logging
 
 from plugin.plugin_interface import AbstractPlugin, PluginResult
 from jarvis.jarvis import takecommand

@@ -1,6 +1,6 @@
 import os
 import shutil
-from my_package import Logging
+from package import Logging
 
 # 设置日志记录
 logging = Logging.getLogger(__name__)

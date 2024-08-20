@@ -3,7 +3,7 @@ import os
 import threading
 from typing import List, Dict, Optional, Tuple
 from long_memory.long_memory_interface import AbstractLongMemory, LongMemoryItem
-from my_package import Logging
+from package import Logging
 
 # 系统数据路径
 SYSTEM_DATA_PATH = "./data/system_data"

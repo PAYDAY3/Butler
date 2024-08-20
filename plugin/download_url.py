@@ -10,7 +10,7 @@ from bs4 import BeautifulSoup
 
 from plugin.plugin_interface import AbstractPlugin, PluginResult
 from jarvis.jarvis import takecommand
-from my_package import Logging
+from package import Logging
 
 TEMP_DIR_PATH = "./temp"
 

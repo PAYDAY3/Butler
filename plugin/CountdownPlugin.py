@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from my_package import Logging
+from package import Logging
 from abc import ABCMeta, abstractmethod
 from jarvis.jarvis import takecommand,speak
 from datetime import datetime

@@ -1,11 +1,11 @@
-from my_snowboy.snowboydecoder import snowboydecoder
-from my_package import Logging
+from snowboy.snowboydecoder import snowboydecoder
+from package import Logging
 import os
 import time
 import subprocess  # 导入 subprocess 库
 
 # 设置 Snowboy 模型路径
-MODEL_PATH = "your_model_path/your_model.pmdl"
+MODEL_PATH = "snowboy/jarvis.pmdl"
 
 # 设置要运行的文件路径
 FILE_TO_RUN = "jarvis.py" 

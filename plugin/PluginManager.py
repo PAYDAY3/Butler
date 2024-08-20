@@ -4,7 +4,7 @@ import inspect
 from abc import ABC, abstractmethod
 from typing import Type, Optional, List, Dict
 from jarvis.jarvis import takecommand
-from my_package import Logging
+from package import Logging
 
 logger = Logging.getLogger(__name__)
 

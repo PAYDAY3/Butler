@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox
-from my_package import Logging
+from package import Logging
 from plugin_manager import PluginManager
 from jarvis.jarvis import takecommand, speak
 from jarvis.CommandPanel import CommandPanel

@@ -15,7 +15,7 @@ from tkinter import messagebox
 from pydub import AudioSegment
 from pydub.playback import play
 import openai
-from my_snowboy.snowboydecoder import HotwordDetector
+from snowboy.snowboydecoder import HotwordDetector
 #临时文件
 import shutil
 import tempfile
@@ -25,12 +25,12 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import azure.cognitiveservices.speech as speechsdk
 
-from my_package.thread import process_tasks
+from package.thread import process_tasks
 import binary_extensions
-from my_package.TextEditor import TextEditor
-from my_package.virtual_keyboard import VirtualKeyboard
-from my_package import Logging
-from my_package.schedule_management import schedule_management
+from package.TextEditor import TextEditor
+from package.virtual_keyboard import VirtualKeyboard
+from package import Logging
+from package.schedule_management import schedule_management
 from jarvis.CommandPanel import CommandPanel
 
 # OpenAI API密钥

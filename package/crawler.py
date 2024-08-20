@@ -7,7 +7,7 @@ import os
 import concurrent.futures
 import argparse
 import urlparse
-import Logging
+from package import Logging
 from urllib.parse import urlparse, urljoin
 from scrapy.crawler import CrawlerProcess
 from scrapy.utils.project import get_project_settings
