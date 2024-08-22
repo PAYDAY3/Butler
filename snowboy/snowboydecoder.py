@@ -6,7 +6,7 @@ from . import snowboydetect
 import time
 import wave
 import os
-from my_package.Logging import Logging
+from package import Logging
 from ctypes import *
 from contextlib import contextmanager
 
