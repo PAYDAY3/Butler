@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-
+import logging
+import pyaudio
 import collections
 import sounddevice as sd
 from . import snowboydetect
@@ -20,7 +21,10 @@ DETECT_DING = os.path.join(TOP_DIR, "resources/ding.wav")
 DETECT_DONG = os.path.join(TOP_DIR, "resources/dong.wav")
 
 def py_error_handler(filename, line, function, err, fmt):
-    pass
+    error_message = (f"ALSA Error in file {filename.decode()}, line {line}, "
+                     f"function {function.decode()}: error code {err}, "
+                     f"message: {fmt.decode().strip()}")
+    logger.error(error_message)
 
 ERROR_HANDLER_FUNC = CFUNCTYPE(None, c_char_p, c_int, c_char_p, c_int, c_char_p)
 
@@ -109,8 +113,10 @@ class HotwordDetector(object):
 
         def audio_callback(indata, outdata, frames, time, status):
             self.ring_buffer.extend(indata)
-            play_data = chr(0) * len(indata)
-            return play_data, pyaudio.paContinue
+            # 确保play_data被正确处理
+            outdata[:] = b'\x00' * len(outdata)
+            # play_data = chr(0) * len(indata)
+            # return play_data, pyaudio.paContinue
 
         with no_alsa_error():
             self.audio = sd.Stream(samplerate=self.detector.SampleRate(), channels=self.detector.NumChannels(), callback=audio_callback)
@@ -206,7 +212,9 @@ class HotwordDetector(object):
         return filename
 
     def terminate(self):
-        self.stream_in.stop_stream()
-        self.stream_in.close()
-        self.audio.stop()
+        # self.stream_in.stop_stream()
+        # self.stream_in.close()
+        if hasattr(self, 'audio'):
+            self.audio.stop()
+            self.audio.stop()
         self._running = False

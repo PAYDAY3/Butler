@@ -5,7 +5,7 @@ import imaplib
 import email
 import time
 import datetime
-import Logging 
+from package import Logging 
 from dateutil import parser
 from email.header import Header
 from email.mime.base import MIMEBase
