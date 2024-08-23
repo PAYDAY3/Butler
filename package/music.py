@@ -90,26 +90,55 @@ def music_player():
                     break
                 else:
                     print("未知命令，请重新输入。")
-                    
+
+    def voice_input_control():
+        global current_song_index
+        while True:
+            try:
+                command = takecommand()
+                if command:
+                    if "播放" in command:
+                        play_music(current_song_index)
+                    elif "下一首" in command:
+                        next_song()
+                    elif "上一首" in command:
+                        previous_song()
+                    elif "搜索" in command:
+                        keyword = command.split("搜索")[-1].strip()
+                        search_song(keyword)
+                    elif "播放列表" in command:
+                        show_playlist()
+                    elif "切换到文字输入模式" in command or command == "1":
+                        print("已切换到文字输入模式")
+                        return
+                    elif "退出" in command:
+                        print("音乐播放器已退出。")
+                        break
+                    else:
+                        print("未知命令，请重新输入。")
+            except Exception as e:
+                print(f"发生错误: {e}")
+                
+    # 初始设置
+    use_voice_input = True
+
     while True:
-        try:
-            command = takecommand()
-            if command:
-                if "播放" in command:
-                    play_music(current_song_index)
-                elif "下一首" in command:
-                    next_song()
-                elif "上一首" in command:
-                    previous_song()
-                elif "搜索" in command:
-                    keyword = command.split("搜索")[-1].strip()
-                    search_song(keyword)
-                elif "播放列表" in command:
-                    show_playlist()
-                elif "退出" in command:
-                    print("音乐播放器已退出。")
-                    break
-                else:
-                    print("未知命令，请重新输入。")
-        except Exception as e:
-            print(f"发生错误: {e}")
+        if use_voice_input:
+            voice_input_control()
+        else:
+            text_input_control()
+
+        # 切换输入模式
+        print("输入 '1' 切换到文字输入模式, 输入 '2' 切换到语音输入模式:")
+        user_input = input().strip()
+        if user_input == "1":
+            use_voice_input = False
+            print("已切换到文字输入模式")
+        elif user_input == "2":
+            use_voice_input = True
+            print("已切换到语音输入模式")
+        else:
+            print("未知命令，请重新输入。")
+
+if __name__ == "__main__":
+    music_player()
