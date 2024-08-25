@@ -17,7 +17,7 @@ CHANNELS = 1
 RATE = 16000
 CHUNK_SIZE = 1024
 
-logging = Logging.getLogger(_name_)
+logging = Logging.getLogger(__name__)
 
 #创建 Snowboy 检测器
 detector = snowboydecoder.HotwordDetector(MODEL_PATH, sensitivity=SENSITIVITY)
