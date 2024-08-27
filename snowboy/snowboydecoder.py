@@ -8,22 +8,21 @@ import time
 import wave
 import os
 from package import Logging
-from ctypes import *
+from ctypes import CFUNCTYPE, c_char_p, c_int, cdll
 from contextlib import contextmanager
+from typing import Callable, List, Optional
 
-logging.basicConfig()
 logger = Logging.getLogger("snowboy")
-logger.setLevel(logging.INFO)
 TOP_DIR = os.path.dirname(os.path.abspath(__file__))
 
-RESOURCE_FILE = os.path.join(TOP_DIR, "resources/common.res")
+RESOURCE_FILE = os.path.join(TOP_DIR, "resources/common.res")  
 DETECT_DING = os.path.join(TOP_DIR, "resources/ding.wav")
 DETECT_DONG = os.path.join(TOP_DIR, "resources/dong.wav")
 
-def py_error_handler(filename, line, function, err, fmt):
-    error_message = (f"ALSA Error in file {filename.decode()}, line {line}, "
-                     f"function {function.decode()}: error code {err}, "
-                     f"message: {fmt.decode().strip()}")
+def py_error_handler(filename: bytes, line: int, function: bytes, err: int, fmt: bytes) -> None:
+    error_message = (f"文件中出现ALSA错误 {filename.decode()}, 行 {line}, "
+                     f"函数 {function.decode()}: 错误代码 {err}, "
+                     f"消息: {fmt.decode().strip()}")
     logger.error(error_message)
 
 ERROR_HANDLER_FUNC = CFUNCTYPE(None, c_char_p, c_int, c_char_p, c_int, c_char_p)
@@ -36,182 +35,152 @@ def no_alsa_error():
         asound = cdll.LoadLibrary('libasound.so')
         asound.snd_lib_error_set_handler(c_error_handler)
         yield
+    except Exception as e:
+        logger.error(f"ALSA 错误处理上下文中发生异常: {e}")
+    finally:
         asound.snd_lib_error_set_handler(None)
-    except:
-        yield
-        pass
 
 class RingBuffer(object):
     """保存音频的环形缓冲区"""
 
-    def __init__(self, size=4096):
+    def __init__(self, size: int = 4096):
         self._buf = collections.deque(maxlen=size)
 
-    def extend(self, data):
+    def extend(self, data: bytes) -> None:
         """将数据添加到缓冲区的末尾"""
         self._buf.extend(data)
 
-    def get(self):
+    def get(self) -> bytes:
         """从缓冲区的开头检索数据并清除它"""
         tmp = bytes(bytearray(self._buf))
         self._buf.clear()
         return tmp
 
 
-def play_audio_file(fname=DETECT_DING):
-    ding_wav = wave.open(fname, 'rb')
-    ding_data = ding_wav.readframes(ding_wav.getnframes())
-    with no_alsa_error():
-        audio = sd.Stream(samplerate=ding_wav.getframerate(), channels=ding_wav.getnchannels(), callback=lambda outdata, frames, time, status: outdata[:len(ding_data)])
-        audio.start()
-        audio.write(ding_data)
-        time.sleep(0.2)
-        audio.stop()
+def play_audio_file(fname: str = DETECT_DING) -> None:
+        with wave.open(fname, 'rb') as ding_wav:
+        ding_data = ding_wav.readframes(ding_wav.getnframes())
+        with no_alsa_error():
+            audio = sd.OutputStream(samplerate=ding_wav.getframerate(), 
+                                    channels=ding_wav.getnchannels())
+            audio.start()
+            audio.write(ding_data)
+            time.sleep(0.2)
+            audio.stop()
 
 class HotwordDetector(object):
-
-    def __init__(self, decoder_model,
-                 resource=RESOURCE_FILE,
-                 sensitivity=[],
-                 audio_gain=1,
-                 apply_frontend=False):
-
-        tm = type(decoder_model)
-        ts = type(sensitivity)
-        if tm is not list:
-            decoder_model = [decoder_model]
-        if ts is not list:
-            sensitivity = [sensitivity]
-        model_str = ",".join(decoder_model)
-
+    def __init__(self, decoder_model: List[str],
+                 resource: str = RESOURCE_FILE,
+                 sensitivity: List[float] = [],
+                 audio_gain: float = 1.0,
+                 apply_frontend: bool = False):
+        from package import snowboydetect
+        
         self.detector = snowboydetect.SnowboyDetect(
-            resource_filename=resource.encode(), model_str=model_str.encode())
+            resource_filename=resource.encode(), 
+            model_str=",".join(decoder_model).encode())
         self.detector.SetAudioGain(audio_gain)
         self.detector.ApplyFrontend(apply_frontend)
+
         self.num_hotwords = self.detector.NumHotwords()
 
         if len(decoder_model) > 1 and len(sensitivity) == 1:
             sensitivity = sensitivity * self.num_hotwords
-        if len(sensitivity) != 0:
+                if len(sensitivity) != 0:
             assert self.num_hotwords == len(sensitivity), \
                 "number of hotwords in decoder_model (%d) and sensitivity " \
                 "(%d) does not match" % (self.num_hotwords, len(sensitivity))
         sensitivity_str = ",".join([str(t) for t in sensitivity])
         if len(sensitivity) != 0:
             self.detector.SetSensitivity(sensitivity_str.encode())
+            
+        self.ring_buffer = RingBuffer(self.detector.NumChannels() * self.detector.SampleRate() * 5)
+        self._running = False
 
-        self.ring_buffer = RingBuffer(
-            self.detector.NumChannels() * self.detector.SampleRate() * 5)
-
-    def start(self, detected_callback=play_audio_file,
-              interrupt_check=lambda: False,
-              sleep_time=0.03,
-              audio_recorder_callback=None,
-              silent_count_threshold=15,
-              recording_timeout=100):
+    def start(self, detected_callback: List[Callable] = [play_audio_file],
+              interrupt_check: Callable[[], bool] = lambda: False,
+              sleep_time: float = 0.03,
+              audio_recorder_callback: Optional[Callable[[str], None]] = None,
+              silent_count_threshold: int = 15,
+              recording_timeout: int = 100) -> None:
         self._running = True
 
-        def audio_callback(indata, outdata, frames, time, status):
+        def audio_callback(indata: bytes, outdata: bytes, frames: int, time: float, status: sd.CallbackFlags) -> None:
             self.ring_buffer.extend(indata)
-            # 确保play_data被正确处理
             outdata[:] = b'\x00' * len(outdata)
-            # play_data = chr(0) * len(indata)
-            # return play_data, pyaudio.paContinue
 
         with no_alsa_error():
-            self.audio = sd.Stream(samplerate=self.detector.SampleRate(), channels=self.detector.NumChannels(), callback=audio_callback)
+            self.audio = sd.InputStream(samplerate=self.detector.SampleRate(), 
+                                       channels=self.detector.NumChannels(),
+                                       callback=audio_callback)
             self.audio.start()
             
-        if interrupt_check():
-            logger.debug("检测语音返回")
-            return
-
-        tc = type(detected_callback)
-        if tc is not list:
-            detected_callback = [detected_callback]
-        if len(detected_callback) == 1 and self.num_hotwords > 1:
-            detected_callback *= self.num_hotwords
-
+        detected_callback = detected_callback * self.num_hotwords if len(detected_callback) == 1 else detected_callback
         assert self.num_hotwords == len(detected_callback), \
-            "错误:您的模型(%d)中的热词不匹配 " \
-            "callbacks (%d)" % (self.num_hotwords, len(detected_callback))
+            f"错误:您的模型(%d)中的热词不匹配 " ({self.num_hotwords}) does not match callbacks ({len(detected_callback)})"
 
         logger.debug("检测...")
 
         state = "PASSIVE"
-        while self._running is True:
+        while self._running:
             if interrupt_check():
                 logger.debug("检测语音中断")
                 break
+
             data = self.ring_buffer.get()
-            if len(data) == 0:
+            if not data:
                 time.sleep(sleep_time)
                 continue
 
             status = self.detector.RunDetection(data)
             if status == -1:
                 logger.warning("初始化流或读取音频数据时出错")
-
+                continue
+                
             #小型状态机处理关键字后的短语记录
             if state == "PASSIVE":
                 if status > 0: #关键词发现
-                    self.recordedData = []
-                    self.recordedData.append(data)
+                    self.recordedData = [data]
                     silentCount = 0
                     recordingCount = 0
-                    message = "关键字 " + str(status) + " 及时检测到: "
-                    message += time.strftime("%Y-%m-%d %H:%M:%S",
-                                         time.localtime(time.time()))
-                    logger.info(message)
-                    callback = detected_callback[status-1]
+                    logger.info(f"关键字 {status} 及时检测到: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}")
+                    detected_callback[status - 1]()
                     if callback is not None:
                         callback()
 
-                    if audio_recorder_callback is not None:
+                    if audio_recorder_callback:
                         state = "ACTIVE"
-                    continue
+                continue
 
             elif state == "ACTIVE":
-                stopRecording = False
-                if recordingCount > recording_timeout:
-                    stopRecording = True
-                elif status == -2: #沉默了
-                    if silentCount > silent_count_threshold:
-                        stopRecording = True
-                    else:
-                        silentCount = silentCount + 1
-                elif status == 0: #声音发现
-                    silentCount = 0
-
-                if stopRecording == True:
-                    fname = self.saveMessage()
-                    audio_recorder_callback(fname)
+                stopRecording = recordingCount > recording_timeout or (status == -2 and silentCount > silent_count_threshold)
+                if stopRecording:
+                    filename = self.save_message()
+                    audio_recorder_callback(filename)
                     state = "PASSIVE"
                     continue
 
-                recordingCount = recordingCount + 1
+                recordingCount += 1
                 self.recordedData.append(data)
+                silentCount = 0 if status == 0 else silentCount + 1
 
-        logger.debug("finished.")
+        logger.debug("完成了.")
 
-    def saveMessage(self):
-        filename = 'output' + str(int(time.time())) + '.wav'
+    def save_message(self) -> str:
+        filename = f'output{int(time.time())}.wav'
         data = b''.join(self.recordedData)
-
-        # 使用wave保存数据
-        wf = wave.open(filename, 'wb')
-        wf.setnchannels(1)
-        wf.setsampwidth(2) # 假设音频数据为 16 位
-        wf.setsampwidth(self.audio.get_sample_size(
+        with wave.open(filename, 'wb') as wf:
+            wf.setnchannels(1)
+            wf.setsampwidth(2)  # 假设音频数据为 16 位
+            wf.setsampwidth(self.audio.get_sample_size(
             self.audio.get_format_from_width(
                 self.detector.BitsPerSample() / 8)))
-        wf.setframerate(self.detector.SampleRate())        
-        wf.writeframes(data)
-        wf.close()
-        logger.debug("完成保存: " + filename)
+            wf.setframerate(self.detector.SampleRate())
+            wf.writeframes(data)
+        logger.debug(f"完成保存: {filename}")
         return filename
 
-    def terminate(self):
+    def terminate(self) -> None:
         # self.stream_in.stop_stream()
         # self.stream_in.close()
         if hasattr(self, 'audio'):
