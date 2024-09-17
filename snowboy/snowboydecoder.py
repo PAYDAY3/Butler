@@ -15,7 +15,7 @@ from typing import Callable, List, Optional
 logger = Logging.getLogger("snowboy")
 TOP_DIR = os.path.dirname(os.path.abspath(__file__))
 
-RESOURCE_FILE = os.path.join(TOP_DIR, "resources/common.res")  
+RESOURCE_FILE = os.path.join(TOP_DIR, "resources/common.res")
 DETECT_DING = os.path.join(TOP_DIR, "resources/ding.wav")
 DETECT_DONG = os.path.join(TOP_DIR, "resources/dong.wav")
 
@@ -58,7 +58,7 @@ class RingBuffer(object):
 
 
 def play_audio_file(fname: str = DETECT_DING) -> None:
-        with wave.open(fname, 'rb') as ding_wav:
+    with wave.open(fname, 'rb') as ding_wav:
         ding_data = ding_wav.readframes(ding_wav.getnframes())
         with no_alsa_error():
             audio = sd.OutputStream(samplerate=ding_wav.getframerate(), 
@@ -86,7 +86,7 @@ class HotwordDetector(object):
 
         if len(decoder_model) > 1 and len(sensitivity) == 1:
             sensitivity = sensitivity * self.num_hotwords
-                if len(sensitivity) != 0:
+        if len(sensitivity) != 0:
             assert self.num_hotwords == len(sensitivity), \
                 "number of hotwords in decoder_model (%d) and sensitivity " \
                 "(%d) does not match" % (self.num_hotwords, len(sensitivity))
@@ -117,7 +117,8 @@ class HotwordDetector(object):
             
         detected_callback = detected_callback * self.num_hotwords if len(detected_callback) == 1 else detected_callback
         assert self.num_hotwords == len(detected_callback), \
-            f"错误:您的模型(%d)中的热词不匹配 " ({self.num_hotwords}) does not match callbacks ({len(detected_callback)})"
+            f"错误:您的模型(%d)中的热词不匹配 " ({self.num_hotwords}), \
+             "与回调数量" ({len(detected_callback)}) "不匹配"
 
         logger.debug("检测...")
 

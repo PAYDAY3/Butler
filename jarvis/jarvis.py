@@ -240,6 +240,14 @@ def execute_program(program_name, handler):
         logging.error(f"模块中未找到运行函数: {program_name}")
         
 def handle_user_command(command, program_mapping, handler, programs):
+    """
+    处理用户命令，根据命令打开对应的程序或执行相应操作。
+
+    :param command: 用户输入的命令
+    :param program_mapping: 命令到程序的映射字典
+    :param handler: 处理程序的对象
+    :return: 是否继续运行
+    """
     if command.startswith("打开"):
         program_name = command[3:].strip()
         if program_name in program_mapping:

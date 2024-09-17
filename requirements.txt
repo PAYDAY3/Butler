@@ -3,9 +3,7 @@ pyttsx3
 pydub
 playsound
 tempfile
-pyaudiokit
-transformers
-torch
+pyaud
 shutil
 tempfile
 prompt_toolkit
