@@ -55,11 +55,24 @@ class WriteFilePlugin(AbstractPlugin):
 
         content = args.get("content")
         encoding = args.get("encoding", "utf-8")
-
+        file_extension = args.get("file_extension", "txt")
+  
+        # 内容长度限制
+        max_length = 1000
+        if content and len(content) > max_length:
+            self._logger.warning("写入内容超出最大限制")
+            return PluginResult.new(f"写入内容不能超过 {max_length} 个字符。", need_call_brain=False)
+        
+        # 验证编码格式
+        valid_encodings = ["utf-8", "utf-16", "ascii"]
+        if encoding not in valid_encodings:
+            self._logger.warning("无效的编码格式")
+            return PluginResult.new("无效的编码格式。", need_call_brain=False)
+    
         if content:
             try:
                 os.makedirs(TEMP_DIR_PATH, exist_ok=True)
-                file_name = f"写入文件-{str(int(time.time()))}.md"
+                file_name = f"写入文件-{str(int(time.time()))}.txt"
                 file_path = os.path.abspath(os.path.join(TEMP_DIR_PATH, file_name))
 
                 self._logger.info(f"准备将内容写入到文件: {file_path}")

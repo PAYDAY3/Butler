@@ -10,7 +10,7 @@ class NotepadPlugin(AbstractPlugin):
         self.name = "NotepadPlugin"
         self.chinese_name = "记事本"
         self.description = "记录简单的文本笔记"
-        self.parameters = {"note": "str"}
+        self.parameters = {"note": "str", "action": "str", "index": "int"}
         self.notes = []
 
     def valid(self) -> bool:
@@ -18,6 +18,7 @@ class NotepadPlugin(AbstractPlugin):
 
     def init(self, logging):
         self.logger = logging.getLogger(self.name)
+        self.load_notes()  # 加载笔记
         
     def get_name(self):
         return self.name
@@ -32,22 +33,73 @@ class NotepadPlugin(AbstractPlugin):
         return self.parameters
 
     def on_startup(self):
-        self.logger.info("NotepadPlugin started.")
+        self.logger.info("记事本插件启动")
 
     def on_shutdown(self):
-        self.logger.info("NotepadPlugin shutdown.")
+        self.logger.info("记事本插件关闭。")
+        self.save_notes()  # 保存笔记
 
     def on_pause(self):
-        self.logger.info("NotepadPlugin paused.")
+        self.logger.info("记事本插件暂停。")
 
     def on_resume(self):
-        self.logger.info("NotepadPlugin resumed.")
+        self.logger.info("记事本插件恢复。")
 
     def run(self, takecommand: str, args: dict) -> PluginResult:
+        action = args.get("action")
         note = args.get("note")
+        index = args.get("index")
+
+        if action == "add":
+            return self.add_note(note)  # 添加笔记
+        elif action == "view":
+            return self.view_notes()  # 查看笔记
+        elif action == "delete":
+            return self.delete_note(index)  # 删除笔记
+        elif action == "edit":
+            return self.edit_note(index, note)  # 编辑笔记
+        elif action == "search":
+            return self.search_notes(note)  # 搜索笔记
+        else:
+            return PluginResult.new(result=None, need_call_brain=False, success=False, error_message="无效的操作")
+
+    def add_note(self, note: str) -> PluginResult:
         if not note:
-            return PluginResult.new(result=None, need_call_brain=False, success=False, error_message="Note parameter is missing")
+            return PluginResult.new(result=None, need_call_brain=False, success=False, error_message="缺少笔记参数")
         
         self.notes.append(note)
-        result = "Note added successfully"
-        return PluginResult.new(result=result, need_call_brain=False, success=True)
+        return PluginResult.new(result="笔记添加成功", need_call_brain=False, success=True)
+
+    def view_notes(self) -> PluginResult:
+        if not self.notes:
+            return PluginResult.new(result="没有可用的笔记", need_call_brain=False, success=True)
+        return PluginResult.new(result="\n".join(f"{i}: {note}" for i, note in enumerate(self.notes)), need_call_brain=False, success=True)
+
+    def delete_note(self, index: int) -> PluginResult:
+        if index is None or index < 0 or index >= len(self.notes):
+            return PluginResult.new(result=None, need_call_brain=False, success=False, error_message="无效的索引")
+        
+        deleted_note = self.notes.pop(index)
+        return PluginResult.new(result=f"笔记 '{deleted_note}' 删除成功", need_call_brain=False, success=True)
+
+    def edit_note(self, index: int, new_note: str) -> PluginResult:
+        if index is None or index < 0 or index >= len(self.notes):
+            return PluginResult.new(result=None, need_call_brain=False, success=False, error_message="无效的索引")
+        
+        self.notes[index] = new_note
+        return PluginResult.new(result="笔记编辑成功", need_call_brain=False, success=True)
+
+    def search_notes(self, keyword: str) -> PluginResult:
+        found_notes = [note for note in self.notes if keyword in note]
+        if not found_notes:
+            return PluginResult.new(result="没有找到匹配的笔记", need_call_brain=False, success=True)
+        return PluginResult.new(result="\n".join(found_notes), need_call_brain=False, success=True)
+
+    def save_notes(self):
+        with open("notes.json", "w") as f:
+            json.dump(self.notes, f)  # 保存笔记到文件
+
+    def load_notes(self):
+        if os.path.exists("notes.json"):
+            with open("notes.json", "r") as f:
+                self.notes = json.load(f)  # 从文件加载笔记

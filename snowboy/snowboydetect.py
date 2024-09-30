@@ -6,6 +6,7 @@
 
 from sys import version_info as _swig_python_version_info
 
+# 根据 Python 版本选择导入方式
 if _swig_python_version_info >= (2, 7, 0):
 
     def swig_import_helper():
@@ -20,6 +21,7 @@ if _swig_python_version_info >= (2, 7, 0):
 
     _snowboydetect = swig_import_helper()
     del swig_import_helper
+    
 elif _swig_python_version_info >= (2, 6, 0):
 
     def swig_import_helper():
@@ -192,24 +194,30 @@ class SnowboyVad(_object):
             self.this = this
 
     def Reset(self):
+        # 重置 VAD
         return _snowboydetect.SnowboyVad_Reset(self)
 
     def RunVad(self, *args):
+        # 运行 VAD 检测
         return _snowboydetect.SnowboyVad_RunVad(self, *args)
 
     def SetAudioGain(self, audio_gain):
+        # 设置音频增益
         return _snowboydetect.SnowboyVad_SetAudioGain(self, audio_gain)
 
-    def ApplyFrontend(self, apply_frontend):
+    def ApplyFrontend(self, apply_frontend):    
         return _snowboydetect.SnowboyVad_ApplyFrontend(self, apply_frontend)
 
     def SampleRate(self):
+        # 获取 VAD 的采样率
         return _snowboydetect.SnowboyVad_SampleRate(self)
 
     def NumChannels(self):
+        # 获取 VAD 的通道数
         return _snowboydetect.SnowboyVad_NumChannels(self)
 
     def BitsPerSample(self):
+        # 获取 VAD 每个样本的位数
         return _snowboydetect.SnowboyVad_BitsPerSample(self)
 
     __swig_destroy__ = _snowboydetect.delete_SnowboyVad
