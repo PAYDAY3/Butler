@@ -30,10 +30,6 @@ plugins_to_manage = {
         "takecommand": ["我无聊了", "休息一下", "讲个笑话", "好无聊"],  # 触发命令
         "args": {}  # 没有需要的参数
     },
-    "NLPPlugin": {
-        "takecommand": ["执行 NLP 任务", "处理文本"],
-        "args": {}
-    },
     "NotepadPlugin": {
         "takecommand": ["记笔记", "添加笔记"],
         "args": {}

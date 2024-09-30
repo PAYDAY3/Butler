@@ -8,7 +8,7 @@ from typing import Optional
 
 logging = Logging.getLogger(__name__)
 
-def delete_temp_files(directory="./temp", log_file: Optional[str] = None, days: int = 7, backup_directory: Optional[str] = None, dry_run: bool = False):  
+def delete_temp_files(directory="./temp", log_file: Optional[str] = None, days: int = 7, backup_directory: Optional[str] = None, dry_run: bool = False):
     global last_execution_time
 
     if not os.path.exists(directory):
@@ -84,3 +84,4 @@ def delete_temp_files(directory="./temp", log_file: Optional[str] = None, days: 
     last_execution_time = now
     print(f"上次执行时间: {last_execution_time}")
     logging.info(f"上次执行时间: {last_execution_time}")
+    
