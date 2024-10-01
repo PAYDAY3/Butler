@@ -5,6 +5,17 @@ from plugin_manager import PluginManager
 from jarvis.jarvis import takecommand, speak
 from jarvis.CommandPanel import CommandPanel
 from jarvis import InputProcessor
+from plugin.Notepad_plugin import NotepadPlugin
+from plugin.read_file import ReadFilePlugin
+from plugin.CountdownPlugin import CountdownPlugin
+from plugin.downloaded_url import DownloadURLPlugin
+from plugin.JokePlugin import JokePlugin
+from plugin.FileSearchPlugin import FileSearchPlugin
+from plugin.GithubPlugin import GithubPlugin
+from plugin.write_file import WriteFilePlugin
+from plugin.TodoPlugin import TodoPlugin
+from plugin.TimePlugin import TimePlugin
+from plugin.SearchPlugin import SearchPlugin
 
 # 配置日志
 logger = Logging.getLogger(__name__)
@@ -31,7 +42,7 @@ plugins_to_manage = {
         "args": {}  # 没有需要的参数
     },
     "NotepadPlugin": {
-        "takecommand": ["记笔记", "添加笔记"],
+        "takecommand": ["记笔记", "添加笔记", "查看笔记", "删除笔记", "编辑笔记", "搜索笔记"],
         "args": {}
     },
     "TodoPlugin": {
@@ -52,6 +63,10 @@ plugins_to_manage = {
     },
     "write_file": {
         "takecommand": {"写入", "写入文件"},
+        "args": {}
+    },
+    "SearchPlugin": {  # 添加搜索插件
+        "takecommand": ["在百度搜索", "在Bing搜索", "bilibili搜索", "快手搜索", "抖音搜索"],
         "args": {}
     },
 }
