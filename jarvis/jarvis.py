@@ -348,7 +348,7 @@ def main():
         "天气预报": "weathpy.py",
         "翻译": "translators.py",
         "文件转换器": "file_converter.py",
-        "帐号登录": "AccountPassword",
+        "帐号登录": "AccountPassword.py",
         # 继续添加其他命令和程序的映射关系
     }
 
