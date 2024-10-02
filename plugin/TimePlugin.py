@@ -3,7 +3,8 @@ import time
 from package import Logging
 from plugin.plugin_interface import AbstractPlugin, PluginResult
 from jarvis.jarvis import takecommand
-logging = Logging.getLogger(_name_)
+
+logging = Logging.getLogger(__name__)
 
 class TimePlugin(AbstractPlugin):
     def __init__(self):

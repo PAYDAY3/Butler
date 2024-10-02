@@ -3,7 +3,6 @@ from tkinter import messagebox
 from package import Logging
 from plugin_manager import PluginManager
 from jarvis.jarvis import takecommand, speak
-from jarvis.CommandPanel import CommandPanel
 from jarvis import InputProcessor
 from plugin.Notepad_plugin import NotepadPlugin
 from plugin.read_file import ReadFilePlugin
@@ -156,22 +155,5 @@ def plugin():
                 speak("已切换到语音输入模式。")
             else:
                 speak("退出程序。")
-                break    
-                                    
-# 创建主窗口
-root = tk.Tk()
-root.title("Jarvis 交互面板")
-root.geometry("800x600")
-
-# 创建交互式命令行面板
-panel = CommandPanel(root, [])
-panel.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-
-# 启动插件功能的线程
-import threading
-plugin_thread = threading.Thread(target=plugin)
-plugin_thread.start()
-
-# 启动主事件循环
-root.mainloop()
-        
+                break
+                

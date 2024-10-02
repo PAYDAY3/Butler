@@ -4,7 +4,7 @@ from package import Logging
 from plugin.plugin_interface import AbstractPlugin, PluginResult
 from jarvis.jarvis import takecommand,speak
 
-logging = Logging.getLogger(_name_)
+logging = Logging.getLogger(__name__)
 
 class FileSearchPlugin(AbstractPlugin):
     def __init__(self):
