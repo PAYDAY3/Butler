@@ -32,6 +32,7 @@ from package.virtual_keyboard import VirtualKeyboard
 from package import Logging
 from package.schedule_management import schedule_management
 from jarvis.CommandPanel import CommandPanel
+from plugin.plugin import plugin
 
 # OpenAI API密钥
 openai.api_key = "YOUR_OPENAI_API_KEY"
@@ -327,6 +328,7 @@ def process_text_input():
     
 @lru_cache(maxsize=128)
 def main():
+    plugin()
     handler = ProgramHandler(program_folder)
     observer = Observer()
     observer.schedule(handler, program_folder, recursive=True)
