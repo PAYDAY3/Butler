@@ -62,14 +62,18 @@ def getLogger(name):
 
     # 文件处理器，支持日志文件滚动
     if not logger.handlers:
-        file_handler = RotatingFileHandler(
-            log_file_path,
-            maxBytes=10 * 1024 * 1024,  # 10 MB
-            backupCount=5
-        )
-        file_handler.setLevel(logging.NOTSET)
-        file_handler.setFormatter(formatter)
-        logger.addHandler(file_handler)
+        try:
+
+            file_handler = RotatingFileHandler(
+                log_file_path,
+                maxBytes=10 * 1024 * 1024,  # 10 MB
+                backupCount=5
+            )
+            file_handler.setLevel(logging.NOTSET)
+            file_handler.setFormatter(formatter)
+            logger.addHandler(file_handler)
+        except Exception as e:
+            print(f"日志处理器初始化失败: {e}")
                             
     return logger
 
@@ -77,9 +81,12 @@ def readLog(lines=200):
     """
     获取最新的指定行数的 log
     """
-    log_path = os.path.join(TEMP_PATH)
-    if os.path.exists(log_path):
-        return tail(log_path, lines)
+    log_path = os.path.join(TEMP_PATH, LOG_FILE)
+    try:
+        if os.path.exists(log_path):
+            return tail(log_path, lines)
+    except Exception as e:
+        print(f"读取日志时出错: {e}")
     return ""
 
 def split_logs(log_file_name, output_files):
@@ -95,9 +102,12 @@ def split_logs(log_file_name, output_files):
                 with open(file_path, "w") as f:
                     pass  # 创建空文件
         return
-    
-    with open(log_path, "r") as f:
-        lines = f.readlines()
+    try:    
+        with open(log_path, "r") as f:
+            lines = f.readlines()
+    except Exception as e:
+        print(f"读取日志文件失败: {e}")
+        return
 
     logs = {name: [] for name in output_files.keys()}  # 用于存储不同程序的日志
 
@@ -121,4 +131,7 @@ def split_logs(log_file_name, output_files):
             f.write("\n".join(logs[name]) + "\n")
 
     # 清空 logging.txt 文件
-    open(log_path, "w").close()
+    try:
+        open(log_path, "w").close()
+    except Exception as e:
+        print(f"清空日志文件失败: {e}")

@@ -6,7 +6,9 @@ import time
 PERMISSIONS = {
     "普通用户": 1,
     "受限操作": 2,
-    "高级操作": 3
+    "高级操作": 3,
+    "查看配置": 2,
+    "高级查看": 3
 }
 
 # 操作所需的权限级别定义
@@ -14,7 +16,8 @@ OPERATIONS = {
     "查看数据": PERMISSIONS["普通用户"],
     "修改配置": PERMISSIONS["受限操作"],
     "核心操作": PERMISSIONS["高级操作"],
-    "写入文件": PERMISSIONS["受限操作"]
+    "写入文件": PERMISSIONS["受限操作"],
+    "查看配置": PERMISSIONS["查看配置"]
 }
 
 # 权限密钥存储（实际应使用更安全的存储方式）
@@ -62,16 +65,19 @@ def verify_permission(required_permission):
     input_key = getpass.getpass("密钥：")
     hashed_key = hashlib.sha256(input_key.encode()).hexdigest()
     
-    for user, key in USER_KEYS.items():
-        if key == hashed_key:
-            user_permission = PERMISSIONS["高级操作"]  # 假设已验证用户为高级操作权限
-            if user_permission >= required_permission:
-                last_verified_time = time.time()  # 记录当前时间
-                print("权限验证成功")
-                return True
-            else:
-                print("权限不足")
-                return False
+    try:
+        for user, key in USER_KEYS.items():
+            if key == hashed_key:
+                user_permission = PERMISSIONS["高级操作"]  # 假设已验证用户为高级操作权限
+                if user_permission >= required_permission:
+                    last_verified_time = time.time()  # 记录当前时间
+                    print("权限验证成功")
+                    return True
+                else:
+                    print("权限不足")
+                    return False
+    except Exception as e:
+        print(f"权限验证过程中出错: {e}")
     print("密钥无效")
     return False
     
