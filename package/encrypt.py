@@ -5,9 +5,18 @@ import os
 from jarvis import InputProcessor
 
 def generate_key():
+    """
+    生成16字节的随机密钥。
+    """
     return get_random_bytes(16)
 
 def encrypt_file(file_path, key):
+    """
+    使用AES加密指定文件。
+    
+    :param file_path: 文件路径
+    :param key: 密钥
+    """
     cipher = AES.new(key, AES.MODE_CBC)
     iv = cipher.iv
     
@@ -20,6 +29,12 @@ def encrypt_file(file_path, key):
         f.write(ciphertext)
 
 def decrypt_file(file_path, key):
+    """
+    使用AES解密指定文件。
+    
+    :param file_path: 文件路径
+    :param key: 密钥
+    """
     with open(file_path, 'rb') as f:
         ciphertext = f.read()
     
@@ -34,13 +49,24 @@ def decrypt_file(file_path, key):
         f.write(plaintext)
 
 def process_directory(directory, key, encrypt=True):
-    for root, _, files in os.walk(directory):
-        for file in files:
-            file_path = os.path.join(root, file)
-            if encrypt:
-                encrypt_file(file_path, key)
-            else:
-                decrypt_file(file_path, key)
+    """
+    加密或解密指定目录及子目录中的所有文件。   
+    :param directory: 目录路径
+    :param key: 密钥
+    :param encrypt: True 表示加密，False 表示解密
+    """
+    try:
+        for root, _, files in os.walk(directory):
+            for file in files:
+                file_path = os.path.join(root, file)
+                if encrypt:
+                    encrypt_file(file_path, key)
+                else:
+                    decrypt_file(file_path, key)
+
+        print(f"目录 '{directory}' 已进行加密或解密处理")
+    except Exception as e:
+        print(f"处理目录 '{directory}' 时发生错误：{e}")
 
 if __name__ == "__main__":
     input_processor = InputProcessor.InputProcessor()
@@ -58,7 +84,7 @@ if __name__ == "__main__":
         encrypt_file(path_to_process, key)
         print(f"文件 '{path_to_process}' 已经加密")
     
-    # 解密示例
+    # 解密
     if os.path.isdir(path_to_process):
         # 处理整个目录
         process_directory(path_to_process, key, encrypt=False)
