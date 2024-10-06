@@ -5,10 +5,15 @@ import tkinter as tk
 from tkinter import messagebox
 from threading import Thread
 
+# 设置默认保存文件夹路径
 save_folder = "./my_package/downloaded"  # 在此处替换为您希望保存文件的文件夹路径
 if not os.path.exists(save_folder):
     os.makedirs(save_folder)  # 如果文件夹不存在，则创建它
-        
+
+def select_save_folder():
+    folder = filedialog.askdirectory(initialdir=default_save_folder, title="选择保存文件夹")
+    return folder if folder else default_save_folder  # 如果用户未选择，返回默认路径
+      
 def download_file(url, save_folder):
     local_filename = os.path.join(save_folder, url.split('/')[-1])  # 结合文件夹路径和文件名
     try:
@@ -70,6 +75,17 @@ def scan_qr_code(save_folder):
     cap.release()
     cv2.destroyAllWindows()
 
+def on_exit():
+    if messagebox.askokcancel("退出确认", "您确定要退出吗？"):
+        root.quit()
+
 if __name__ == "__main__":
+    root = tk.Tk()
+    root.title("二维码扫描器")
+
+    save_folder = select_save_folder()  # 选择保存文件夹
     print("正在扫描二维码... 按 'q' 退出。")
-    scan_qr_code(save_folder)
+    Thread(target=scan_qr_code, args=(save_folder,)).start()
+
+    root.protocol("WM_DELETE_WINDOW", on_exit)  # 添加退出确认
+    root.mainloop()
