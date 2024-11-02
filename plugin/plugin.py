@@ -88,10 +88,17 @@ def match_command_to_plugin(command: str):
         if isinstance(takecommands, str):
             takecommands = [takecommands]
         
+        # 如果 takecommands 是空的，跳过这个插件
+        if isinstance(takecommands, (set, list)) and not takecommands:
+            continue
+
         # 检查命令是否匹配任何一个指定的触发命令
         if any(cmd in command for cmd in takecommands):
-            return plugin_name, details['args']
-    return None, None
+            # 查找对应的插件对象
+            for plugin in all_plugins:
+                if plugin.get_name() == plugin_name:
+                    return plugin_name, details['args'], plugin  # 返回插件对象
+    return None, None, None
 
 def process_command(command: str):
     """处理指令并执行相应的插件."""
