@@ -1,7 +1,8 @@
 #!/bin/bash
 
-# 定义日志文件
+# 定义默认日志文件和下载路径
 LOGFILE="install_requirements.log"
+REQUIREMENTS_FILE="requirements.txt"
 
 # 记录当前日期和时间到日志文件
 echo "[$(date)] 开始执行脚本..." >> "$LOGFILE"
@@ -13,7 +14,12 @@ if [ "$#" -ne 1 ]; then
 fi
 
 REQUIREMENTS_URL=$1
-REQUIREMENTS_FILE="requirements.txt"
+if [ "$#" -ge 2 ]; then
+  LOGFILE=$2
+fi
+if [ "$#" -ge 3 ]; then
+  REQUIREMENTS_FILE=$3
+fi
 
 # 下载requirements.txt文件并显示进度条
 echo "下载 $REQUIREMENTS_URL 到 $REQUIREMENTS_FILE ..." | tee -a "$LOGFILE"
@@ -123,6 +129,12 @@ else
   fi
 fi
 
+# 如果requirements.txt为空，退出
+if [ ! -s "$REQUIREMENTS_FILE" ]; then
+  echo "所有依赖项已安装，无需安装。" | tee -a "$LOGFILE"
+  exit 0
+fi
+
 # 使用pip安装requirements.txt中的依赖，并使用国内镜像源作为备用
 echo "正在安装requirements.txt中的依赖..." | tee -a "$LOGFILE"
 pip3 install -r "$REQUIREMENTS_FILE" >> "$LOGFILE" 2>&1
@@ -139,6 +151,13 @@ if [ $? -eq 0 ]; then
 else
   echo "依赖项安装失败。" | tee -a "$LOGFILE"
   exit 1
+fi
+
+# 询问是否删除requirements.txt文件
+read -p "是否删除下载的 $REQUIREMENTS_FILE？（y/n）: " delete_file
+if [ "$delete_file" = "y" ]; then
+  rm -f "$REQUIREMENTS_FILE"
+  echo "$REQUIREMENTS_FILE 已删除。" | tee -a "$LOGFILE"
 fi
 
 # 结束日志记录
