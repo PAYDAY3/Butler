@@ -1,7 +1,6 @@
 import math
 
-# this function is used to round the result to 2 decimal places
-# e.g. 52.3523 -> 52.35, 52.0011 -> 52, 0.00000233 -> 0.0000023
+# 自定义四舍五入函数
 def custom_round(x, decimal_places=2):
     str_x = f"{x:.10f}"
     before_decimal = str_x.split('.')[0]
@@ -13,7 +12,7 @@ def custom_round(x, decimal_places=2):
     else:
         return round(x, decimal_places)
 
-# this function converts a number in scientific notation to decimal notation
+# 科学计数法转换为十进制
 def scito_decimal(sci_str):
     def split_exponent(number_str):
         parts = number_str.split("e")
@@ -45,15 +44,15 @@ def scito_decimal(sci_str):
     coefficient, exponent = split_exponent(sci_str)
     decimal_str = multiplyby_10(coefficient, exponent)
 
-    # remove trailing zeros
+    # 去除尾随零
     if "." in decimal_str:
         decimal_str = decimal_str.rstrip("0")
 
     return decimal_str
 
-# normalize the result to 2 decimal places and remove trailing zeros
+# 将结果归一化为小数点后2位并删除后面的零
 def normalize(res, round_to=2):
-        # we round the result to 2 decimal places
+        # 我们把结果四舍五入到小数点后两位
         res = custom_round(res, round_to)
         res = str(res)
         if "." in res:
@@ -67,28 +66,31 @@ def normalize(res, round_to=2):
 
         return res
 
-# 1. add
+# 加法
 def add_(args):
-
+    if not all(isinstance(arg, (int, float)) for arg in args):
+        raise TypeError("所有参数必须是数字")
     return normalize(sum(args))
 
-# 2. subtract
+# 减法
 def subtract_(args):
-
+    if not all(isinstance(arg, (int, float)) for arg in args):
+        raise TypeError("所有参数必须是数字")
     res = args[0]
     for arg in args[1:]:
         res -= arg
     return normalize(res)
 
-# 3. multiply
+# 乘法
 def multiply_(args):
-
+    if not all(isinstance(arg, (int, float)) for arg in args):
+        raise TypeError("所有参数必须是数字")
     res = args[0]
     for arg in args[1:]:
         res *= arg
     return normalize(res)
 
-# 4. divide
+# 除法
 def divide_(args):
 
     res = args[0]
@@ -96,7 +98,7 @@ def divide_(args):
         res /= arg
     return normalize(res)
 
-# 5. power
+# 幂
 def power_(args):
         
     res = args[0]
@@ -104,12 +106,12 @@ def power_(args):
         res **= arg
     return normalize(res)
 
-# 6. square root
+# 平方根
 def sqrt_(args):
     res = args[0]
     return normalize(math.sqrt(res))
 
-# 7. 10th log
+# 对数
 def log_(args):
     # if only one argument is passed, it is 10th log
     if len(args) == 1:
@@ -123,40 +125,103 @@ def log_(args):
     else:
         raise Exception("Invalid number of arguments passed to log function")
 
-# 8. natural log
+# 自然对数
 def ln_(args):
     res = args[0]
     return normalize(math.log(res))
 
+# 绝对值
+def abs_(args):
+    if len(args) != 1:
+        raise ValueError("绝对值只接受一个参数")
+    return normalize(abs(args[0]))
 
-# 9. choose
+# 三角函数
+def sin_(args):
+    if len(args) != 1:
+        raise ValueError("正弦只接受一个参数")
+    return normalize(math.sin(args[0]))
+
+def cos_(args):
+    if len(args) != 1:
+        raise ValueError("余弦只接受一个参数")
+    return normalize(math.cos(args[0]))
+
+def tan_(args):
+    if len(args) != 1:
+        raise ValueError("正切只接受一个参数")
+    return normalize(math.tan(args[0]))
+
+# 反三角函数
+def arcsin_(args):
+    if len(args) != 1:
+        raise ValueError("反正弦只接受一个参数")
+    return normalize(math.asin(args[0]))
+
+def arccos_(args):
+    if len(args) != 1:
+        raise ValueError("反余弦只接受一个参数")
+    return normalize(math.acos(args[0]))
+
+def arctan_(args):
+    if len(args) != 1:
+        raise ValueError("反正切只接受一个参数")
+    return normalize(math.atan(args[0]))
+
+# 指数函数
+def exp_(args):
+    if len(args) != 1:
+        raise ValueError("指数函数只接受一个参数")
+    return normalize(math.exp(args[0]))
+
+# 组合
 def choose_(args):
     n = args[0]
     r = args[1]
     return normalize(math.comb(n, r))
 
-# 10. permutation
+# 排列
 def permutate_(args):
     n = args[0]
     r = args[1]
     return normalize(math.perm(n, r))
 
-# 11. greatest common divisor
+# 最大公约数
 def gcd_(args):
     res = args[0]
     for arg in args[1:]:
         res = math.gcd(res, arg)
     return normalize(res)
 
-# 12. least common multiple
+# 最小公倍数
 def lcm_(args):
     res = args[0]
     for arg in args[1:]:
         res = res * arg // math.gcd(res, arg)
     return normalize(res)
 
-# 13. remainder
+# 余数
 def remainder_(args):
     dividend = args[0]
     divisor = args[1]
     return normalize(dividend % divisor)
+
+# 平均值
+def mean_(args):
+    if not all(isinstance(arg, (int, float)) for arg in args):
+        raise TypeError("所有参数必须是数字")
+    return normalize(sum(args) / len(args))
+
+# 标准差
+def stddev_(args):
+    if not all(isinstance(arg, (int, float)) for arg in args):
+        raise TypeError("所有参数必须是数字")
+    mean = sum(args) / len(args)
+    variance = sum((x - mean) ** 2 for x in args) / len(args)
+    return normalize(math.sqrt(variance))
+
+# n次方根
+def nth_root(args):
+    if len(args) != 2 or args[1] <= 0:
+        raise ValueError("n次方根函数接受两个参数，且n必须为正数")
+    return normalize(args[0] ** (1 / args[1]))
