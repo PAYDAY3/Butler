@@ -121,7 +121,7 @@ def split_logs(log_file_name, output_files):
 
     # 将日志写入各自的文件中
     for program_name, log_lines in logs.items():
-        file_path = output_files.get(program_name, os.path.join(TEMP_PATH, f"{program_name}.txt"))  
+        file_path = output_files.get(program_name, os.path.join(TEMP_PATH, f"{program_name}.txt"))
         with open(log_file_path, "a") as f:
             f.writelines(log_lines)
 
