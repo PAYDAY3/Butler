@@ -110,7 +110,8 @@ def split_logs(log_file_name, output_files):
         return
 
     logs = {name: [] for name in output_files.keys()}  # 用于存储不同程序的日志
-
+    logs["default"] = []  # 用于收集未匹配的日志
+    
     for line in lines:
         if " - " in line:
             program_name = line.split(" - ")[1]  # 提取程序名（即 logger 名）
@@ -127,6 +128,7 @@ def split_logs(log_file_name, output_files):
 
     # 写入到对应的文件中，如果文件不存在则创建
     for name, file_path in output_files.items():
+        file_path = output_files.get(program_name, os.path.join(TEMP_PATH, f"{program_name}.txt"))
         with open(file_path, "a") as f:  # 使用 "a" 模式追加内容
             f.write("\n".join(logs[name]) + "\n")
 
