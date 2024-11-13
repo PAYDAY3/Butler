@@ -14,8 +14,8 @@ LOG_FILE = "logging.txt"  # 统一的日志文件名
 
 def ensure_log_directory():
     """确保日志目录存在，如果不存在则创建"""
-    if not os.path.exists(TEMP_DIR):
-        os.makedirs(TEMP_DIR)
+    if not os.path.exists(TEMP_PATH):
+        os.makedirs(TEMP_PATH)
 
 def tail(filepath, n=10):
     """
@@ -58,7 +58,7 @@ def getLogger(name):
     logger = logging.getLogger(name)
     logger.setLevel(logging.INFO)
 
-    log_file_path = os.path.join(TEMP_DIR, LOG_FILE)
+    log_file_path = os.path.join(TEMP_PATH, LOG_FILE)
 
     # 文件处理器，支持日志文件滚动
     if not logger.handlers:
@@ -93,7 +93,7 @@ def split_logs(log_file_name, output_files):
     """
     自动从 logging.txt 中获取日志，并根据程序名称将日志分割到不同的文件中
     """
-    log_path = os.path.join(TEMP_DIR, LOG_FILE)
+    log_path = os.path.join(TEMP_PATH, LOG_FILE)
 
     if not os.path.exists(log_path):
         # 如果日志文件不存在，则不进行分割
@@ -121,8 +121,7 @@ def split_logs(log_file_name, output_files):
 
     # 将日志写入各自的文件中
     for program_name, log_lines in logs.items():
-        log_file_name = f"{program_name}.txt"
-        log_file_path = os.path.join(TEMP_DIR, log_file_name)
+        file_path = output_files.get(program_name, os.path.join(TEMP_PATH, f"{program_name}.txt"))  
         with open(log_file_path, "a") as f:
             f.writelines(log_lines)
 
