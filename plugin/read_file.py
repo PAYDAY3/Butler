@@ -3,6 +3,7 @@ from abc import ABCMeta, abstractmethod
 from jarvis.jarvis import takecommand
 from datetime import datetime
 from plugin.plugin_interface import AbstractPlugin, PluginResult
+import chardet
 
 logging = Logging.getLogger(__name__)
 
@@ -12,8 +13,8 @@ class ReadFilePlugin(AbstractPlugin):
     def valid(self) -> bool:
         return True
 
-    def init(self, logging):
-        self._logger = logging
+    def init(self, logging=None):
+    self._logger = logging if logging else Logging.getLogger(__name__)
 
     def get_name(self):
         return "read_file"
@@ -49,17 +50,18 @@ class ReadFilePlugin(AbstractPlugin):
         self._logger.info("ReadFilePlugin 已恢复")
 
     def run(self, takecommand: str, args: dict) -> PluginResult:
-        
         file_path = args.get("file_path")
-        if not file_path:
+        if not isinstance(file_path, str) or not file_path.strip():
             self._logger.warning("缺少文件路径参数")
             return PluginResult.new(result=None, need_call_brain=False, success=False,
                                    error_message="缺少文件路径参数")
 
         try:
             self._logger.info(f"尝试读取文件: {file_path}")
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, 'rb') as f:
                 content = f.read()
+                encoding = chardet.detect(raw_data)['encoding']
+                content = raw_data.decode(encoding)
             self._logger.info(f"成功读取文件: {file_path}")
             # 返回读取的文件内容
             return PluginResult.new(result=content, need_call_brain=True, success=True,
@@ -68,6 +70,10 @@ class ReadFilePlugin(AbstractPlugin):
             self._logger.error(f"文件不存在: {file_path}")
             return PluginResult.new(result=None, need_call_brain=False, success=False,
                                    error_message=f"文件不存在: {file_path}")
+        except UnicodeDecodeError:
+            self._logger.error(f"无法解码文件: {file_path}")
+            return PluginResult.new(result=None, need_call_brain=False, success=False,
+                                    error_message=f"无法解码文件: {file_path}")  
         except Exception as e:
             self._logger.error(f"读取文件时出错: {str(e)}")
             return PluginResult.new(result=None, need_call_brain=False, success=False,
