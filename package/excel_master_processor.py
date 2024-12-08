@@ -3,7 +3,7 @@ import numpy as np
 import os
 import glob
 from openpyxl import load_workbook
-from openpyxl.chart import BarChart, LineChart, PieChart, Reference
+from openpyxl.chart import BarChart, LineChart, PieChart, ScatterChart, Reference
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.impute import SimpleImputer
@@ -17,9 +17,11 @@ def load_excel_files(directory):
     all_data = []
     excel_files = glob.glob(os.path.join(directory, "*.xlsx"))
     for file in excel_files:
-        df = pd.read_excel(file)
-        df['源文件'] = os.path.basename(file)
-        all_data.append(df)
+        df = pd.read_excel(file, sheet_name=None)
+        for sheet_name, sheet_data in df.items():
+            sheet_data['源文件'] = os.path.basename(file)
+            sheet_data['工作表'] = sheet_name
+            all_data.append(sheet_data)
     return pd.concat(all_data, ignore_index=True)
 
 def clean_data(df):
@@ -175,7 +177,7 @@ def create_visualizations(df, analysis, output_dir):
             plt.savefig(os.path.join(output_dir, f"{num_col}_时间序列图.png"))
             plt.close()
     
-    # 新增：饼图（对于分类变量）
+    # 饼图（对于分类变量）
     for column in categorical_columns[:3]:  # 只绘制前三个分类列
         plt.figure(figsize=(10, 10))
         df[column].value_counts().plot(kind='pie', autopct='%1.1f%%')
@@ -205,14 +207,57 @@ def export_to_excel(df, analysis, output_file):
         workbook = writer.book
         worksheet = workbook['处理后的数据']
         
-        for idx, column in enumerate(df.select_dtypes(include=['int64', 'float64']).columns, start=1):
-            chart = BarChart()
-            chart.title = f"{column}分布"
-            chart.x_axis.title = column
-            chart.y_axis.title = "值"
-            data = Reference(worksheet, min_col=idx, min_row=1, max_row=len(df)+1)
-            chart.add_data(data, titles_from_data=True)
-            worksheet.add_chart(chart, f"{chr(65+idx)}1")
+        create_excel_charts(worksheet, df)
+
+def create_excel_charts(worksheet, df):
+    """根据数据类型创建Excel图表"""
+    numeric_columns = df.select_dtypes(include=['int64', 'float64']).columns
+    categorical_columns = df.select_dtypes(include=['object']).columns
+    date_columns = df.select_dtypes(include=['datetime64']).columns
+
+    for idx, column in enumerate(numeric_columns, start=1):
+        # 创建柱状图
+        chart = BarChart()
+        chart.title = f"{column}分布"
+        chart.x_axis.title = column
+        chart.y_axis.title = "值"
+        data = Reference(worksheet, min_col=idx, min_row=1, max_row=len(df)+1)
+        chart.add_data(data, titles_from_data=True)
+        worksheet.add_chart(chart, f"{chr(65+idx)}1")
+
+        # 如果有日期列，创建折线图
+        if len(date_columns) > 0:
+            line_chart = LineChart()
+            line_chart.title = f"{column}随时间变化"
+            line_chart.x_axis.title = "日期"
+            line_chart.y_axis.title = column
+            dates = Reference(worksheet, min_col=df.columns.get_loc(date_columns[0])+1, min_row=2, max_row=len(df)+1)
+            values = Reference(worksheet, min_col=idx, min_row=1, max_row=len(df)+1)
+            line_chart.add_data(values, titles_from_data=True)
+            line_chart.set_categories(dates)
+            worksheet.add_chart(line_chart, f"{chr(65+idx)}15")
+
+    # 为分类列创建饼图
+    for idx, column in enumerate(categorical_columns[:3], start=1):  # 只为前三个分类列创建饼图
+        pie_chart = PieChart()
+        pie_chart.title = f"{column}分布"
+        labels = Reference(worksheet, min_col=df.columns.get_loc(column)+1, min_row=2, max_row=len(df)+1)
+        data = Reference(worksheet, min_col=df.columns.get_loc(column)+1, min_row=1, max_row=len(df)+1)
+        pie_chart.add_data(data, titles_from_data=True)
+        pie_chart.set_categories(labels)
+        worksheet.add_chart(pie_chart, f"{chr(65+len(numeric_columns)+idx)}1")
+
+    # 如果有两个或更多数值列，创建散点图
+    if len(numeric_columns) >= 2:
+        scatter_chart = ScatterChart()
+        scatter_chart.title = f"{numeric_columns[0]} vs {numeric_columns[1]}"
+        scatter_chart.x_axis.title = numeric_columns[0]
+        scatter_chart.y_axis.title = numeric_columns[1]
+        xvalues = Reference(worksheet, min_col=df.columns.get_loc(numeric_columns[0])+1, min_row=2, max_row=len(df)+1)
+        yvalues = Reference(worksheet, min_col=df.columns.get_loc(numeric_columns[1])+1, min_row=2, max_row=len(df)+1)
+        series = Series(yvalues, xvalues, title_from_data=True)
+        scatter_chart.series.append(series)
+        worksheet.add_chart(scatter_chart, f"{chr(65+len(numeric_columns)+len(categorical_columns)+1)}1")
 
 def process_excel_files(directory, filter_column=None, filter_condition=None, merge_column=None):
     """处理Excel文件的主函数"""
@@ -235,7 +280,7 @@ def process_excel_files(directory, filter_column=None, filter_condition=None, me
     
     print("正在创建可视化...")
     output_dir = os.path.join(directory, "可视化结果")
-    os.makedirs(output_dir, exist_ok=True)
+    os.makedirs(output_dir, exist_ok=True)  
     create_visualizations(df, analysis, output_dir)
     
     print("正在导出结果...")
@@ -255,4 +300,14 @@ def main():
 
 if __name__ == "__main__":
     main()
-# pip install pandas numpy openpyxl matplotlib seaborn scikit-learn scipy
+
+# 使用说明：
+# 1. 确保已安装所有必要的库：pip install pandas numpy openpyxl matplotlib seaborn scikit-learn scipy
+# 2. 将所有需要处理的Excel文件放在同一个目录下
+# 3. 运行脚本，按提示输入相关信息
+# 4. 处理完成后，结果将保存在指定目录下的"处理后的主数据.xlsx"文件中，可视化结果将保存在"可视化结果"文件夹中
+
+# 注意事项：
+# - 该脚本会处理目录中的所有.xlsx文件
+# - 如果数据量很大，处理过程可能需要一些时间
+# - 确保有足够的磁盘空间来保存处理后的数据和可视化结果
