@@ -7,7 +7,7 @@ import bcrypt
 from jarvis.jarvis import takecommand # 语音识别
 from package import Logging
 
-logging = Logging.getLogge(__name__)
+logging = Logging.getLogger(__name__)
 
 # 初始化数据库连接
 conn = sqlite3.connect('account_manager.db')
