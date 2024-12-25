@@ -1,5 +1,8 @@
 import os
 import time
+import json
+import csv
+from datetime import datetime
 from package import Logging
 from plugin.plugin_interface import AbstractPlugin, PluginResult
 from jarvis.jarvis import takecommand
@@ -8,14 +11,18 @@ logging = Logging.getLogger(__name__)
 
 # 任务类
 class Task:
-    def __init__(self, description, due_date=None, tags=None):
+    def __init__(self, description, due_date=None, tags=None, priority=1):
         self.description = description  # 任务描述
         self.due_date = due_date  # 截止日期
         self.completed = False  # 完成状态
         self.tags = tags if tags else []  # 标签
+        self.priority = priority  # 优先级
 
     def mark_completed(self):
         self.completed = True  # 标记为已完成
+
+    def __str__(self):
+        return f"{self.description} (Due: {self.due_date}, Completed: {self.completed}, Tags: {', '.join(self.tags)}, Priority: {self.priority})"
 
 # 待办事项插件       
 class TodoPlugin(AbstractPlugin):
@@ -23,7 +30,7 @@ class TodoPlugin(AbstractPlugin):
         self.name = "TodoPlugin"
         self.chinese_name = "待办事项"
         self.description = "管理简单的待办事项列表"
-        self.parameters = {"action": "str", "task": "str"}
+        self.parameters = {"action": "str", "task": "str", "priority": "int"}
         self.todo_list = []  # 待办事项列表
         self.load_todo_list()  # 加载待办事项
 
@@ -64,7 +71,8 @@ class TodoPlugin(AbstractPlugin):
             json.dump([{"description": task.description, 
                          "due_date": task.due_date.isoformat() if task.due_date else None, 
                          "completed": task.completed, 
-                         "tags": task.tags} for task in self.todo_list], f)
+                         "tags": task.tags,
+                         "priority": task.priority} for task in self.todo_list], f)
 
     def load_todo_list(self):
         # 从 JSON 文件加载待办事项
@@ -73,7 +81,7 @@ class TodoPlugin(AbstractPlugin):
                 tasks = json.load(f)
                 for task in tasks:
                     due_date = datetime.fromisoformat(task["due_date"]) if task["due_date"] else None
-                    task_obj = Task(task["description"], due_date, task["tags"])
+                    task_obj = Task(task["description"], due_date, task["tags"], task["priority"])
                     task_obj.completed = task["completed"]
                     self.todo_list.append(task_obj)
 
@@ -81,12 +89,13 @@ class TodoPlugin(AbstractPlugin):
         # 导出待办事项到 CSV 文件
         with open('todo_list.csv', 'w', newline='') as f:
             writer = csv.writer(f)
-            writer.writerow(['Description', 'Due Date', 'Completed', 'Tags'])
+            writer.writerow(['Description', 'Due Date', 'Completed', 'Tags', 'Priority'])
             for task in self.todo_list:
                 writer.writerow([task.description, 
                                  task.due_date.isoformat() if task.due_date else '', 
                                  task.completed, 
-                                 ', '.join(task.tags)])
+                                 ', '.join(task.tags),
+                                 task.priority])
 
     def import_from_csv(self):
         # 从 CSV 文件导入待办事项
@@ -94,30 +103,32 @@ class TodoPlugin(AbstractPlugin):
             reader = csv.reader(f)
             next(reader)  # 跳过表头
             for row in reader:
-                task_obj = Task(row[0], datetime.fromisoformat(row[1]) if row[1] else None, row[3].split(', ') if row[3] else [])
+                task_obj = Task(row[0], datetime.fromisoformat(row[1]) if row[1] else None, row[3].split(', ') if row[3] else [], int(row[4]))
                 task_obj.completed = row[2] == 'True'
                 self.todo_list.append(task_obj)
 
     def run(self, takecommand: str, args: dict) -> PluginResult:
         action = args.get("action")
-        task = args.get("task")
+        task_description = args.get("task")
+        priority = args.get("priority", 1)
         
         if not action:
             return PluginResult.new(result=None, need_call_brain=False, success=False, error_message="Action parameter is missing")
         
         if action == "add":
             # 添加任务
-            if not task:
+            if not task_description:
                 return PluginResult.new(result=None, need_call_brain=False, success=False, error_message="Task parameter is missing")
-            self.todo_list.append(task)
-            result = f"任务 '{task}' 添加到待办事项列表"
+            new_task = Task(task_description, priority=priority)
+            self.todo_list.append(new_task)
+            result = f"任务 '{task_description}' 添加到待办事项列表"
 
         elif action == "list":
             # 列出任务
-            result = "Todo list:\n" + "\n".join(self.todo_list)
+            result = "Todo list:\n" + "\n".join(str(task) for task in self.todo_list)
         
         elif action == "remove":
-            if not task:
+            if not task_description:
                 return PluginResult.new(result=None, need_call_brain=False, success=False, error_message="Task parameter is missing")
             for task in self.todo_list:
                 if task.description == task_description:
@@ -125,7 +136,7 @@ class TodoPlugin(AbstractPlugin):
                     result = f"任务 '{task_description}' 从待办事项列表中删除"
                     break
             else:
-                result = f"任务 '{task}' 未在待办事项列表中找到"
+                result = f"任务 '{task_description}' 未在待办事项列表中找到"
         
         elif action == "complete":
             # 标记任务为已完成
@@ -135,7 +146,6 @@ class TodoPlugin(AbstractPlugin):
                 if task.description == task_description:
                     task.mark_completed()
                     result = f"任务 '{task_description}' 标记为已完成"
-                    self.todo_list.remove(task)
                     break
             else:
                 result = f"任务 '{task_description}' 未在待办事项列表中找到"
@@ -161,4 +171,3 @@ class TodoPlugin(AbstractPlugin):
             return PluginResult.new(result=None, need_call_brain=False, success=False, error_message="Invalid action")
 
         return PluginResult.new(result=result, need_call_brain=False, success=True)
-
