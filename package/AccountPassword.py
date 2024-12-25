@@ -4,7 +4,7 @@ import time
 import sys
 from getpass import getpass
 import bcrypt
-from jarvis.jarvis import takecommand # 语音识别
+from jarvis.jarvis import takecommand
 from package import Logging
 
 logging = Logging.getLogger(__name__)
@@ -135,10 +135,10 @@ def delete_account():
     username = input("请输入要删除的用户名: ")
     password = getpass("请输入要删除的密码: ")
 
-    cursor.execute("SELECT id FROM users WHERE username = ? AND password = ?", (username, password))
+    cursor.execute("SELECT id, password FROM users WHERE username = ?", (username,))
     user = cursor.fetchone()
 
-    if user:
+    if user and bcrypt.checkpw(password.encode('utf-8'), user[1]):
         cursor.execute("DELETE FROM users WHERE id = ?", (user[0],))
         conn.commit()
         print(f"账号 {username} 已成功删除。")
@@ -201,5 +201,8 @@ def AccountPassword():
             print("无效的选择，请重试。")
 
 # 程序启动时尝试自动登录
-if not auto_login():  # 如果自动登录失败或跳过，启动主菜单
-    AccountPassword()
+try:
+    if not auto_login():  # 如果自动登录失败或跳过，启动主菜单
+        AccountPassword()
+finally:
+    conn.close()  # 确保数据库连接在程序结束时关闭
