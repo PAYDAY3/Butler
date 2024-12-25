@@ -1,18 +1,11 @@
-
 import os
 import time
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from bs4 import BeautifulSoup
-
+import requests
+from uuid import uuid4
 from plugin.plugin_interface import AbstractPlugin, PluginResult
-from jarvis.jarvis import takecommand
 from package import Logging
 
-TEMP_DIR_PATH = "./temp"
+TEMP_DIR_PATH = os.getenv("TEMP_DIR_PATH", "./temp")
 
 logger = Logging.getLogger(__name__)
 
@@ -21,10 +14,10 @@ class DownloadURLPlugin(AbstractPlugin):
         return True
 
     def __init__(self):
-        self._logger = None
+        self.logger = Logging.getLogger(self.__class__.__name__)
 
     def init(self, logging):
-        self.logger = Logging.getLogger(self.name)
+        self.logger = Logging.getLogger(self.__class__.__name__)
 
     def get_name(self):
         return "download_url"
@@ -33,8 +26,8 @@ class DownloadURLPlugin(AbstractPlugin):
         return "下载网页"
 
     def get_description(self):
-        return "下载网页接口，当你需要下载某个url的内容时，你应该调用本接口。\n" \
-               "当我的输入内容是一个网页url时，你应该优先考虑调用本接口下载网页内容，然后再对网页内容进行下一步的处理，以满足我的需求。"
+        return ("下载网页接口，当你需要下载某个url的内容时，你应该调用本接口。\n"
+                "当我的输入内容是一个网页url时，你应该优先考虑调用本接口下载网页内容，然后再对网页内容进行下一步的处理，以满足我的需求。")
 
     def get_parameters(self):
         return {
@@ -49,7 +42,7 @@ class DownloadURLPlugin(AbstractPlugin):
         }
 
     def run(self, takecommand: str, args: dict) -> PluginResult:
-        urt = args.get("url")
+        url = args.get("url")
         if not url:
             return PluginResult.new(
                 result=None, need_call_brain=False, success=False, 
@@ -61,10 +54,10 @@ class DownloadURLPlugin(AbstractPlugin):
             response = requests.get(url)
             response.raise_for_status()  # 检查请求是否成功
             # 将内容保存到文件中
-            file_name = f"download_url-{int(time.time())}.txt"
-            file_path = os.path.abspath(os.path.join(system_config.TEMP_DIR_PATH, file_name))
+            file_name = f"download_url-{uuid4().hex}.txt"
+            file_path = os.path.abspath(os.path.join(TEMP_DIR_PATH, file_name))
             with open(file_path, "w", encoding="utf-8") as f:
-                f.write(text_content)
+                f.write(response.text)
             
             self.logger.info(f"网页内容已下载并保存到 {file_path}")
 
@@ -76,13 +69,12 @@ class DownloadURLPlugin(AbstractPlugin):
         except requests.RequestException as e:
             self.logger.error(f"下载网页时出错: {str(e)}")
             return PluginResult.new(
-            result=None, need_call_brain=False, success=False, 
-            error_message=f"下载网页时出错: {str(e)}"
-        )
-
+                result=None, need_call_brain=False, success=False, 
+                error_message=f"下载网页时出错: {str(e)}"
+            )
         except Exception as e:
             self.logger.error(f"处理网页时出错: {str(e)}")
             return PluginResult.new(
-            result=None, need_call_brain=False, success=False, 
-            error_message=f"处理网页时出错: {str(e)}"    
+                result=None, need_call_brain=False, success=False, 
+                error_message=f"处理网页时出错: {str(e)}"
             )
