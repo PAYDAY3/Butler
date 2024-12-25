@@ -1,8 +1,10 @@
 import os
 import time
+import json
 from package import Logging
 from plugin.plugin_interface import AbstractPlugin, PluginResult
 from jarvis.jarvis import takecommand
+
 logging = Logging.getLogger(__name__)
 
 class NotepadPlugin(AbstractPlugin):
@@ -19,7 +21,7 @@ class NotepadPlugin(AbstractPlugin):
     def init(self, logging):
         self.logger = logging.getLogger(self.name)
         self.load_notes()  # 加载笔记
-        
+
     def get_name(self):
         return self.name
 
@@ -86,10 +88,16 @@ class NotepadPlugin(AbstractPlugin):
         if index is None or index < 0 or index >= len(self.notes):
             return PluginResult.new(result=None, need_call_brain=False, success=False, error_message="无效的索引")
         
+        if not new_note:
+            return PluginResult.new(result=None, need_call_brain=False, success=False, error_message="缺少新笔记内容")
+        
         self.notes[index] = new_note
         return PluginResult.new(result="笔记编辑成功", need_call_brain=False, success=True)
 
     def search_notes(self, keyword: str) -> PluginResult:
+        if not keyword:
+            return PluginResult.new(result=None, need_call_brain=False, success=False, error_message="缺少搜索关键字")
+        
         found_notes = [note for note in self.notes if keyword in note]
         if not found_notes:
             return PluginResult.new(result="没有找到匹配的笔记", need_call_brain=False, success=True)
