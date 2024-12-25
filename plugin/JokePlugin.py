@@ -9,17 +9,17 @@ logging = Logging.getLogger(__name__)
 
 class JokePlugin(AbstractPlugin):
     def __init__(self):
-        self.name = "JokePlugin"
+        self.name = "JokePlugin"  
         self.chinese_name = "笑话插件"
         self.description = "随机讲笑话并朗读"
         self.parameters = {}  # 此插件不需要参数
         self.jokes = [
-            "为什么企鹅不会飞？因为他们太胖了！",
-            "为什么树木总是在看地图？因为它们总是迷路！",
-            "为什么蜗牛总是背着房子？因为它们太宅了！",
-            "为什么小明总是喜欢玩游戏？因为游戏比学习有趣多了！",
-            "为什么老师总是喜欢提问？因为他们想看看学生有没有认真听课！",
-            "为什么猪总是喜欢睡觉？因为他们太懒了！",
+            ("为什么企鹅不会飞？", "因为他们太胖了！"),
+            ("为什么树木总是在看地图？", "因为它们总是迷路！"),
+            ("为什么蜗牛总是背着房子？", "因为它们太宅了！"),
+            ("为什么小明总是喜欢玩游戏？", "因为游戏比学习有趣多了！"),
+            ("为什么老师总是喜欢提问？", "因为他们想看看学生有没有认真听课！"),
+            ("为什么猪总是喜欢睡觉？", "因为他们太懒了！"),
             # ... 更多笑话
         ]
 
@@ -60,6 +60,6 @@ class JokePlugin(AbstractPlugin):
             speak(joke_question)  # 调用你的 speak 函数
             time.sleep(3)  # 停顿3秒（可以根据需要调整）
             speak(joke_answer)  # 然后说出答案部分
-            return PluginResult.new(result=joke, need_call_brain=False, success=True)
+            return PluginResult.new(result=joke_question + " " + joke_answer, need_call_brain=False, success=True)
         else:
-            return PluginResult.new(result=None, need_call_brain=False, success=False) 
+            return PluginResult.new(result=None, need_call_brain=False, success=False)
