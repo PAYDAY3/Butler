@@ -2,13 +2,29 @@ import os
 import shutil
 import datetime
 import logging
-from package import Logging
 from pathlib import Path
 from typing import Optional
+from package import Logging
 
 logging = Logging.getLogger(__name__)
 
-def delete_temp_files(directory="./temp", log_file: Optional[str] = None, days: int = 7, backup_directory: Optional[str] = None, dry_run: bool = False):
+def delete_temp_files(
+    directory: str = "./temp",
+    log_file: Optional[str] = None,
+    days: int = 7,
+    backup_directory: Optional[str] = None,
+    dry_run: bool = False
+) -> None:
+    """
+    删除指定目录下超过指定天数的临时文件和目录。
+
+    Args:
+        directory (str): 要清理的目录路径。
+        log_file (Optional[str]): 日志文件路径。
+        days (int): 超过该天数的文件和目录将被删除。
+        backup_directory (Optional[str]): 备份目录路径。
+        dry_run (bool): 如果为 True，则不实际删除文件和目录，只打印将要删除的内容。
+    """
     global last_execution_time
 
     if not os.path.exists(directory):
@@ -16,18 +32,16 @@ def delete_temp_files(directory="./temp", log_file: Optional[str] = None, days: 
         logging.info(f"目录 {directory} 不存在")
         return
 
-    # 获取当前时间
     now = datetime.datetime.now()
     report = []
 
-    # 遍历目录下的所有文件和子目录
     for root, dirs, files in os.walk(directory):
         for file in files:
             file_path = os.path.join(root, file)
             if not os.access(file_path, os.R_OK):
-                logger.warning(f"跳过不可读文件: {file_path}")
+                logging.warning(f"跳过不可读文件: {file_path}")
                 continue
-        
+
             file_mtime = datetime.datetime.fromtimestamp(os.path.getmtime(file_path))
             file_age = (now - file_mtime).days
 
@@ -37,7 +51,7 @@ def delete_temp_files(directory="./temp", log_file: Optional[str] = None, days: 
                     os.makedirs(os.path.dirname(backup_path), exist_ok=True)
                     shutil.copy2(file_path, backup_path)
                     logging.info(f"备份文件: {file_path}到{backup_path}")
-                    
+
                 if not dry_run:
                     try:
                         os.remove(file_path)
@@ -46,13 +60,13 @@ def delete_temp_files(directory="./temp", log_file: Optional[str] = None, days: 
                     except Exception as e:
                         print(f"删除文件 {file_path} 失败: {e}")
                         logging.error(f"删除文件 {file_path} 失败: {e}")
-                    
+
         for dir_name in dirs:
             dir_path = os.path.join(root, dir_name)
             if not os.access(dir_path, os.R_OK):
-                logger.warning(f"Skipping unreadable directory: {dir_path}")
+                logging.warning(f"跳过不可读目录: {dir_path}")
                 continue
-         
+
             dir_mtime = datetime.datetime.fromtimestamp(os.path.getmtime(dir_path))
             dir_age = (now - dir_mtime).days
 
@@ -62,7 +76,7 @@ def delete_temp_files(directory="./temp", log_file: Optional[str] = None, days: 
                     os.makedirs(os.path.dirname(backup_path), exist_ok=True)
                     shutil.copytree(dir_path, backup_path)
                     logging.info(f"备份目录: {dir_path}到{backup_path}")
-                    
+
                 if not dry_run:
                     try:
                         shutil.rmtree(dir_path)
@@ -80,8 +94,6 @@ def delete_temp_files(directory="./temp", log_file: Optional[str] = None, days: 
             for entry in report:
                 f.write(f"{entry}\n")
 
-    # 记录当前执行时间
     last_execution_time = now
     print(f"上次执行时间: {last_execution_time}")
     logging.info(f"上次执行时间: {last_execution_time}")
-    
