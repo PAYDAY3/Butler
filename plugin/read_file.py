@@ -14,7 +14,7 @@ class ReadFilePlugin(AbstractPlugin):
         return True
 
     def init(self, logging=None):
-    self._logger = logging if logging else Logging.getLogger(__name__)
+        self._logger = logging if logging else Logging.getLogger(__name__)
 
     def get_name(self):
         return "read_file"
@@ -60,8 +60,8 @@ class ReadFilePlugin(AbstractPlugin):
             self._logger.info(f"尝试读取文件: {file_path}")
             with open(file_path, 'rb') as f:
                 content = f.read()
-                encoding = chardet.detect(raw_data)['encoding']
-                content = raw_data.decode(encoding)
+                encoding = chardet.detect(content)['encoding']
+                content = content.decode(encoding)
             self._logger.info(f"成功读取文件: {file_path}")
             # 返回读取的文件内容
             return PluginResult.new(result=content, need_call_brain=True, success=True,
@@ -74,6 +74,10 @@ class ReadFilePlugin(AbstractPlugin):
             self._logger.error(f"无法解码文件: {file_path}")
             return PluginResult.new(result=None, need_call_brain=False, success=False,
                                     error_message=f"无法解码文件: {file_path}")  
+        except PermissionError:
+            self._logger.error(f"权限不足，无法读取文件: {file_path}")
+            return PluginResult.new(result=None, need_call_brain=False, success=False,
+                                    error_message=f"权限不足，无法读取文件: {file_path}")
         except Exception as e:
             self._logger.error(f"读取文件时出错: {str(e)}")
             return PluginResult.new(result=None, need_call_brain=False, success=False,
