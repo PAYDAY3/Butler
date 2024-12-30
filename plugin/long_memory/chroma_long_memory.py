@@ -152,4 +152,6 @@ class SQLiteLongMemory(AbstractLongMemory):
         # 使缓存中的项失效
         keys_to_remove = [k for k, v in self._cache.items() if any(item.id in ids for item in v)]
         for key in keys_to_remove:
-            del self._cache[key]
+            if any(item.id in ids for item in self._cache[key]):
+                del self._cache[key]
+         self._logger.info(f"缓存中的项已失效: {keys_to_remove}")
