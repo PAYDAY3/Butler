@@ -5,15 +5,35 @@ from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 
 def load_api_key():
-    # 从环境变量加载Azure Cognitive Services的API密钥
     load_dotenv()
     return os.getenv('AZURE_TRANSLATE_KEY')
 
-def translate_text(text, target_language='en'):
+def detect_language(text):
+    api_key = load_api_key()
+    endpoint = "https://api.cognitive.microsofttranslator.com"
+    
+    path = '/detect'
+    constructed_url = endpoint + path
+
+    headers = {
+        'Ocp-Apim-Subscription-Key': api_key,
+        'Content-Type': 'application/json',
+        'X-ClientTraceId': str(uuid.uuid4())
+    }
+    body = [{ 'text': text }]
+    
+    response = requests.post(constructed_url, headers=headers, json=body)
+    response.raise_for_status()
+    
+    language = response.json()[0]['language']
+    return language
+
+def translate_text(text):
     api_key = load_api_key()
     endpoint = "https://api.cognitive.microsofttranslator.com"
 
-    # 准备请求头和请求参数
+    detected_language = detect_language(text)
+
     headers = {
         "Ocp-Apim-Subscription-Key": api_key,
         "Content-Type": "application/json",
@@ -21,10 +41,10 @@ def translate_text(text, target_language='en'):
     }
     params = {
         "api-version": "3.0",
-        "to": target_language
+        "from": detected_language,
+        "to": 'zh'
     }
 
-    # 发送翻译请求
     translate_url = f"{endpoint}/translate"
     body = [{"text": text}]
     response = requests.post(translate_url, headers=headers, params=params, json=body)
@@ -33,55 +53,45 @@ def translate_text(text, target_language='en'):
     
     return translated_text
 
-def translate_file(input_file, output_file, target_language='en'):
-    # 读取输入文件内容
+def translate_file(input_file, output_file):
     with open(input_file, 'r', encoding='utf-8') as file:
         text = file.read()
 
-    # 翻译文本
-    translated_text = translate_text(text, target_language)
+    translated_text = translate_text(text)
 
-    # 将翻译结果写入输出文件
     with open(output_file, 'w', encoding='utf-8') as file:
         file.write(translated_text)
 
     print(f"文件翻译成功，已保存到 {output_file}")
 
-def translate_website(url, target_language='en'):
-    # 获取网页内容
+def translate_website(url):
     response = requests.get(url)
     soup = BeautifulSoup(response.content, 'html.parser')
 
-    # 提取网页中的文本内容
     text_elements = soup.find_all(text=True)
 
-    # 构建要翻译的文本列表
     text_to_translate = "\n".join([element.strip() for element in text_elements if element.strip()])
 
-    # 翻译文本
-    translated_text = translate_text(text_to_translate, target_language)
+    translated_text = translate_text(text_to_translate)
 
-    # 替换原始文本为翻译后的文本
     for element in text_elements:
         if element.strip():
-            translated_text = translate_text(element.strip(), target_language)
+            translated_text = translate_text(element.strip())
             element.replace_with(translated_text)
 
-    # 输出翻译后的网页内容
     translated_html = soup.prettify()
     print(translated_html)
 
 def translators():
     choice = input("请选择翻译类型: 1. 文件 2. 网页\n")
-    to_language = input("请输入目标语言代码（例如：zh, en, es）:\n")
 
     if choice == '1':
         file_path = input("请输入文件路径:\n")
         output_file = input("请输入输出文件路径:\n")
-        translate_file(file_path, output_file, to_language)
+        translate_file(file_path, output_file)
     elif choice == '2':
         url = input("请输入网页URL:\n")
-        translate_website(url, to_language)
+        translate_website(url)
     else:
         print("无效选择")
 
