@@ -65,6 +65,32 @@ class ProgramManager:
         self.uninstall_button = ttk.Button(self.control_frame, text="卸载选定的软件", command=self.on_uninstall)
         self.uninstall_button.pack(side=tk.LEFT, padx=10)
         
+     def uninstall_program(program_name):
+         """卸载指定程序"""
+        try:
+            uninstall_command = f"wmic product where name='{program_name}' call uninstall"
+            subprocess.run(uninstall_command, shell=True, check=True)
+            print(f"{program_name} 已成功卸载。")
+        except subprocess.CalledProcessError as e:
+            print(f"卸载 {program_name} 失败: {e}")
+
+    def clean_residual_files(program_name):
+        """清理卸载后遗留的文件"""
+        possible_paths = [
+            os.path.join("C:\\Program Files", program_name),
+            os.path.join("C:\\Program Files (x86)", program_name),
+            os.path.join(os.environ["APPDATA"], program_name),
+            os.path.join(os.environ["LOCALAPPDATA"], program_name)
+        ]
+    
+        for path in possible_paths:
+            if os.path.exists(path):
+                try:
+                    shutil.rmtree(path)
+                    print(f"{path} 中的残留文件已被清理。")
+                except Exception as e:
+                    print(f"清理 {path} 失败: {e}")   
+                    
     def get_program_size(self, path):
         """获取程序占用空间"""
         try:
