@@ -1,8 +1,3 @@
-# 该文件是由SWIG自动生成的(http://www.swig.org)。
-# 版本3.0.12
-# 不要修改这个文件，除非你知道你在做什么——修改
-# 使用SWIG接口文件。
-
 from sys import version_info as _swig_python_version_info
 
 # 根据 Python 版本选择导入方式
@@ -25,22 +20,16 @@ elif _swig_python_version_info >= (2, 6, 0):
 
     def swig_import_helper():
         from os.path import dirname
-        import imp
+        import importlib.util
 
-        fp = None
         try:
-            fp, pathname, description = imp.find_module(
-                "_snowboydetect", [dirname(__file__)]
-            )
+            spec = importlib.util.find_spec("_snowboydetect")
+            _mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(_mod)
+            return _mod
         except ImportError:
             import _snowboydetect
-
             return _snowboydetect
-        try:
-            _mod = imp.load_module("_snowboydetect", fp, pathname, description)
-        finally:
-            fp and fp.close()
-        return _mod
 
     _snowboydetect = swig_import_helper()
     del swig_import_helper
@@ -58,15 +47,14 @@ try:
 except ImportError:
     import __builtin__
 
-
-def _swig_setattr_nondynamic(self, class_type, name, value, static=1):
+def _swig_setattr_nondynamic(self, class_type, name: str, value, static: int = 1):
     if name == "thisown":
         return self.this.own(value)
     if name == "this":
         if type(value).__name__ == "SwigPyObject":
             self.__dict__[name] = value
             return
-    method = class_type.__swig_setmethods__.get(name, None)
+    method = class_type.__swig_setmethods__.get(name)
     if method:
         return method(self, value)
     if not static:
@@ -75,35 +63,25 @@ def _swig_setattr_nondynamic(self, class_type, name, value, static=1):
         else:
             self.__dict__[name] = value
     else:
-        raise AttributeError("You cannot add attributes to %s" % self)
+        raise AttributeError(f"不能添加属性到 {self}")
 
-
-def _swig_setattr(self, class_type, name, value):
+def _swig_setattr(self, class_type, name: str, value):
     return _swig_setattr_nondynamic(self, class_type, name, value, 0)
 
-
-def _swig_getattr(self, class_type, name):
+def _swig_getattr(self, class_type, name: str):
     if name == "thisown":
         return self.this.own()
-    method = class_type.__swig_getmethods__.get(name, None)
+    method = class_type.__swig_getmethods__.get(name)
     if method:
         return method(self)
-    raise AttributeError(
-        "'%s' object has no attribute '%s'" % (class_type.__name__, name)
-    )
-
+    raise AttributeError(f"'{class_type.__name__}' 对象没有属性 '{name}'")
 
 def _swig_repr(self):
     try:
-        strthis = "proxy of " + self.this.__repr__()
+        strthis = f"proxy of {self.this.__repr__()}"
     except __builtin__.Exception:
         strthis = ""
-    return "<%s.%s; %s >" % (
-        self.__class__.__module__,
-        self.__class__.__name__,
-        strthis,
-    )
-
+    return f"<{self.__class__.__module__}.{self.__class__.__name__}; {strthis} >"
 
 try:
     _object = object
@@ -115,17 +93,15 @@ except __builtin__.Exception:
 
     _newclass = 0
 
-
 class SnowboyDetect(_object):
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(
-        self, SnowboyDetect, name, value
-    )
+    __setattr__ = lambda self, name, value: _swig_setattr(self, SnowboyDetect, name, value)
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, SnowboyDetect, name)
     __repr__ = _swig_repr
 
-    def __init__(self, resource_filename, model_str):
+    def __init__(self, resource_filename: str, model_str: str):
+        """用资源文件和模型字符串初始化 SnowboyDetect。"""
         this = _snowboydetect.new_SnowboyDetect(resource_filename, model_str)
         try:
             self.this.append(this)
@@ -133,41 +109,51 @@ class SnowboyDetect(_object):
             self.this = this
 
     def Reset(self):
+        """重置检测器。"""
         return _snowboydetect.SnowboyDetect_Reset(self)
 
     def RunDetection(self, *args):
+        """用给定的参数运行检测。"""
         return _snowboydetect.SnowboyDetect_RunDetection(self, *args)
 
-    def SetSensitivity(self, sensitivity_str):
+    def SetSensitivity(self, sensitivity_str: str):
+        """设置灵敏度。"""
         return _snowboydetect.SnowboyDetect_SetSensitivity(self, sensitivity_str)
 
-    def SetHighSensitivity(self, high_sensitivity_str):
-        return _snowboydetect.SnowboyDetect_SetHighSensitivity(
-            self, high_sensitivity_str
-        )
+    def SetHighSensitivity(self, high_sensitivity_str: str):
+        """设置高灵敏度。"""
+        return _snowboydetect.SnowboyDetect_SetHighSensitivity(self, high_sensitivity_str)
 
-    def GetSensitivity(self):
+    def GetSensitivity(self) -> str:
+        """获取灵敏度。"""
         return _snowboydetect.SnowboyDetect_GetSensitivity(self)
 
-    def SetAudioGain(self, audio_gain):
+    def SetAudioGain(self, audio_gain: float):
+        """设置音频增益。"""
         return _snowboydetect.SnowboyDetect_SetAudioGain(self, audio_gain)
 
     def UpdateModel(self):
+        """更新模型。"""
         return _snowboydetect.SnowboyDetect_UpdateModel(self)
 
-    def NumHotwords(self):
+    def NumHotwords(self) -> int:
+        """返回热词数量。"""
         return _snowboydetect.SnowboyDetect_NumHotwords(self)
 
-    def ApplyFrontend(self, apply_frontend):
+    def ApplyFrontend(self, apply_frontend: bool):
+        """应用前端。"""
         return _snowboydetect.SnowboyDetect_ApplyFrontend(self, apply_frontend)
 
-    def SampleRate(self):
+    def SampleRate(self) -> int:
+        """返回采样率。"""
         return _snowboydetect.SnowboyDetect_SampleRate(self)
 
-    def NumChannels(self):
+    def NumChannels(self) -> int:
+        """返回通道数。"""
         return _snowboydetect.SnowboyDetect_NumChannels(self)
 
-    def BitsPerSample(self):
+    def BitsPerSample(self) -> int:
+        """返回每个样本的位数。"""
         return _snowboydetect.SnowboyDetect_BitsPerSample(self)
 
     __swig_destroy__ = _snowboydetect.delete_SnowboyDetect
@@ -185,7 +171,8 @@ class SnowboyVad(_object):
     __getattr__ = lambda self, name: _swig_getattr(self, SnowboyVad, name)
     __repr__ = _swig_repr
 
-    def __init__(self, resource_filename):
+    def __init__(self, resource_filename: str):
+        """用资源文件初始化 SnowboyVad。"""
         this = _snowboydetect.new_SnowboyVad(resource_filename)
         try:
             self.this.append(this)
@@ -193,30 +180,31 @@ class SnowboyVad(_object):
             self.this = this
 
     def Reset(self):
-        # 重置 VAD
+        """重置 VAD。"""
         return _snowboydetect.SnowboyVad_Reset(self)
 
     def RunVad(self, *args):
-        # 运行 VAD 检测
+        """用给定的参数运行 VAD 检测。"""
         return _snowboydetect.SnowboyVad_RunVad(self, *args)
 
-    def SetAudioGain(self, audio_gain):
-        # 设置音频增益
+    def SetAudioGain(self, audio_gain: float):
+        """设置音频增益。"""
         return _snowboydetect.SnowboyVad_SetAudioGain(self, audio_gain)
 
-    def ApplyFrontend(self, apply_frontend):    
+    def ApplyFrontend(self, apply_frontend: bool):
+        """应用前端。"""
         return _snowboydetect.SnowboyVad_ApplyFrontend(self, apply_frontend)
 
-    def SampleRate(self):
-        # 获取 VAD 的采样率
+    def SampleRate(self) -> int:
+        """返回采样率。"""
         return _snowboydetect.SnowboyVad_SampleRate(self)
 
-    def NumChannels(self):
-        # 获取 VAD 的通道数
+    def NumChannels(self) -> int:
+        """返回通道数。"""
         return _snowboydetect.SnowboyVad_NumChannels(self)
 
-    def BitsPerSample(self):
-        # 获取 VAD 每个样本的位数
+    def BitsPerSample(self) -> int:
+        """返回每个样本的位数。"""
         return _snowboydetect.SnowboyVad_BitsPerSample(self)
 
     __swig_destroy__ = _snowboydetect.delete_SnowboyVad
@@ -226,5 +214,4 @@ class SnowboyVad(_object):
 SnowboyVad_swigregister = _snowboydetect.SnowboyVad_swigregister
 SnowboyVad_swigregister(SnowboyVad)
 
-# This file is compatible with both classic and new-style classes.
 # 这个文件兼容经典类和新式类。
