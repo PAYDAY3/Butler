@@ -17,7 +17,25 @@ def bandpass_filter(data, lowcut, highcut, fs, order=5):
     b, a = butter_bandpass(lowcut, highcut, fs, order=order)
     y = lfilter(b, a, data)
     return y
+
+def noise_reduction(audio_data):
+    # 转换音频数据到频域
+    fft_data = np.fft.fft(audio_data)  # 对音频数据进行快速傅里叶变换（FFT），将其从时域转换到频域
+    magnitude = np.abs(fft_data)       # 获取频域数据的幅度
+    phase = np.angle(fft_data)         # 获取频域数据的相位
     
+    # 估计噪声功率谱
+    noise_magnitude = np.mean(magnitude[:int(0.1 * len(magnitude))])  # 估计噪声功率谱，使用频率范围内的一部分数据计算噪声平均值
+    
+    # 从信号中减去噪声
+    magnitude = magnitude - noise_magnitude  # 从信号中减去噪声幅度
+    magnitude[magnitude < 0] = 0             # 确保幅度不为负值
+    
+    # 重构信号
+    fft_data = magnitude * np.exp(1j * phase)  # 使用新的幅度和原始相位重建频域信号
+    denoised_audio = np.fft.ifft(fft_data)     # 对频域信号进行逆快速傅里叶变换（iFFT），将其转换回时域
+    return np.real(denoised_audio)             # 返回去噪后的实数部分音频数据
+       
 class ClapSnapDetector:
     def __init__(self, threshold=0.3, min_frequency=2000, max_frequency=4000):
         self.threshold = threshold
