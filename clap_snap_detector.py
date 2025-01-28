@@ -1,11 +1,23 @@
 import pyaudio
 import numpy as np
-from scipy.signal import find_peaks
+from scipy.signal import find_peaks, butter, lfilter
 import threading
 import time
 import wave
 import os
 
+def butter_bandpass(lowcut, highcut, fs, order=5):
+    nyquist = 0.5 * fs
+    low = lowcut / nyquist
+    high = highcut / nyquist
+    b, a = butter(order, [low, high], btype='band')
+    return b, a
+
+def bandpass_filter(data, lowcut, highcut, fs, order=5):
+    b, a = butter_bandpass(lowcut, highcut, fs, order=order)
+    y = lfilter(b, a, data)
+    return y
+    
 class ClapSnapDetector:
     def __init__(self, threshold=0.3, min_frequency=2000, max_frequency=4000):
         self.threshold = threshold
@@ -18,8 +30,9 @@ class ClapSnapDetector:
 
     def detect_clap_snap(self, audio_data, sample_rate):
         audio_array = np.frombuffer(audio_data, dtype=np.int16)
-        fft_data = np.fft.fft(audio_array)
-        freqs = np.fft.fftfreq(len(fft_data), 1/sample_rate)
+        filtered_data = bandpass_filter(audio_array, self.min_frequency, self.max_frequency, sample_rate)
+        fft_data = np.fft.fft(filtered_data)
+        freqs = np.fft.fftfreq(len(fft_data), 1/sample_rate)    
         
         pos_mask = freqs > 0
         freqs = freqs[pos_mask]
@@ -107,4 +120,3 @@ if __name__ == "__main__":
     finally:
         detector.stop_listening()
         print(f"总共检测到 {detector.detected_count} 次拍手声或啪啪声")
-
