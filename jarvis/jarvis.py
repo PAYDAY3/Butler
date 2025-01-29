@@ -297,11 +297,11 @@ class Jarvis:
             self.programs = self.open_programs()
 
         def on_modified(self, event):
-            if event.src_path.endswith(('.py', 'invoke.py')) or event.src_path.split('.')[-1] in binary_extensions:
+            if event.src_path.endswith('.py') or event.src_path.split('.')[-1] in binary_extensions:
                 self.programs = self.open_programs.clear_cache()()
 
         def on_created(self, event):
-            if event.src_path.endswith(('.py', 'invoke.py')) or event.src_path.split('.')[-1] in binary_extensions:
+            if event.src_path.endswith('.py') or event.src_path.split('.')[-1] in binary_extensions:
                 self.programs = self.open_programs.clear_cache()()
 
         @lru_cache(maxsize=128)
