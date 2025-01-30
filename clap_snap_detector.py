@@ -48,6 +48,7 @@ class ClapSnapDetector:
 
     def detect_clap_snap(self, audio_data, sample_rate):
         audio_array = np.frombuffer(audio_data, dtype=np.int16)
+        denoised_data = noise_reduction(audio_array)
         filtered_data = bandpass_filter(audio_array, self.min_frequency, self.max_frequency, sample_rate)
         fft_data = np.fft.fft(filtered_data)
         freqs = np.fft.fftfreq(len(fft_data), 1/sample_rate)    
