@@ -12,7 +12,7 @@ from urllib.parse import urlparse, urljoin
 from scrapy.crawler import CrawlerProcess
 from scrapy.utils.project import get_project_settings
 import scrapy
-from jarvis.jarvis import takecommand
+from jarvis.jarvis import Jarvis
 
 # 设置日志配置
 logging = Logging.getLogger(__name__)
@@ -52,11 +52,11 @@ url_queue = [start_url]
 # 创建一个Redis客户端来存储爬虫的状态
 redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
 
-# 创建一个文件夹用于存储下载的图片
+# 创建一个文件夹用于存储下载的文件
 if not os.path.exists(downloaded):
     os.makedirs(downloaded)
 
-def download_image(url, filename):
+def download_file(url, filename):
     try:
         response = requests.get(url, stream=True)
         response.raise_for_status()
@@ -66,40 +66,47 @@ def download_image(url, filename):
                 f.write(chunk)
         logging.info(f"下载 {url}")
     except requests.RequestException as e:
-        logging.error(f"下载了 {url}: {e}")
+        logging.error(f"下载 {url}: {e}")
 
-def search_and_crawl_images(search_query):
+def search_and_crawl_files(search_query, file_type):
     search_url = 'https://www.bing.com/search'
-    params = {'q': search_query, 'tbm': 'isch'}
+    params = {'q': search_query}
+    if file_type == 'image':
+        params['tbm'] = 'isch'
+    elif file_type == 'video':
+        params['tbm'] = 'vid'
     headers = get_headers()
     try:
         response = requests.get(search_url, params=params, headers=headers)
         response.raise_for_status()
         soup = BeautifulSoup(response.content, 'html.parser')
-        image_links = [img.get('src') for img in soup.find_all('img')]
+        if file_type == 'image':
+            file_links = [img.get('src') for img in soup.find_all('img')]
+        elif file_type == 'video':
+            file_links = [a['href'] for a in soup.find_all('a', href=True) if 'watch' in a['href']]
         logging.info("搜索结果:")
-        for i, image_link in enumerate(image_links):
-            logging.info(f"{i+1}. {image_link}")
+        for i, file_link in enumerate(file_links):
+            logging.info(f"{i+1}. {file_link}")
         logging.info("")
         while True:
-            choice = input("输入要下载的图像编号(或'q'退出): ")
+            choice = input(f"输入要下载的{file_type}编号(或'q'退出): ")
             if choice.lower() == 'q':
                 break
             try:
                 choice = int(choice)
-                if 0 < choice <= len(image_links):
-                    image_url = image_links[choice-1]
-                    download_image(image_url, os.path.basename(image_url))
+                if 0 < choice <= len(file_links):
+                    file_url = file_links[choice-1]
+                    download_file(file_url, os.path.basename(file_url))
                 else:
                     logging.warning("无效的选择")
             except ValueError:
                 logging.warning("无效的输入")
     except requests.RequestException as e:
-        logging.error(f"Failed to search images: {e}")
+        logging.error(f"Failed to search {file_type}: {e}")
         return False  # 返回False表示失败
     return True  # 返回True表示成功
 
-def rint_progress_bar(iteration, total, length=40):
+def print_progress_bar(iteration, total, length=40):
     percent = ("{0:.1f}").format(100 * (iteration / float(total)))
     filled_length = int(length * iteration // total)
     bar = '█' * filled_length + '-' * (length - filled_length)
@@ -120,12 +127,13 @@ def crawl_website(start_url, max_depth):
             for link in links:
                 if link not in visited_urls:
                     url_queue.append(link)
-            images = [img.get('src') for img in soup.find_all('img')]
-            print_progress_bar(0, len(images))   
+            files = [img.get('src') for img in soup.find_all('img')] + \
+                    [a['href'] for a in soup.find_all('a', href=True) if 'watch' in a['href']]
+            print_progress_bar(0, len(files))   
             with concurrent.futures.ThreadPoolExecutor() as executor:
-                futures = [executor.submit(download_image, image_url, os.path.basename(image_url)) for image_url in images]
-                for i,future in enumerate(concurrent.futures.as_completed(futures)):
-                    print_progress_bar(i + 1, len(images))
+                futures = [executor.submit(download_file, file_url, os.path.basename(file_url)) for file_url in files]
+                for i, future in enumerate(concurrent.futures.as_completed(futures)):
+                    print_progress_bar(i + 1, len(files))
                 time.sleep(delay_time + random.random())
         except requests.RequestException as e:
             logging.error(f"爬取 {url} 失败: {e}")
@@ -133,13 +141,13 @@ def crawl_website(start_url, max_depth):
             break
     redis_client.set('crawler_state', str(len(visited_urls)))
     return True  # 返回True表示成功
-    
+
 def controlled_crawl(urls, delay):
     for url in urls:
         response = requests.get(url, headers=get_headers())
         # 处理响应
         time.sleep(delay)    
-        
+
 class MyScrapySpider(scrapy.Spider):
     name = "my_scrapy_spider"
 
@@ -157,14 +165,17 @@ class MyScrapySpider(scrapy.Spider):
         with open(path, 'wb') as f:
             f.write(response.body)
         self.log(f'下载 {response.url}')    
-        
-def crawler(takecommand):
-    crawl_website(takecommand())
+
+def crawler():
+    command = Jarvis.takecommand()
+    crawl_website(command())
     
-    parser = argparse.ArgumentParser(description="Image Search and Crawler")
+    parser = argparse.ArgumentParser(description="Multimedia Search and Crawler")
     parser.add_argument('search_query', type=str, nargs='?', help='输入搜索查询')
+    parser.add_argument('--type', type=str, default='image', choices=['image', 'video'], help='文件类型')
     args = parser.parse_args()
     search_query = args.search_query
+    file_type = args.type
     
     if not search_query:
         search_query = input('搜索内容: ')
@@ -176,10 +187,7 @@ def crawler(takecommand):
             run_scrapy_crawler(search_query)        
             
     else:  # 如果输入不是网址，作为搜索查询
-        search_querys = search_query
-        image_format = input("格式：")
-        limit = int(input("数量："))
-        search_and_crawl_images(search_query, image_format, limit)
+        success = search_and_crawl_files(search_query, file_type)
         if not success:
             logger.info("切换到Scrapy爬虫")
             run_scrapy_crawler(search_query)
