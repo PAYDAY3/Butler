@@ -3,7 +3,7 @@ import numpy as np
 from scipy.signal import find_peaks, butter, lfilter
 import threading
 import time
-import wave
+import subprocess
 import os
 
 def butter_bandpass(lowcut, highcut, fs, order=5):
@@ -37,21 +37,22 @@ def noise_reduction(audio_data):
     return np.real(denoised_audio)             # 返回去噪后的实数部分音频数据
        
 class ClapSnapDetector:
-    def __init__(self, threshold=0.3, min_frequency=2000, max_frequency=4000):
+    def __init__(self, threshold=0.3, min_frequency_clap=1000, max_frequency_clap=2000, min_frequency_snap=2000, max_frequency_snap=4000):
         self.threshold = threshold
-        self.min_frequency = min_frequency
-        self.max_frequency = max_frequency
+        self.min_frequency_clap = min_frequency_clap
+        self.max_frequency_clap = max_frequency_clap
+        self.min_frequency_snap = min_frequency_snap
+        self.max_frequency_snap = max_frequency_snap
         self.is_listening = False
-        self.detected_count = 0
-        self.clap_audio = "clap.wav"
-        self.snap_audio = "snap.wav"
+        self.detected_count_clap = 0
+        self.detected_count_snap = 0
 
     def detect_clap_snap(self, audio_data, sample_rate):
         audio_array = np.frombuffer(audio_data, dtype=np.int16)
         denoised_data = noise_reduction(audio_array)
-        filtered_data = bandpass_filter(audio_array, self.min_frequency, self.max_frequency, sample_rate)
+        filtered_data = bandpass_filter(audio_array, self.min_frequency_clap, self.max_frequency_snap, sample_rate)
         fft_data = np.fft.fft(filtered_data)
-        freqs = np.fft.fftfreq(len(fft_data), 1/sample_rate)    
+        freqs = np.fft.fftfreq(len(fft_data), 1/sample_rate)
         
         pos_mask = freqs > 0
         freqs = freqs[pos_mask]
@@ -60,32 +61,31 @@ class ClapSnapDetector:
         peaks, _ = find_peaks(magnitude, height=self.threshold*np.max(magnitude))
         peak_freqs = freqs[peaks]
         
-        in_range_peaks = peak_freqs[(peak_freqs >= self.min_frequency) & (peak_freqs <= self.max_frequency)]
+        # 检查鼓掌
+        clap_peaks = peak_freqs[(peak_freqs >= self.min_frequency_clap) & (peak_freqs <= self.max_frequency_clap)]
+        if len(clap_peaks) > 0:
+            return "clap"
         
-        if len(in_range_peaks) > 0:
-            return True
-        return False
+        # 检查响指
+        snap_peaks = peak_freqs[(peak_freqs >= self.min_frequency_snap) & (peak_freqs <= self.max_frequency_snap)]
+        if len(snap_peaks) > 0:
+            return "snap"
+        
+        return None
 
-    def play_audio(self, file_path):
-        if os.path.exists(file_path):
-            wf = wave.open(file_path, 'rb')
-            p = pyaudio.PyAudio()
-            
-            stream = p.open(format=p.get_format_from_width(wf.getsampwidth()),
-                            channels=wf.getnchannels(),
-                            rate=wf.getframerate(),
-                            output=True)
-            
-            data = wf.readframes(1024)
-            while data:
-                stream.write(data)
-                data = wf.readframes(1024)
-            
-            stream.stop_stream()
-            stream.close()
-            p.terminate()
-        else:
-            print(f"音频文件 {file_path} 不存在")
+    def open_program(self, sound_type):
+        """
+        根据声音类型启动相应的程序。
+        这里你可以根据需要更改为不同的程序路径。
+        """
+        if sound_type == "clap":
+            print("启动程序: 击掌对应程序")
+            # 启动击掌对应的程序
+            subprocess.run(["jarvis/jarvis.py"])
+        elif sound_type == "snap":
+            print("启动程序: 响指对应程序")
+            # 启动响指对应的程序
+            subprocess.run(["jarvis/jarvis.py"])
 
     def listen(self):
         CHUNK = 1024
@@ -105,16 +105,15 @@ class ClapSnapDetector:
 
         while self.is_listening:
             data = stream.read(CHUNK)
-            if self.detect_clap_snap(data, RATE):
-                self.detected_count += 1
-                print(f"检测到拍手声或啪啪声！ (总计: {self.detected_count})")
-                
-                if self.detected_count % 2 == 0:
-                    print("播放拍手声音效")
-                    self.play_audio(self.clap_audio)
-                else:
-                    print("播放打响指声音效")
-                    self.play_audio(self.snap_audio)
+            detected_sound = self.detect_clap_snap(data, RATE)
+            if detected_sound == "clap":
+                self.detected_count_clap += 1
+                print(f"检测到击掌声！ (总计: {self.detected_count_clap})")
+                self.open_program("clap")  # 当检测到击掌声时启动程序
+            elif detected_sound == "snap":
+                self.detected_count_snap += 1
+                print(f"检测到响指声！ (总计: {self.detected_count_snap})")
+                self.open_program("snap")  # 当检测到响指声时启动程序
 
         stream.stop_stream()
         stream.close()
@@ -133,9 +132,9 @@ if __name__ == "__main__":
     detector = ClapSnapDetector()
     try:
         detector.start_listening()
-        time.sleep(60)
+        time.sleep(60)  # 听 60 秒
     except KeyboardInterrupt:
         print("停止监听...")
     finally:
         detector.stop_listening()
-        print(f"总共检测到 {detector.detected_count} 次拍手声或啪啪声")
+        print(f"总共检测到 {detector.detected_count_clap} 次击掌声和 {detector.detected_count_snap} 次响指声")
