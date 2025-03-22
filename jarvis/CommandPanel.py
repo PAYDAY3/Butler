@@ -69,7 +69,25 @@ class CommandPanel(tk.Frame):
         
         self.program_path = None
         self.running_process = None  # 用于存储正在运行的进程
+        # 高对比度主题
+        self.high_contrast_mode = False
+        self.COLORS = {
+            "normal": {"bg":"white", "fg":"black"},
+            "high_contrast": {"bg":"black", "fg":"yellow"}
+        }
         
+        # 快捷键绑定
+        self.master.bind("<F1>", self.toggle_contrast)
+        self.master.bind("<Tab>", self.focus_next)
+
+    def toggle_contrast(self, event):
+        """切换高对比度模式"""
+        self.high_contrast_mode = not self.high_contrast_mode
+        colors = self.COLORS["high_contrast" if self.high_contrast_mode else "normal"]
+        self.config(bg=colors['bg'])
+        for widget in self.winfo_children():
+            widget.config(bg=colors['bg'], fg=colors['fg'])     
+            
     def add_panel(self):
         # 创建一个新的交互面板
         new_panel = CommandPanel(self.master, self.program_files)
