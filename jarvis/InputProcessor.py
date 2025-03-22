@@ -27,17 +27,28 @@ class InputProcessor:
             str: The captured voice command.
         """
         try:
-            self.display_subtitle("语音输入模式已激活，请开始说话...")
-            wake_command = takecommand().lower()  # 调用 takecommand 函数
-            print(f"请输入命令: {wake_command}")
-            self.display_subtitle(f"语音输入: {wake_command}")
-            logging.info(f"Voice command: {wake_command}")
-            return wake_command
+            self.display_subtitle("正在聆听（5秒超时）...")
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(takecommand)
+                try:
+                    command = future.result(timeout=5).lower()
+                    if not self._validate_command(command):
+                        self.display_subtitle("检测到危险字符")
+                        return ""
+                    return command
+                except TimeoutError:
+                    self.display_subtitle("输入超时")
+                    return ""
         except Exception as e:
             logging.error(f"Error processing voice input: {e}")
             self.display_subtitle("语音输入处理时出错。")
             return ""
-
+            
+    def _validate_command(self, command: str) -> bool:
+        """命令安全性校验"""
+        forbidden = [';', '&', '|', '`', '$']
+        return all(c not in command for c in forbidden)
+        
     def process_text_input(self) -> str:
         """
         Processes text input by activating text input mode and capturing the command.
