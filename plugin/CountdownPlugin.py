@@ -10,8 +10,9 @@ logging = Logging.getLogger(__name__)
 class CountdownPlugin(AbstractPlugin):
     def __init__(self):
         self.name = "倒计时"
-        self.chinese_name = ""
-        self.description = ""
+        self.chinese_name = "倒计时插件程序"
+        self.description = "执行倒计时功能，支持秒级设置"
+        self._is_running = False # 添加运行状态标志
         self.parameters = {}
 
     def valid(self) -> bool:
@@ -45,6 +46,10 @@ class CountdownPlugin(AbstractPlugin):
         logging.info("倒计时插件恢复")
 
     def run(self, takecommand: str, args: dict) -> PluginResult:
+        if "取消" in takecommand:
+            self._is_running = False
+            return PluginResult.new("倒计时已取消", False)
+            
         if "运行" in takecommand:
             if "秒" in takecommand:
                 seconds = int(takecommand.split("秒")[0].split("运行")[-1])
