@@ -72,18 +72,21 @@ class BluetoothPlugin(AbstractPlugin):
         device_list = "\n".join([f"{name} ({addr})" for addr, name in devices])
         self._logger.info(f"找到以下蓝牙设备:\n{device_list}")
         return PluginResult.new(result=f"找到以下蓝牙设备:\n{device_list}", need_call_brain=True)
-
+   
     def connect_device(self, device_address: str) -> PluginResult:
         self._logger.info(f"尝试连接设备: {device_address}")
         try:
             sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
+            sock.settimeout(10)  # 设置超时
             sock.connect((device_address, 1))
             self._logger.info(f"成功连接到设备: {device_address}")
+            jarvis.mouth.speak("蓝牙连接成功。", lambda: {})  # 语音反馈
             return PluginResult.new(result=f"成功连接到设备: {device_address}", need_call_brain=True)
-        except Exception as e:
+        except bluetooth.btcommon.BluetoothError as e:
             self._logger.error(f"连接失败: {str(e)}")
+            jarvis.mouth.speak("蓝牙连接失败，请检查设备是否可用。", lambda: {})
             return PluginResult.new(result=f"连接失败: {str(e)}", need_call_brain=False)
-
+    
     def send_command(self, device_address: str, command: str) -> PluginResult:
         if not command:
             self._logger.warning("发送命令不能为空")
