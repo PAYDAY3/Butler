@@ -1,110 +1,138 @@
 import logging
-import os
 from logging.handlers import RotatingFileHandler
-import threading
+import sys
+import os
+from pathlib import Path
 
-PAGE = 4096
-
-DEBUG = logging.DEBUG
-INFO = logging.INFO
-WARNING = logging.WARNING
-ERROR = logging.ERROR
-
-TEMP_PATH = os.getenv("LOG_DIR", "logs")
-LOG_FILE = os.getenv("LOG_FILE", "logging.txt")
-
-log_directory_lock = threading.Lock()
-
-def ensure_log_directory():
-    """确保日志目录存在，如果不存在则创建"""
-    if not os.path.exists(TEMP_PATH):
-        os.makedirs(TEMP_PATH)
-
-def tail(filepath, n=10):
-    """高效实现 tail -n"""
-    buffer_size = 8192
-    with open(filepath, 'rb') as f:
-        f.seek(0, os.SEEK_END)
-        file_size = f.tell()
-        offset = min(file_size, buffer_size)
-        lines = []
-        while len(lines) <= n and offset < file_size:
-            f.seek(-offset, os.SEEK_END)
-            lines = f.readlines()
-            offset += buffer_size
-        return b''.join(lines[-n:]).decode('utf-8')
-
-def getLogger(name):
-    """自定义 getLogger 函数，确保线程安全"""
-    with log_directory_lock:
-        ensure_log_directory()
-        format = "%(asctime)s - %(name)s - %(filename)s - %(funcName)s - line %(lineno)s - %(levelname)s - %(message)s"
-        formatter = logging.Formatter(format)
-        logging.basicConfig(format=format)
-        logger = logging.getLogger(name)
-        logger.setLevel(logging.INFO)
-
-        log_file_path = os.path.join(TEMP_PATH, LOG_FILE)
-
-        if not logger.handlers:
-            try:
-                file_handler = RotatingFileHandler(
-                    log_file_path,
-                    maxBytes=10 * 1024 * 1024,  # 10 MB
-                    backupCount=5
-                )
-                file_handler.setLevel(logging.NOTSET)
-                file_handler.setFormatter(formatter)
-                logger.addHandler(file_handler)
-            except OSError as e:
-                print(f"初始化日志处理器失败: {e}")
-
-    return logger
-
-def readLog(lines=200):
-    """获取最新的指定行数的日志"""
-    log_path = os.path.join(TEMP_PATH, LOG_FILE)
-    try:
-        if os.path.exists(log_path):
-            return tail(log_path, lines)
-    except OSError as e:
-        print(f"读取日志时出错: {e}")
-    return ""
-
-def split_logs(log_file_name, output_files):
-    """根据程序名称将日志分割到不同的文件中"""
-    log_path = os.path.join(TEMP_PATH, LOG_FILE)
-
-    if not os.path.exists(log_path):
-        for file_path in output_files.values():
-            if not os.path.exists(file_path):
-                with open(file_path, "w"):
-                    pass  # 创建空文件
-        return
-
-    try:
-        with open(log_path, "r") as f:
-            lines = f.readlines()
-    except OSError as e:
-        print(f"读取日志文件失败: {e}")
-        return
-
-    logs = {name: [] for name in output_files.keys()}
-    logs["default"] = []
-
-    for line in lines:
-        if " - " in line:
-            program_name = line.split(" - ")[1]
-            logs.setdefault(program_name, []).append(line)
+class Logger:
+    _configured = False
+    _loggers = {}
+    
+    @classmethod
+    def _configure(cls, log_dir="logs", log_level=logging.INFO, 
+                   max_bytes=5*1024*1024, backup_count=3):
+        """
+        配置日志系统（只执行一次）
+        
+        参数:
+            log_dir: 日志目录路径
+            log_level: 日志级别 (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+            max_bytes: 日志文件最大字节数
+            backup_count: 备份文件数量
+        """
+        if cls._configured:
+            return
+            
+        # 创建日志目录（如果不存在）
+        Path(log_dir).mkdir(parents=True, exist_ok=True)
+        
+        # 基本配置
+        root_logger = logging.getLogger()
+        root_logger.setLevel(log_level)
+        
+        # 日志格式
+        formatter = logging.Formatter(
+            '%(asctime)s | %(levelname)-8s | %(name)s | %(filename)s:%(lineno)d | %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S'
+        )
+        
+        # 控制台处理器（所有级别）
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setFormatter(formatter)
+        root_logger.addHandler(console_handler)
+        
+        # 1. 总日志文件（所有级别）
+        all_handler = RotatingFileHandler(
+            filename=os.path.join(log_dir, "all.log"),
+            maxBytes=max_bytes,
+            backupCount=backup_count,
+            encoding='utf-8'
+        )
+        all_handler.setFormatter(formatter)
+        root_logger.addHandler(all_handler)
+        
+        # 2. INFO级别日志文件
+        info_handler = RotatingFileHandler(
+            filename=os.path.join(log_dir, "info.log"),
+            maxBytes=max_bytes,
+            backupCount=backup_count,
+            encoding='utf-8'
+        )
+        info_handler.setFormatter(formatter)
+        info_handler.setLevel(logging.INFO)
+        info_handler.addFilter(lambda record: record.levelno == logging.INFO)
+        root_logger.addHandler(info_handler)
+        
+        # 3. WARNING级别日志文件
+        warning_handler = RotatingFileHandler(
+            filename=os.path.join(log_dir, "warning.log"),
+            maxBytes=max_bytes,
+            backupCount=backup_count,
+            encoding='utf-8'
+        )
+        warning_handler.setFormatter(formatter)
+        warning_handler.setLevel(logging.WARNING)
+        warning_handler.addFilter(lambda record: record.levelno == logging.WARNING)
+        root_logger.addHandler(warning_handler)
+        
+        # 4. ERROR级别日志文件（包含ERROR和CRITICAL）
+        error_handler = RotatingFileHandler(
+            filename=os.path.join(log_dir, "error.log"),
+            maxBytes=max_bytes,
+            backupCount=backup_count,
+            encoding='utf-8'
+        )
+        error_handler.setFormatter(formatter)
+        error_handler.setLevel(logging.ERROR)
+        root_logger.addHandler(error_handler)
+        
+        # 5. DEBUG级别日志文件（可选）
+        debug_handler = RotatingFileHandler(
+            filename=os.path.join(log_dir, "debug.log"),
+            maxBytes=max_bytes,
+            backupCount=backup_count,
+            encoding='utf-8'
+        )
+        debug_handler.setFormatter(formatter)
+        debug_handler.setLevel(logging.DEBUG)
+        debug_handler.addFilter(lambda record: record.levelno == logging.DEBUG)
+        root_logger.addHandler(debug_handler)
+        
+        cls._configured = True
+    
+    @classmethod
+    def get_logger(cls, name=None):
+        """
+        获取配置好的日志记录器
+        
+        参数:
+            name: 日志记录器名称（通常使用 __name__）
+            
+        返回:
+            配置好的 logging.Logger 实例
+        """
+        # 确保配置已执行
+        if not cls._configured:
+            cls._configure()
+            
+        # 获取或创建日志记录器
+        if name not in cls._loggers:
+            logger = logging.getLogger(name)
+            cls._loggers[name] = logger
+        return cls._loggers[name]
+    
+    @classmethod
+    def configure(cls, **kwargs):
+        """
+        自定义日志配置（必须在首次获取日志记录器前调用）
+        
+        参数:
+            log_dir: 日志目录路径
+            log_level: 日志级别
+            max_bytes: 日志文件最大字节数
+            backup_count: 备份文件数量
+        """
+        if not cls._configured:
+            cls._configure(**kwargs)
         else:
-            logs["default"].append(line)
-
-    for program_name, log_lines in logs.items():
-        file_path = output_files.get(program_name, os.path.join(TEMP_PATH, f"{program_name}.txt"))
-        with open(file_path, "a") as f:
-            f.writelines(log_lines)
-
-    try:
-        open(log_path, "w").close()  # 清空日志文件
-    except OSError as e:
-        print(f"清空日志文件失败: {e}")
+            raise RuntimeError("Logger already configured. Configure must be called before first use.")
