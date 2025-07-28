@@ -13,13 +13,8 @@ class PluginManager:
         self.plugin_package = plugin_package
         # self.plugins = {}
         self.plugins: Dict[str, AbstractPlugin] = {}
-        self.logger = logging.getLogger("PluginManager")
-        self.logger.setLevel(logging.DEBUG)
         handler = logging.StreamHandler()
-        handler.setLevel(logging.DEBUG)
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         handler.setFormatter(formatter)
-        self.logger.addHandler(handler)
         self.load_all_plugins()
         
     # 动态加载单个插件
@@ -73,7 +68,15 @@ class PluginManager:
         return list(self.plugins.values())
 
     # 运行插件
-    def run_plugin(self, name, takecommand: str, args: List[str]) -> Optional[str]:
+    def run_plugin(self, name: str, takecommand: str, args: dict) -> PluginResult:
+        plugin = self.get_plugin(name)
+        if plugin:
+            return plugin.run(takecommand, args)
+        return PluginResult.new(
+            result=None, 
+            success=False, 
+            error_message=f"插件 {name} 未找到"
+        )
         plugin = self.get_plugin(name)
         # plugin_name = takecommand.split()[0]  # 假设插件名称在命令的开头
         # plugin = self.plugins.get(plugin_name)
