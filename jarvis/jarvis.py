@@ -10,7 +10,7 @@ import tkinter as tk
 from tkinter import messagebox
 from pydub import AudioSegment
 from pydub.playback import play
-import openai
+import requests  # 替换openai为requests
 from snowboy import snowboydecoder
 import shutil
 import tempfile
@@ -38,12 +38,12 @@ from plugin.plugin import plugin
 
 class Jarvis:
     def __init__(self):
-        self.openai_api_key = "YOUR_OPENAI_API_KEY"
-        openai.api_key = self.openai_api_key
+        # 替换为DeepSeek API密钥
+        self.deepseek_api_key = "YOUR_DEEPSEEK_API_KEY"
         self.engine = pyttsx3.init()
         self.logging = Logging.getLogger(__name__)
         self.WAKE_WORD = "jarvis"
-        self.program_folder = ["./program", "./tools"]
+        self.program_folder = ["./program"]
         self.model = "my_Snowboy/jarvis.umdl"
         self.program_mapping = {
             "邮箱": "e-mail.py",
@@ -69,15 +69,11 @@ class Jarvis:
         self.matched_program = None
         
         # 定义音频文件路径
-        self.JARVIS_AUDIO_FILE = "./my_snowboy/resources/jarvis.wav"
+        self.JARVIS_AUDIO_FILE = "..../jarvis.wav"
         self.OUTPUT_FILE = "./temp.wav"
         self.FINAL_OUTPUT_FILE = "./final_output.wav"
 
-    ####################
-    # 算法实现部分
-    ####################
-    
-    # 1. 排序算法
+    # 1.算法实现部分
     def quick_sort(self, arr):
         """快速排序算法"""
         if len(arr) <= 1:
@@ -191,27 +187,58 @@ class Jarvis:
             a, b = b, a + b
         return b
     
-    ####################
     # 核心功能
-    ####################
-    
     def preprocess(self, text):
-        inputs = openai.Completion.create(
-            prompt=text,
-            max_tokens=512,
-            stop=None,
-            temperature=0
-        )['choices'][0]['text']
-        return inputs
+        # 使用DeepSeek API
+        url = "https://api.deepseek.com/v1/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {self.deepseek_api_key}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "model": "deepseek-chat",
+            "messages": [
+                {"role": "system", "content": "你是一个AI助手，负责文本预处理。"},
+                {"role": "user", "content": text}
+            ],
+            "max_tokens": 512,
+            "temperature": 0
+        }
+        
+        try:
+            response = requests.post(url, headers=headers, json=payload)
+            response.raise_for_status()
+            result = response.json()
+            return result['choices'][0]['message']['content']
+        except Exception as e:
+            print(f"DeepSeek API调用失败: {e}")
+            return text  # 出错时返回原始文本
 
     def generate_response(self, text):
-        input_ids = self.preprocess(text)
-        response = openai.Completion.create(
-            prompt=input_ids,
-            max_tokens=150,
-            temperature=0.5
-        )['choices'][0]['text']
-        return response
+        # 使用DeepSeek API
+        url = "https://api.deepseek.com/v1/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {self.deepseek_api_key}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "model": "deepseek-chat",
+            "messages": [
+                {"role": "system", "content": "你是一个AI助手，负责生成自然语言响应。"},
+                {"role": "user", "content": text}
+            ],
+            "max_tokens": 150,
+            "temperature": 0.5
+        }
+        
+        try:
+            response = requests.post(url, headers=headers, json=payload)
+            response.raise_for_status()
+            result = response.json()
+            return result['choices'][0]['message']['content']
+        except Exception as e:
+            print(f"DeepSeek API调用失败: {e}")
+            return "抱歉，我暂时无法回答这个问题。"  # 出错时返回默认响应
 
     def speak(self, audio):
         # 保存临时语音文件
