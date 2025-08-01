@@ -1,6 +1,8 @@
 import hashlib
 import getpass
 import time
+import json
+import os
 
 # 权限级别定义
 PERMISSIONS = {
@@ -20,114 +22,286 @@ OPERATIONS = {
     "查看配置": PERMISSIONS["查看配置"]
 }
 
-# 权限密钥存储（实际应使用更安全的存储方式）
-USER_KEYS = {
-    "admin": hashlib.sha256("admin_key".encode()).hexdigest(),  # 示例密钥
+# 用户信息存储（包含用户名、密钥哈希和权限级别）
+USERS = {
+    "admin": {
+        "key_hash": hashlib.sha256("admin_key".encode()).hexdigest(),
+        "permission": PERMISSIONS["高级操作"]  # 权限级别3
+    },
+    "operator": {
+        "key_hash": hashlib.sha256("operator_key".encode()).hexdigest(),
+        "permission": PERMISSIONS["受限操作"]  # 权限级别2
+    }
 }
 
 # 权限有效时间（秒）
 PERMISSION_VALID_TIME = 30 * 60  # 30分钟
 
-# 记录上次验证时间
-last_verified_time = None
+# 用户会话管理
+user_sessions = {}
+
+# 文件哈希存储文件
+HASH_STORAGE_FILE = "file_hashes.json"
+
 def calculate_file_hash(file_path):
-    """Calculates the SHA256 hash of a file."""
+    """计算文件的SHA256哈希值"""
     hasher = hashlib.sha256()
-    with open(file_path, 'rb') as file:
-        while True:
-            chunk = file.read(4096)  # 分块读取文件
-            if not chunk:
-                break
-            hasher.update(chunk)
-    return hasher.hexdigest()
-    
+    try:
+        with open(file_path, 'rb') as file:
+            while True:
+                chunk = file.read(4096)  # 分块读取文件
+                if not chunk:
+                    break
+                hasher.update(chunk)
+        return hasher.hexdigest()
+    except FileNotFoundError:
+        print(f"文件未找到: {file_path}")
+        return None
+    except Exception as e:
+        print(f"计算文件哈希时出错: {e}")
+        return None
+
+def save_file_hash(file_path, file_hash):
+    """保存文件哈希到存储文件"""
+    try:
+        # 如果文件不存在，创建空字典
+        if not os.path.exists(HASH_STORAGE_FILE):
+            with open(HASH_STORAGE_FILE, 'w') as f:
+                json.dump({}, f)
+        
+        # 读取现有哈希
+        with open(HASH_STORAGE_FILE, 'r') as f:
+            hashes = json.load(f)
+        
+        # 更新哈希值
+        hashes[file_path] = file_hash
+        
+        # 写回文件
+        with open(HASH_STORAGE_FILE, 'w') as f:
+            json.dump(hashes, f)
+        
+        return True
+    except Exception as e:
+        print(f"保存文件哈希时出错: {e}")
+        return False
+
+def get_stored_hash(file_path):
+    """从存储中获取文件的哈希值"""
+    try:
+        if not os.path.exists(HASH_STORAGE_FILE):
+            return None
+            
+        with open(HASH_STORAGE_FILE) as f:
+            hashes = json.load(f)
+            return hashes.get(file_path)
+    except Exception as e:
+        print(f"获取存储哈希时出错: {e}")
+        return None
+
 def verify_file_integrity(file_path):
     """通过比较文件的散列来验证文件的完整性"""
     current_hash = calculate_file_hash(file_path)
-    stored_hash = get_stored_hash(file_path)  # 函数从存储中检索哈希值
+    if current_hash is None:
+        return False
+        
+    stored_hash = get_stored_hash(file_path)
+    
+    if stored_hash is None:
+        print(f"警告: 文件 {file_path} 没有存储的哈希值，首次使用?")
+        if save_file_hash(file_path, current_hash):
+            print(f"已保存文件 {file_path} 的初始哈希值")
+            return True
+        return False
+    
     if current_hash == stored_hash:
-        print("文件完整性验证")
+        print("文件完整性验证通过")
         return True
     else:
         print("文件完整性受损!")
         return False
-        
-# 获取并验证权限密钥
-def verify_permission(required_permission):
-    global last_verified_time
-    
-    # 检查权限是否仍然有效
-    if last_verified_time and (time.time() - last_verified_time < PERMISSION_VALID_TIME):
-        print("权限仍然有效")
-        return True
-    
-    print("此操作需要权限，请输入密钥：")
-    input_key = getpass.getpass("密钥：")
-    hashed_key = hashlib.sha256(input_key.encode()).hexdigest()
-    
+
+def update_session(username):
+    """更新用户会话时间"""
+    user_sessions[username] = time.time()
+
+def is_session_valid(username):
+    """检查用户会话是否有效"""
+    if username not in user_sessions:
+        return False
+    return (time.time() - user_sessions[username]) < PERMISSION_VALID_TIME
+
+def verify_permission(username, required_permission):
+    """验证用户权限"""
     try:
-        for user, key in USER_KEYS.items():
-            if key == hashed_key:
-                user_permission = PERMISSIONS["高级操作"]  # 假设已验证用户为高级操作权限
-                if user_permission >= required_permission:
-                    last_verified_time = time.time()  # 记录当前时间
-                    print("权限验证成功")
-                    return True
-                else:
-                    print("权限不足")
-                    return False
+        # 检查用户是否存在
+        if username not in USERS:
+            print("用户不存在")
+            return False
+        
+        # 检查会话是否有效
+        if is_session_valid(username):
+            print("权限仍然有效")
+            return True
+        
+        # 会话无效，需要重新验证
+        print("此操作需要权限，请输入密钥：")
+        input_key = getpass.getpass("密钥：")
+        hashed_key = hashlib.sha256(input_key.encode()).hexdigest()
+        
+        # 验证密钥
+        if USERS[username]["key_hash"] == hashed_key:
+            user_permission = USERS[username]["permission"]
+            if user_permission >= required_permission:
+                update_session(username)  # 更新会话时间
+                print("权限验证成功")
+                return True
+            else:
+                print("权限不足")
+                return False
+        else:
+            print("密钥无效")
+            return False
+            
+    except KeyError as e:
+        print(f"用户配置错误: {e}")
+        return False
+    except PermissionError as e:
+        print(f"权限系统错误: {e}")
+        return False
     except Exception as e:
         print(f"权限验证过程中出错: {e}")
-    print("密钥无效")
-    return False
-    
+        return False
+
 # 权限控制装饰器
 def require_permission(operation_name):
     def decorator(func):
-        def wrapper(*args, **kwargs):
+        def wrapper(username, *args, **kwargs):
             required_permission = OPERATIONS.get(operation_name)
-            if required_permission and verify_permission(required_permission):
+            if required_permission is None:
+                print(f"未知操作: {operation_name}")
+                return None
+                
+            if verify_permission(username, required_permission):
                 print(f"权限验证成功，正在执行操作：{operation_name}")
-                return func(*args, **kwargs)
+                # 记录审计日志
+                log_operation(username, operation_name, "执行")
+                return func(username, *args, **kwargs)
             else:
                 print(f"权限不足，无法执行操作：{operation_name}")
+                # 记录审计日志
+                log_operation(username, operation_name, "拒绝")
         return wrapper
     return decorator
-    
+
 # 查询操作所需的权限
 def get_required_permission(operation):
     return OPERATIONS.get(operation, None)
 
+# 审计日志功能
+def log_operation(username, operation, status):
+    """记录操作到审计日志"""
+    timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+    log_entry = f"[{timestamp}] 用户: {username}, 操作: {operation}, 状态: {status}\n"
+    
+    try:
+        with open("audit.log", "a") as f:
+            f.write(log_entry)
+    except Exception as e:
+        print(f"记录审计日志时出错: {e}")
+
 # 操作函数
 @require_permission("查看数据")
-def view_data(file_path):
+def view_data(username, file_path):
     if verify_file_integrity(file_path):
-        # 从文件中读取和显示数据
-        with open(file_path, 'r') as file:
-            data = file.read()
-            print(data)
+        try:
+            with open(file_path, 'r') as file:
+                data = file.read()
+                print(f"文件内容:\n{data}")
+                return True
+        except Exception as e:
+            print(f"读取文件时出错: {e}")
+            return False
     else:
         print("文件完整性受损!无法查看数据")
+        return False
 
 @require_permission("修改配置")
-def modify_config():
-    required_permission = get_required_permission("修改配置")
-    if required_permission and verify_permission(required_permission):
-        print("正在修改配置...")
-    else:
-        print("操作被拒绝：权限不足")
-        
+def modify_config(username):
+    print("正在修改配置...")
+    # 这里添加实际的配置修改逻辑
+    return True
+
 @require_permission("核心操作")
-def core_operation():
-    required_permission = get_required_permission("核心操作")
-    if required_permission and verify_permission(required_permission):
-        print("执行核心操作...")
-    else:
-        print("操作被拒绝：权限不足")
+def core_operation(username):
+    print("执行核心操作...")
+    # 这里添加实际的核心操作逻辑
+    return True
 
 # 提供操作列表及其所需权限
 def print_operations():
     print("可用操作及其所需权限级别：")
+    print("=" * 40)
     for operation, level in OPERATIONS.items():
-        permission_level = [key for key, value in PERMISSIONS.items() if value == level][0]
-        print(f"- {operation}: {permission_level}")
+        # 找到权限级别对应的名称
+        permission_name = [key for key, value in PERMISSIONS.items() if value == level]
+        if permission_name:
+            print(f"- {operation}: {permission_name[0]} (级别 {level})")
+        else:
+            print(f"- {operation}: 未知权限 (级别 {level})")
+
+# 用户登录功能
+def login():
+    """用户登录并返回用户名"""
+    username = input("用户名: ")
+    password = getpass.getpass("密码: ")
+    hashed_pw = hashlib.sha256(password.encode()).hexdigest()
+    
+    if username in USERS and USERS[username]["key_hash"] == hashed_pw:
+        update_session(username)
+        print(f"登录成功! 欢迎 {username}")
+        return username
+    else:
+        print("登录失败: 用户名或密码错误")
+        return None
+
+# 主程序
+def main():
+    print("=== 权限控制系统 ===")
+    
+    # 初始化文件哈希存储
+    if not os.path.exists(HASH_STORAGE_FILE):
+        with open(HASH_STORAGE_FILE, 'w') as f:
+            json.dump({}, f)
+    
+    # 用户登录
+    current_user = login()
+    if not current_user:
+        return
+    
+    while True:
+        print("\n请选择操作:")
+        print("1. 查看操作列表")
+        print("2. 查看文件内容")
+        print("3. 修改配置")
+        print("4. 执行核心操作")
+        print("5. 退出系统")
+        
+        choice = input("> ")
+        
+        if choice == "1":
+            print_operations()
+        elif choice == "2":
+            file_path = input("请输入文件路径: ")
+            view_data(current_user, file_path)
+        elif choice == "3":
+            modify_config(current_user)
+        elif choice == "4":
+            core_operation(current_user)
+        elif choice == "5":
+            print("退出系统...")
+            break
+        else:
+            print("无效选择，请重新输入")
+
+if __name__ == "__main__":
+    main()
