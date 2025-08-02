@@ -46,22 +46,57 @@ all_plugins = plugin_manager.get_all_plugins()
 logger.info(f"已加载插件: {[plugin.get_name() for plugin in all_plugins]}")
 
 def match_command_to_plugin(command: str):
-    """根据语音命令匹配对应的插件."""
+    """根据语音命令匹配对应的插件，支持多种匹配模式和优先级"""
+    matched_plugins = []
+    
     for plugin_name, details in plugins_to_manage.items():
         takecommands = details['takecommand']
+        match_type = details.get('match_type', 'contains')  # 默认包含匹配
+        priority = details.get('priority', 0)               # 默认优先级
         
+        # 标准化命令格式
         if isinstance(takecommands, str):
             takecommands = [takecommands]
+        elif isinstance(takecommands, set):
+            takecommands = list(takecommands)
         
-        if isinstance(takecommands, (set, list)) and not takecommands:
+        # 空命令列表检查
+        if not takecommands:
             continue
-
-        if any(cmd in command for cmd in takecommands):
-            for plugin in all_plugins:
-                if plugin.get_name() == plugin_name:
-                    return plugin_name, details['args'], plugin
+        
+        for cmd in takecommands:
+            # 根据匹配类型进行不同方式的匹配
+            if match_type == 'exact' and command.lower() == cmd.lower():
+                matched_plugins.append((plugin_name, details, priority))
+                break  # 精确匹配只需匹配一次
+            
+            elif match_type == 'prefix' and command.lower().startswith(cmd.lower()):
+                matched_plugins.append((plugin_name, details, priority))
+                break  # 前缀匹配只需匹配一次
+            
+            elif match_type == 'contains' and cmd.lower() in command.lower():
+                matched_plugins.append((plugin_name, details, priority))
+                # 包含匹配可能多个，但不break，继续检查其他命令
+    
+    # 按优先级排序（优先级高的在前）
+    matched_plugins.sort(key=lambda x: x[2], reverse=True)
+    
+    if matched_plugins:
+        plugin_name, details, priority = matched_plugins[0]
+        plugin = plugin_manager.get_plugin(plugin_name)
+        
+        if plugin:
+            # 准备插件参数
+            args = details.get('args', {})
+            
+            # 添加额外的上下文信息
+            args['original_command'] = command
+            
+            return plugin_name, args, plugin
+    
+    # 没有匹配到任何插件
     return None, None, None
-
+    
 def process_command(command: str):
     """处理指令并执行相应的插件."""
     plugin_name, args, plugin = match_command_to_plugin(command)
