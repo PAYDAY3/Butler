@@ -18,6 +18,8 @@ from plugin.TodoPlugin import TodoPlugin
 from plugin.TimePlugin import TimePlugin
 from plugin.SearchPlugin import SearchPlugin
 from plugin.BluetoothPlugin import BluetoothPlugin
+from plugin.GlobalFileSearchPlugin import GlobalFileSearchPlugin
+from plugin.MemoPlugin import MemoPlugin 
 
 # 配置日志
 logger = Logging.getLogger(__name__)
@@ -39,6 +41,12 @@ plugins_to_manage = {
     "write_file": {"takecommand": {"写入", "写入文件"}, "args": {}},
     "SearchPlugin": {"takecommand": ["在百度搜索", "在Bing搜索", "bilibili搜索", "快手搜索", "抖音搜索"], "args": {}},
     "BluetoothPlugin": {"takecommand": ["搜索蓝牙设备", "连接蓝牙设备", "断开蓝牙设备"], "args": {}},
+    "MemoPlugin": {"takecommand": ["添加备忘录", "列出备忘录", "完成备忘录", "删除备忘录"], "args": {}},
+    "GlobalFileSearchPlugin": {
+        "takecommand": ["搜索文件"], 
+        "args": {}
+    },
+
 }
 
 # 加载所有插件
