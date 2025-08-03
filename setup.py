@@ -2,8 +2,8 @@ from setuptools import setup, find_packages
 
 setup(
     name="Butler",
-    version="1.0.0",
-    description="A Python-based intelligent voice assistant.",
+    version="2.0.0",
+    description="一种基于Python的高级智能助手系统",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     author="PAYDAY3",
@@ -14,43 +14,42 @@ setup(
         "pyttsx3",
         "pydub",
         "playsound",
-        "tempfile",
-        "pyaud",
-        "shutil",
+        "pyaudio",
         "prompt_toolkit",
-        "pillow",
+        "Pillow",
         "pygame",
         "watchdog",
-        "dateutil",
+        "python-dateutil",
         "sounddevice",
         "openpyxl",
-        "docx",
+        "python-docx",
         "PyPDF2",
         "requests>=2.32.0",
         "beautifulsoup4",
         "redis",
         "scrapy",
-        "imaplib",
         "paramiko",
-        "dotenv",
-        "PIL",
+        "python-dotenv",
         "nltk",
-        "Crypto",
+        "pycryptodome",
         "schedule",
         "twisted>=24.7.0rc1",
-        "azure-cognitiveservices-speech"
+        "azure-cognitiveservices-speech",
+        "numpy",
+        "scipy"
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
-        "Development Status :: 4 - Beta",
+        "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
-        "Topic :: Software Development :: Libraries :: Python Modules",
+        "Topic :: Home Automation",
+        "Topic :: Multimedia :: Sound/Audio :: Speech"
     ],
-    python_requires='>=3.6',
+    python_requires='>=3.8',
     license="MIT",
-    keywords="voice assistant, AI, Python",
+    keywords="voice assistant, AI, home automation, Python",
     project_urls={
         "Documentation": "https://github.com/PAYDAY3/Butler/wiki",
         "Source": "https://github.com/PAYDAY3/Butler",
@@ -58,7 +57,16 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'butler=jarvis:main',
+            'butler=butler.main:main',
         ],
     },
+    include_package_data=True,
+    package_data={
+        'butler': [
+            'snowboy/*.pmdl',
+            'snowboy/*.umdl',
+            'config/*.json',
+            'audio/*.wav'
+        ]
+    }
 )
