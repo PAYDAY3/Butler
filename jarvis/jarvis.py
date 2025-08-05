@@ -35,6 +35,9 @@ from package import Logging
 from package.schedule_management import schedule_management
 from jarvis.CommandPanel import CommandPanel
 from plugin.plugin import plugin
+from .edit import EditTool
+from .bash import BashTool
+from .collection import ToolCollection
 
 class Jarvis:
     def __init__(self):
@@ -45,6 +48,9 @@ class Jarvis:
         self.WAKE_WORD = "jarvis"
         self.program_folder = ["./program"]
         self.model = "my_Snowboy/jarvis.umdl"
+        self.edit_tool = EditTool()
+        self.bash_tool = BashTool()
+        self.tool_collection = ToolCollection(self.edit_tool, self.bash_tool)
         self.program_mapping = {
             "邮箱": "e-mail.py",
             "播放音乐": "music.py",
@@ -62,6 +68,8 @@ class Jarvis:
             "翻译": "translators.py",
             "文件转换器": "file_converter.py",
             "帐号登录": "AccountPassword.py",
+            "文本编辑器": self.edit_tool,
+            "终端命令": self.bash_tool
         }
         self.conversation_history = []
         self.running = True
@@ -456,6 +464,11 @@ class Jarvis:
         return programs
     
     def execute_program(self, program_name):
+        # 如果program_name是工具对象，直接执行
+        if isinstance(program_name, BaseAnthropicTool):
+            # 这里可以添加工具执行逻辑
+            self.speak(f"准备执行{program_name.name}工具")
+            return
         try:
             # 尝试从缓存中获取模块
             if program_name in sys.modules:
