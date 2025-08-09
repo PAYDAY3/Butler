@@ -1,69 +1,86 @@
+import concurrent.futures  # 添加缺失的并发库导入
+from datetime import datetime  # 添加时间戳功能
 from my_package import Logging
 from jarvis import takecommand
 
 logging = Logging.getLogger(__name__)
 
 class InputProcessor:
-    def __init__(self):
-        """
-        Initializes the InputProcessor class.
-        """
-        pass
+    # 使用类常量提高可维护性
+    FORBIDDEN_CHARS = [';', '&', '|', '`', '$']  # 禁止使用的危险字符
+    VOICE_TIMEOUT = 5  # 语音输入超时时间（秒）
 
     def display_subtitle(self, message: str) -> None:
-        """
-        Displays a subtitle message.
-        
-        Args:
-            message (str): The message to be displayed.
-        """
-        print(message)
+        """显示带时间戳的字幕消息"""
+        print(f"[{datetime.now().strftime('%H:%M:%S')}] {message}")
 
     def process_voice_input(self) -> str:
-        """
-        Processes voice input by activating voice input mode and capturing the command.
-        
-        Returns:
-            str: The captured voice command.
-        """
+        """处理语音输入：包含超时机制和安全验证"""
         try:
             self.display_subtitle("正在聆听（5秒超时）...")
+            
+            # 使用线程池执行语音输入捕获
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 future = executor.submit(takecommand)
                 try:
-                    command = future.result(timeout=5).lower()
+                    # 处理可能的空返回值并标准化输入
+                    command = future.result(timeout=self.VOICE_TIMEOUT) or ""
+                    command = command.strip().lower()
+                    
+                    # 空输入处理
+                    if not command:
+                        self.display_subtitle("未检测到语音输入")
+                        return ""
+                    
+                    # 安全验证
                     if not self._validate_command(command):
                         self.display_subtitle("检测到危险字符")
                         return ""
+                    
                     return command
-                except TimeoutError:
+                
+                except concurrent.futures.TimeoutError:  # 修正超时异常类型
                     self.display_subtitle("输入超时")
                     return ""
+                    
         except Exception as e:
-            logging.error(f"Error processing voice input: {e}")
-            self.display_subtitle("语音输入处理时出错。")
+            logging.error(f"语音输入处理错误: {e}", exc_info=True)
+            self.display_subtitle("语音输入处理时出错")
             return ""
-            
+
     def _validate_command(self, command: str) -> bool:
-        """命令安全性校验"""
-        forbidden = [';', '&', '|', '`', '$']
-        return all(c not in command for c in forbidden)
+        """命令安全性校验（使用类常量）"""
+        return all(c not in command for c in self.FORBIDDEN_CHARS)
         
     def process_text_input(self) -> str:
-        """
-        Processes text input by activating text input mode and capturing the command.
-        
-        Returns:
-            str: The captured text input.
-        """
+        """处理文本输入：包含模式切换和安全验证"""
         try:
-            self.display_subtitle("文字手写输入模式已激活。输入 2 返回语音输入模式。")
-            user_input = input("请输入命令: ").lower()
-            print(f"请输入命令: {user_input}")
+            self.display_subtitle("文字手写输入模式已激活。输入 '2' 返回语音输入模式。")
+            user_input = input("请输入命令: ").strip().lower()
+            
+            # 处理模式切换请求
+            if user_input == '2':
+                return "SWITCH_TO_VOICE"  # 特殊返回值表示切换模式
+                
+            # 空输入处理
+            if not user_input:
+                self.display_subtitle("输入为空")
+                return ""
+                
+            # 安全验证
+            if not self._validate_command(user_input):
+                self.display_subtitle("检测到危险字符")
+                return ""
+            
+            # 显示并记录有效输入
             self.display_subtitle(f"文字手写输入: {user_input}")
-            logging.info(f"Text input: {user_input}")
+            logging.info(f"文本输入: {user_input}")
             return user_input
+            
+        except EOFError:  # 处理Ctrl+D/Ctrl+Z终止输入
+            self.display_subtitle("输入终止")
+            return ""
         except Exception as e:
-            logging.error(f"Error processing text input: {e}")
-            self.display_subtitle("文字手写输入处理时出错。")
+            logging.error(f"文本输入处理错误: {e}", exc_info=True)
+            self.display_subtitle("文字输入处理时出错")
             return ""
