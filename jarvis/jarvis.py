@@ -69,7 +69,8 @@ class Jarvis:
             "文件转换器": "file_converter.py",
             "帐号登录": "AccountPassword.py",
             "文本编辑器": self.edit_tool,
-            "终端命令": self.bash_tool
+            "终端命令": self.bash_tool,
+            "计算机控制": self.computer_tool
         }
         self.conversation_history = []
         self.running = True
