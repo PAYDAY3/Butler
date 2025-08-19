@@ -18,6 +18,7 @@ import concurrent.futures
 from functools import lru_cache
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+from dotenv import load_dotenv
 import azure.cognitiveservices.speech as speechsdk
 import numpy as np
 import heapq
@@ -41,13 +42,22 @@ from .collection import ToolCollection
 
 class Jarvis:
     def __init__(self):
+        load_dotenv()
         # 替换为DeepSeek API密钥
-        self.deepseek_api_key = "YOUR_DEEPSEEK_API_KEY"
+        self.deepseek_api_key = os.getenv("DEEPSEEK_API_KEY")
         self.engine = pyttsx3.init()
         self.logging = Logging.getLogger(__name__)
         self.WAKE_WORD = "jarvis"
         self.program_folder = ["./program"]
-        self.model = "my_Snowboy/jarvis.umdl"
+
+        base_dir = os.path.dirname(__file__)
+        self.model = os.path.join(base_dir, "snowboy", "jarvis.umdl")
+        self.JARVIS_AUDIO_FILE = os.path.join(base_dir, "resources", "jarvis.wav")
+
+        # Paths for temporary files are relative to the current working directory
+        self.OUTPUT_FILE = "./temp.wav"
+        self.FINAL_OUTPUT_FILE = "./final_output.wav"
+
         self.edit_tool = EditTool()
         self.bash_tool = BashTool()
         self.tool_collection = ToolCollection(self.edit_tool, self.bash_tool)
@@ -76,11 +86,6 @@ class Jarvis:
         self.running = True
         self.use_voice_input = True
         self.matched_program = None
-        
-        # 定义音频文件路径
-        self.JARVIS_AUDIO_FILE = "..../jarvis.wav"
-        self.OUTPUT_FILE = "./temp.wav"
-        self.FINAL_OUTPUT_FILE = "./final_output.wav"
 
     # 1.算法实现部分
     def quick_sort(self, arr):
@@ -291,8 +296,8 @@ class Jarvis:
                 os.remove(self.FINAL_OUTPUT_FILE)
 
     def takecommand(self):
-        speech_key = "your_subscription_key"
-        service_region = "chinaeast2"
+        speech_key = os.getenv("AZURE_SPEECH_KEY")
+        service_region = os.getenv("AZURE_SERVICE_REGION", "chinaeast2")
         speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=service_region)
         speech_config.speech_synthesis_language = "zh-CN"
         recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config)
@@ -649,6 +654,25 @@ class Jarvis:
         def open_programs(self):
             return Jarvis().open_programs(self.program_folder, self.external_folders)
 
+def main():
+    """Main entry point for the application."""
+    try:
+        jarvis = Jarvis()
+        jarvis.main()
+    except ImportError as e:
+        # A specific check for snowboy, since we know it's a problem.
+        if "snowboy" in str(e) or "snowboydecoder" in str(e):
+            print("--- FATAL ERROR ---")
+            print("Failed to import the 'snowboy' library, which is required for hotword detection.")
+            print("This is a manual dependency that cannot be installed automatically by pip.")
+            print("Please find and install a pre-compiled 'snowboy' wheel (.whl) file")
+            print("that is compatible with your Operating System and Python version.")
+            print("-------------------")
+        else:
+            print(f"An unexpected import error occurred: {e}")
+            print("Please ensure all dependencies are installed correctly.")
+    except Exception as e:
+        print(f"An unexpected error occurred during execution: {e}")
+
 if __name__ == "__main__":
-    jarvis = Jarvis()
-    jarvis.main()
+    main()
