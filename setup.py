@@ -65,8 +65,7 @@ setup(
         'butler': [
             'snowboy/*.pmdl',
             'snowboy/*.umdl',
-            'config/*.json',
-            'audio/*.wav'
+            'resources/*.wav'
         ]
     }
 )
