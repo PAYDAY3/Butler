@@ -1,9 +1,9 @@
 import os
 import shutil
-from package import Logging
+from package.log_manager import LogManager
 
 # 设置日志记录
-logging = Logging.get_logger(__name__)
+logging = LogManager.get_logger(__name__)
 
 def load_file_list(file_list_path):
     """加载文件名列表"""

@@ -81,35 +81,38 @@ class MemoPlugin(AbstractPlugin):
                 return f"已删除备忘录: {content}"
         return f"未找到ID为 {memo_id} 的备忘录"
 
+    def get_commands(self) -> list[str]:
+        return ["添加备忘录", "列出备忘录", "完成备忘录", "删除备忘录"]
+
     def run(self, command: str, args: dict) -> PluginResult:
-        original_command = args.get('original_command', '')
-        
-        if "添加备忘录" in original_command:
-            content = original_command.replace("添加备忘录", "").strip()
+        content = args.get("content")
+        memo_id = args.get("memo_id")
+        show_all = args.get("show_all", False)
+
+        if "添加备忘录" in command:
             if content:
                 result = self.add_memo(content)
                 return PluginResult(success=True, result=result)
             return PluginResult(success=False, error_message="备忘录内容不能为空")
         
-        elif "列出备忘录" in original_command:
-            show_all = "所有" in original_command
+        elif "列出备忘录" in command:
             result = self.list_memos(show_all)
             return PluginResult(success=True, result=result)
         
-        elif "完成备忘录" in original_command:
+        elif "完成备忘录" in command:
             try:
-                memo_id = int(original_command.replace("完成备忘录", "").strip())
+                memo_id = int(memo_id)
                 result = self.complete_memo(memo_id)
                 return PluginResult(success=True, result=result)
-            except ValueError:
+            except (ValueError, TypeError):
                 return PluginResult(success=False, error_message="请输入有效的备忘录ID")
         
-        elif "删除备忘录" in original_command:
+        elif "删除备忘录" in command:
             try:
-                memo_id = int(original_command.replace("删除备忘录", "").strip())
+                memo_id = int(memo_id)
                 result = self.delete_memo(memo_id)
                 return PluginResult(success=True, result=result)
-            except ValueError:
+            except (ValueError, TypeError):
                 return PluginResult(success=False, error_message="请输入有效的备忘录ID")
         
         return PluginResult(

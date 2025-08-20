@@ -1,10 +1,10 @@
 import os
 import random
 import time
-from package import Logging
+from package.log_manager import LogManager
 from plugin.plugin_interface import AbstractPlugin, PluginResult
 
-logging = Logging.get_logger(__name__)
+logging = LogManager.get_logger(__name__)
 
 class JokePlugin(AbstractPlugin):
     def __init__(self):
@@ -26,7 +26,7 @@ class JokePlugin(AbstractPlugin):
         return True
 
     def init(self, logging):
-        self.logger = logging.get_logger(self.name)
+        self.logger = LogManager.get_logger(self.name)
 
     def get_name(self):
         return self.name
@@ -52,13 +52,14 @@ class JokePlugin(AbstractPlugin):
     def on_resume(self):
         self.logger.info("JokePlugin 恢复.")
 
+    def get_commands(self) -> list[str]:
+        return ["我无聊了", "休息一下", "讲个笑话", "好无聊"]
+
     def run(self, takecommand: str, args: dict) -> PluginResult:
-        if any(keyword in takecommand for keyword in ["我无聊了", "休息一下", "讲个笑话", "好无聊"]):
-            # 随机选择一个笑话
-            joke_question, joke_answer = random.choice(self.jokes)
-            speak(joke_question)  # 调用你的 speak 函数
-            time.sleep(3)  # 停顿3秒（可以根据需要调整）
-            speak(joke_answer)  # 然后说出答案部分
-            return PluginResult.new(result=joke_question + " " + joke_answer, need_call_brain=False, success=True)
-        else:
-            return PluginResult.new(result=None, need_call_brain=False, success=False)
+        from butler.main import Jarvis
+        # 随机选择一个笑话
+        joke_question, joke_answer = random.choice(self.jokes)
+        Jarvis(None).speak(joke_question)
+        time.sleep(3)  # 停顿3秒（可以根据需要调整）
+        Jarvis(None).speak(joke_answer)
+        return PluginResult.new(result=joke_question + " " + joke_answer, need_call_brain=False, success=True)

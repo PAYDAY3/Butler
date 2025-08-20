@@ -35,3 +35,16 @@ class AbstractPlugin(abc.ABC):
     @abc.abstractmethod
     def status(self) -> Any:
         raise NotImplementedError
+
+    def get_commands(self) -> list[str]:
+        """
+        Returns a list of commands that this plugin can handle.
+        """
+        return []
+
+    def get_match_type(self) -> str:
+        """
+        Returns the match type for the commands.
+        Can be 'exact', 'prefix', or 'contains'.
+        """
+        return 'contains'

@@ -2,10 +2,10 @@ import threading
 import queue
 import os
 import time
-from package import Logging
+from package.log_manager import LogManager
 from concurrent.futures import ThreadPoolExecutor
 
-logging = Logging.get_logger(__name__)
+logging = LogManager.get_logger(__name__)
 
 # 模拟处理任务的函数
 def do_something(task):

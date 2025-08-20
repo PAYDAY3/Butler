@@ -4,9 +4,9 @@ import datetime
 import logging
 from pathlib import Path
 from typing import Optional
-from package import Logging
+from package.log_manager import LogManager
 
-logging = Logging.get_logger(__name__)
+logging = LogManager.get_logger(__name__)
 
 def delete_temp_files(
     directory: str = "./temp",

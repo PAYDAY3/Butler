@@ -1,10 +1,10 @@
-from package import Logging
+from package.log_manager import LogManager
 from abc import ABCMeta, abstractmethod
 from datetime import datetime
 from plugin.plugin_interface import AbstractPlugin, PluginResult
 import chardet
 
-logging = Logging.get_logger(__name__)
+logging = LogManager.get_logger(__name__)
 
 
 class ReadFilePlugin(AbstractPlugin):
@@ -13,7 +13,7 @@ class ReadFilePlugin(AbstractPlugin):
         return True
 
     def init(self, logging=None):
-        self._logger = logging if logging else Logging.get_logger(__name__)
+        self._logger = logging if logging else LogManager.get_logger(__name__)
 
     def get_name(self):
         return "read_file"

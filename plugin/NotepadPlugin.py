@@ -1,10 +1,10 @@
 import os
 import time
 import json
-from package import Logging
+from package.log_manager import LogManager
 from plugin.plugin_interface import AbstractPlugin, PluginResult
 
-logging = Logging.get_logger(__name__)
+logging = LogManager.get_logger(__name__)
 
 class NotepadPlugin(AbstractPlugin):
     def __init__(self):
@@ -18,7 +18,7 @@ class NotepadPlugin(AbstractPlugin):
         return True
 
     def init(self, logging):
-        self.logger = logging.get_logger(self.name)
+        self.logger = LogManager.get_logger(self.name)
         self.load_notes()  # 加载笔记
 
     def get_name(self):
@@ -46,21 +46,24 @@ class NotepadPlugin(AbstractPlugin):
     def on_resume(self):
         self.logger.info("记事本插件恢复。")
 
+    def get_commands(self) -> list[str]:
+        return ["记笔记", "添加笔记", "查看笔记", "删除笔记", "编辑笔记", "搜索笔记"]
+
     def run(self, takecommand: str, args: dict) -> PluginResult:
         action = args.get("action")
         note = args.get("note")
         index = args.get("index")
 
-        if action == "add":
-            return self.add_note(note)  # 添加笔记
-        elif action == "view":
-            return self.view_notes()  # 查看笔记
-        elif action == "delete":
-            return self.delete_note(index)  # 删除笔记
-        elif action == "edit":
-            return self.edit_note(index, note)  # 编辑笔记
-        elif action == "search":
-            return self.search_notes(note)  # 搜索笔记
+        if "add" in takecommand or "添加" in takecommand:
+            return self.add_note(note)
+        elif "view" in takecommand or "查看" in takecommand:
+            return self.view_notes()
+        elif "delete" in takecommand or "删除" in takecommand:
+            return self.delete_note(index)
+        elif "edit" in takecommand or "编辑" in takecommand:
+            return self.edit_note(index, note)
+        elif "search" in takecommand or "搜索" in takecommand:
+            return self.search_notes(note)
         else:
             return PluginResult.new(result=None, need_call_brain=False, success=False, error_message="无效的操作")
 

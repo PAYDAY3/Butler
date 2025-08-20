@@ -1,8 +1,8 @@
-from package import Logging
+from package.log_manager import LogManager
 from abc import ABCMeta, abstractmethod
 from datetime import datetime
 
-logging = Logging.get_logger(__name__)
+logging = LogManager.get_logger(__name__)
 
 class PluginResult(object):
     def __init__(self):

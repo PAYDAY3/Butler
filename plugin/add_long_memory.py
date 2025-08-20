@@ -1,10 +1,10 @@
-from package import Logging
+from package.log_manager import LogManager
 import time
 
 from plugin.plugin_interface import AbstractPlugin, PluginResult
-from long_memory.long_memory_interface import LongMemoryItem
+from .long_memory.long_memory_interface import LongMemoryItem
 
-logger = Logging.get_logger(__name__)
+logger = LogManager.get_logger(__name__)
 
 class AddLongMemoryPlugin(AbstractPlugin):
     def valid(self) -> bool:

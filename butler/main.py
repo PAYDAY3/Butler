@@ -30,7 +30,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from package.thread import process_tasks
 from . import binary_extensions
 from package.virtual_keyboard import VirtualKeyboard
-from package import Logging
+from package.log_manager import LogManager
 from butler.CommandPanel import CommandPanel
 from plugin.plugin import process_command as process_plugin_command
 
@@ -41,7 +41,7 @@ class Jarvis:
         # 替换为DeepSeek API密钥
         self.deepseek_api_key = os.getenv("DEEPSEEK_API_KEY")
         self.engine = pyttsx3.init()
-        self.logging = Logging.get_logger(__name__)
+        self.logging = LogManager.get_logger(__name__)
 
         base_dir = os.path.dirname(__file__)
         self.JARVIS_AUDIO_FILE = os.path.join(base_dir, "resources", "jarvis.wav")

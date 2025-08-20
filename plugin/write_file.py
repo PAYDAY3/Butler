@@ -1,12 +1,12 @@
 import os
 import time
 
-from package import Logging
+from package.log_manager import LogManager
 from plugin.plugin_interface import AbstractPlugin, PluginResult
 
 TEMP_DIR_PATH = "./temp"
 
-logger = Logging.get_logger(__name__)
+logger = LogManager.get_logger(__name__)
 
 class WriteFilePlugin(AbstractPlugin):
     def valid(self) -> bool:

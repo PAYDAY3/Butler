@@ -1,10 +1,10 @@
 import requests
 from http.server import SimpleHTTPRequestHandler, HTTPServer
 from ftplib import FTP
-from package import Logging
+from package.log_manager import LogManager
 
 # 配置日志记录
-logging = Logging.get_logger(__name__)
+logging = LogManager.get_logger(__name__)
 
 # HTTP 服务器
 class CustomHandler(SimpleHTTPRequestHandler):

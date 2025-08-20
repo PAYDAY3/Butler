@@ -7,15 +7,14 @@ import os
 import concurrent.futures
 import argparse
 import urlparse
-from package import Logging
+from package.log_manager import LogManager
 from urllib.parse import urlparse, urljoin
 from scrapy.crawler import CrawlerProcess
 from scrapy.utils.project import get_project_settings
 import scrapy
-from jarvis.jarvis import Jarvis
 
 # 设置日志配置
-logging = Logging.get_logger(__name__)
+logging = LogManager.get_logger(__name__)
 downloaded = "./downloaded/"  # 存储数据文件
 
 # 设置User Agent列表

@@ -981,18 +981,26 @@ def tcpip():
         print(arrow + ("[{0}+{1}] You must select a device before...").format(Fore.RED, Fore.WHITE))
 
 
-# TODO
 def extract_contacts():
     global device
     if device != 'none':
         try:
-            print(arrow + ("[{0}+{1}] This option is still in BETA").format(Fore.RED, Fore.WHITE))
             d = adbutils.adb.device(device)
-            output = d.shell("content query --uri content://contacts/phones/  --projection display_name:number:notes ")
-            print(output)
-            d.shell("content query --uri content://contacts/phones/  --projection display_name:number:notes ")
-        except:
-            print(arrow + ("[{0}+{1}] An error ocurred extracting the contacts...").format(Fore.RED, Fore.WHITE))
+            output = d.shell("content query --uri content://contacts/phones/ --projection display_name:number")
+            table = Table()
+            table.add_column("Name", style="cyan")
+            table.add_column("Phone Number", style="magenta")
+            lines = output.splitlines()
+            for line in lines:
+                if "display_name" in line:
+                    parts = line.split(',')
+                    name = parts[0].split('=')[1]
+                    number = parts[1].split('=')[1]
+                    table.add_row(name, number)
+            console = Console()
+            console.print(table)
+        except Exception as e:
+            print(arrow + Fore.RED + f"An error occurred extracting contacts: {e}")
     else:
         print(arrow + ("[{0}+{1}] You must select a device before...").format(Fore.RED, Fore.WHITE))
 
@@ -1010,19 +1018,17 @@ def extract_sms():
     else:
         print(arrow + ("[{0}+{1}] You must select a device before...").format(Fore.RED, Fore.WHITE))
 
-#todo
 def delete_sms():
     global device
     if device != 'none':
         try:
-            print(arrow + ("[{0}+{1}] This option is still in BETA").format(Fore.RED, Fore.WHITE))
             d = adbutils.adb.device(device)
-            print(arrow + ("[{0}+{1}] Specify row id").format(Fore.RED, Fore.WHITE))
-            row = my_input(arrow + " adbsploit" + Fore.RED + "(delete-sms) " + Fore.WHITE + "> ")
-            d.shell("content delete --uri content://sms/ --where" + '"row=' + "'" + row + "'" + '"')
-            print('SMS Deleted')
-        except:
-            print(arrow + ("[{0}+{1}] An error ocurred deleting the sms...").format(Fore.RED, Fore.WHITE))
+            print(arrow + ("[{0}+{1}] Specify the SMS ID to delete").format(Fore.RED, Fore.WHITE))
+            sms_id = my_input(arrow + " adbsploit" + Fore.RED + "(delete-sms) " + Fore.WHITE + "> ")
+            d.shell(f"content delete --uri content://sms/{sms_id}")
+            print(arrow + Fore.GREEN + f"SMS with ID {sms_id} deleted successfully.")
+        except Exception as e:
+            print(arrow + Fore.RED + f"An error occurred deleting SMS: {e}")
     else:
         print(arrow + ("[{0}+{1}] You must select a device before...").format(Fore.RED, Fore.WHITE))
 
@@ -1046,15 +1052,20 @@ def send_sms():
         print(arrow + ("[{0}+{1}] You must select a device before...").format(Fore.RED, Fore.WHITE))
 
 
-# TODO
 def current_app():
     global device
     if device != 'none':
         try:
             d = adbutils.adb.device(device)
-            print(arrow + Fore.GREEN + d.current_app())
-        except:
-            print(arrow + ("[{0}+{1}] An error ocurred getting the current app...").format(Fore.RED, Fore.WHITE))
+            current = d.current_app()
+            table = Table()
+            table.add_column("Package", style="cyan")
+            table.add_column("Activity", style="magenta")
+            table.add_row(current.package, current.activity)
+            console = Console()
+            console.print(table)
+        except Exception as e:
+            print(arrow + Fore.RED + f"An error occurred getting the current app: {e}")
     else:
         print(arrow + ("[{0}+{1}] You must select a device before...").format(Fore.RED, Fore.WHITE))
 
@@ -1117,162 +1128,31 @@ def extract_app():
     path = d.shell("pm path " + app)
     d.shell("pull " + path[8:])
 
+def _run_scrcpy(command):
+    if shutil.which("scrcpy") is None:
+        print(arrow + Fore.RED + "scrcpy is not installed. Please install it from https://github.com/Genymobile/scrcpy")
+        return
+
+    try:
+        subprocess.Popen(command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    except Exception as e:
+        print(arrow + Fore.RED + f"An error occurred running scrcpy: {e}")
+
 def screenrecord():
     global device
     if device != 'none':
         print(arrow + ("[{0}+{1}] Introduce the path and file name: (/home/user/Desktop/record.mp4)").format(Fore.RED, Fore.WHITE))
-        ans = my_input(arrow + " adbsploit" + Fore.RED + "(kill-process) " + Fore.WHITE + "> ")
-        try:
-            if sys.platform.startswith('win32'):
-                if shutil.which("scrcpy") is not None:
-                    if ans == "":
-                        subprocess.Popen(['scrcpy -r record.mp4 -s ' + device],
-                                         shell=True,
-                                         stdin=subprocess.PIPE,
-                                         stdout=subprocess.PIPE,
-                                         stderr=subprocess.STDOUT, )
-                    else:
-                        subprocess.Popen(['scrcpy -r ' + ans + ' -s ' + device],
-                                         shell=True,
-                                         stdin=subprocess.PIPE,
-                                         stdout=subprocess.PIPE,
-                                         stderr=subprocess.STDOUT, )
-
-                else:
-                    print(arrow + ("[{0}+{1}] ADBSploit use scrcpy to remote control").format(Fore.RED, Fore.WHITE))
-                    print(arrow + (
-                        "[{0}+{1}] You must install it from https://github.com/Genymobile/scrcpy/releases").format(
-                        Fore.RED, Fore.WHITE))
-
-            elif sys.platform.startswith('linux'):
-                if shutil.which("scrcpy") is not None:
-                    if ans == "":
-                        subprocess.Popen(['scrcpy -r record.mp4 -s ' + device],
-                                         shell=True,
-                                         stdin=subprocess.PIPE,
-                                         stdout=subprocess.PIPE,
-                                         stderr=subprocess.STDOUT, )
-                    else:
-                        subprocess.Popen(['scrcpy -r ' + ans + ' -s ' + device],
-                                         shell=True,
-                                         stdin=subprocess.PIPE,
-                                         stdout=subprocess.PIPE,
-                                         stderr=subprocess.STDOUT, )
-                else:
-                    print(arrow + (
-                        "[{0}+{1}] ADBSploit use scrcpy to remote control, do you want to install it? (y/n)").format(
-                        Fore.RED, Fore.WHITE))
-                    ans = my_input(arrow + " adbsploit" + Fore.RED + "(remote-control) " + Fore.WHITE + "> ")
-                    if ans == "y" or ans == "Y":
-                        subprocess.Popen('sudo apt-get install scrcpy', shell=True)
-                    elif ans == "n" or ans == "N":
-                        print(arrow + (
-                            "[{0}+{1}] Continue with ADBSploit...").format(
-                            Fore.RED, Fore.WHITE))
-                    else:
-                        print(arrow + (
-                            "[{0}+{1}] The option is incorrect please try again").format(
-                            Fore.RED, Fore.WHITE))
-            elif sys.platform.startswith('darwin'):
-                if shutil.which("scrcpy") is not None:
-                    if ans == "":
-                        subprocess.Popen(['scrcpy -r record.mp4 -s ' + device],
-                                         shell=True,
-                                         stdin=subprocess.PIPE,
-                                         stdout=subprocess.PIPE,
-                                         stderr=subprocess.STDOUT, )
-                    else:
-                        subprocess.Popen(['scrcpy -r ' + ans + ' -s ' + device],
-                                         shell=True,
-                                         stdin=subprocess.PIPE,
-                                         stdout=subprocess.PIPE,
-                                         stderr=subprocess.STDOUT, )
-                else:
-                    print(arrow + (
-                        "[{0}+{1}] ADBSploit use scrcpy to remote control, do you want to install it? (y/n)").format(
-                        Fore.RED, Fore.WHITE))
-                    ans = my_input(arrow + " adbsploit" + Fore.RED + "(remote-control) " + Fore.WHITE + "> ")
-                    if ans == "y" or ans == "Y":
-                        subprocess.call(
-                            '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"',
-                            shell=True)
-                        subprocess.call('brew install scrcpy', shell=True)
-                    elif ans == "n" or ans == "N":
-                        print(arrow + (
-                            "[{0}+{1}] Continue with ADBSploit...").format(
-                            Fore.RED, Fore.WHITE))
-                    else:
-                        print(arrow + (
-                            "[{0}+{1}] The option is incorrect please try again").format(
-                            Fore.RED, Fore.WHITE))
-            else:
-                print(arrow + ("[{0}+{1}] An error ocurred streaming the screen...").format(Fore.RED, Fore.WHITE))
-        except:
-            print(arrow + ("[{0}+{1}] An error ocurred streaming the screen...").format(Fore.RED, Fore.WHITE))
+        ans = my_input(arrow + " adbsploit" + Fore.RED + "(screenrecord) " + Fore.WHITE + "> ")
+        if ans == "":
+            ans = "record.mp4"
+        _run_scrcpy(f"scrcpy -r {ans} -s {device}")
     else:
         print(arrow + ("[{0}+{1}] You must select a device before...").format(Fore.RED, Fore.WHITE))
-
 
 def remote_control():
     global device
     if device != 'none':
-        try:
-            if sys.platform.startswith('win32'):
-                if shutil.which("scrcpy") is not None:
-                    subprocess.Popen(['scrcpy -s ' + device],
-                                            shell=True,
-                                            stdin=subprocess.PIPE,
-                                            stdout=subprocess.PIPE,
-                                            stderr=subprocess.STDOUT,)
-                else:
-                    print(arrow + ("[{0}+{1}] ADBSploit use scrcpy to remote control").format(Fore.RED, Fore.WHITE))
-                    print(arrow + ("[{0}+{1}] You must install it from https://github.com/Genymobile/scrcpy/releases").format(Fore.RED, Fore.WHITE))
-
-            elif sys.platform.startswith('linux'):
-                if shutil.which("scrcpy") is not None:
-                    subprocess.Popen(['scrcpy -s ' + device],
-                                            shell=True,
-                                            stdin=subprocess.PIPE,
-                                            stdout=subprocess.PIPE,
-                                            stderr=subprocess.STDOUT,)
-                else:
-                    print(arrow + ("[{0}+{1}] ADBSploit use scrcpy to remote control, do you want to install it? (y/n)").format(Fore.RED, Fore.WHITE))
-                    ans = my_input(arrow + " adbsploit" + Fore.RED + "(remote-control) " + Fore.WHITE + "> ")
-                    if ans == "y" or ans == "Y":
-                        subprocess.Popen('sudo apt-get install scrcpy',shell=True)
-                    elif ans == "n" or ans == "N":
-                        print(arrow + (
-                            "[{0}+{1}] Continue with ADBSploit...").format(
-                            Fore.RED, Fore.WHITE))
-                    else:
-                        print(arrow + (
-                            "[{0}+{1}] The option is incorrect please try again").format(
-                            Fore.RED, Fore.WHITE))
-            elif sys.platform.startswith('darwin'):
-                if shutil.which("scrcpy") is not None:
-                    subprocess.Popen(['scrcpy -s ' + device],
-                                            shell=True,
-                                            stdin=subprocess.PIPE,
-                                            stdout=subprocess.PIPE,
-                                            stderr=subprocess.STDOUT,)
-                else:
-                    print(arrow + ("[{0}+{1}] ADBSploit use scrcpy to remote control, do you want to install it? (y/n)").format(Fore.RED, Fore.WHITE))
-                    ans = my_input(arrow + " adbsploit" + Fore.RED + "(remote-control) " + Fore.WHITE + "> ")
-                    if ans == "y" or ans == "Y":
-                        subprocess.call('/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"',shell=True)
-                        subprocess.call('brew install scrcpy', shell=True)
-                    elif ans == "n" or ans == "N":
-                        print(arrow + (
-                            "[{0}+{1}] Continue with ADBSploit...").format(
-                            Fore.RED, Fore.WHITE))
-                    else:
-                        print(arrow + (
-                            "[{0}+{1}] The option is incorrect please try again").format(
-                            Fore.RED, Fore.WHITE))
-            else:
-                print(arrow + ("[{0}+{1}] An error ocurred streaming the screen...").format(Fore.RED, Fore.WHITE))
-        except:
-            print(arrow + ("[{0}+{1}] An error ocurred streaming the screen...").format(Fore.RED, Fore.WHITE))
+        _run_scrcpy(f"scrcpy -s {device}")
     else:
         print(arrow + ("[{0}+{1}] You must select a device before...").format(Fore.RED, Fore.WHITE))
 #TODO
