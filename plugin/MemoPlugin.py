@@ -1,7 +1,7 @@
 import os
 import json
 from datetime import datetime
-from abstract_plugin import AbstractPlugin, PluginResult
+from .abstract_plugin import AbstractPlugin, PluginResult
 
 class MemoPlugin(AbstractPlugin):
     def __init__(self):

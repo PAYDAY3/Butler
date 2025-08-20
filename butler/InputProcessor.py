@@ -3,7 +3,7 @@ from datetime import datetime  # 添加时间戳功能
 from my_package import Logging
 from jarvis import takecommand
 
-logging = Logging.getLogger(__name__)
+logging = Logging.get_logger(__name__)
 
 class InputProcessor:
     # 使用类常量提高可维护性

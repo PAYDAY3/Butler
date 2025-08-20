@@ -4,7 +4,7 @@ from ftplib import FTP
 from package import Logging
 
 # 配置日志记录
-logging = Logging.getLogger(__name__)
+logging = Logging.get_logger(__name__)
 
 # HTTP 服务器
 class CustomHandler(SimpleHTTPRequestHandler):

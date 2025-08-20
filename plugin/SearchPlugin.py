@@ -1,7 +1,6 @@
 import urllib.parse
 from package import Logging
 from plugin.plugin_interface import AbstractPlugin, PluginResult
-from jarvis.jarvis import takecommand, speak
 
 class SearchPlugin(AbstractPlugin):
     def __init__(self):
@@ -9,13 +8,13 @@ class SearchPlugin(AbstractPlugin):
         self.chinese_name = "搜索插件"
         self.description = "使用搜索引擎和视频网站搜索相关信息"
         self.parameters = {}  # 此插件不需要参数
-        self.logger = Logging.getLogger(self.name)
+        self.logger = Logging.get_logger(self.name)
 
     def valid(self) -> bool:
         return True
 
     def init(self, logging):
-        self.logger = logging.getLogger(self.name)
+        self.logger = logging.get_logger(self.name)
 
     def get_name(self) -> str:
         return self.name

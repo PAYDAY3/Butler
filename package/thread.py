@@ -5,7 +5,7 @@ import time
 from package import Logging
 from concurrent.futures import ThreadPoolExecutor
 
-logging = Logging.getLogger(__name__)
+logging = Logging.get_logger(__name__)
 
 # 模拟处理任务的函数
 def do_something(task):

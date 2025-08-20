@@ -15,7 +15,7 @@ DATABASE_FILE_NAME = "long_memory.db"
 class SQLiteLongMemory(AbstractLongMemory):
     def __init__(self, collection_name: str = DEFAULT_COLLECTION_NAME, cache_size: int = 100):
         # 初始化日志记录器
-        self._logger = Logging.getLogger(__name__)
+        self._logger = Logging.get_logger(__name__)
         # 初始化集合为 None
         self._conn: Optional[sqlite3.Connection] = None
         # 使用提供的集合名称（或默认值）

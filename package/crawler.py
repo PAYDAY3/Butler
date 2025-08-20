@@ -15,7 +15,7 @@ import scrapy
 from jarvis.jarvis import Jarvis
 
 # 设置日志配置
-logging = Logging.getLogger(__name__)
+logging = Logging.get_logger(__name__)
 downloaded = "./downloaded/"  # 存储数据文件
 
 # 设置User Agent列表

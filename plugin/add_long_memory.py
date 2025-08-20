@@ -3,9 +3,8 @@ import time
 
 from plugin.plugin_interface import AbstractPlugin, PluginResult
 from long_memory.long_memory_interface import LongMemoryItem
-from jarvis.jarvis import takecommand
 
-logger = Logging.getLogger(__name__)
+logger = Logging.get_logger(__name__)
 
 class AddLongMemoryPlugin(AbstractPlugin):
     def valid(self) -> bool:

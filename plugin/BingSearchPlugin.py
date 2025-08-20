@@ -2,7 +2,7 @@ import requests
 from package import Logging
 from plugin.plugin_interface import AbstractPlugin, PluginResult
 
-logging = Logging.getLogger(__name__)
+logging = Logging.get_logger(__name__)
 
 class BingSearchPlugin(AbstractPlugin):
 
@@ -10,7 +10,7 @@ class BingSearchPlugin(AbstractPlugin):
         return True
 
     def init(self, logging=None):
-        self._logger = logging if logging else Logging.getLogger(__name__)
+        self._logger = logging if logging else Logging.get_logger(__name__)
 
     def get_name(self):
         return "bing_search"

@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Optional
 from package import Logging
 
-logging = Logging.getLogger(__name__)
+logging = Logging.get_logger(__name__)
 
 def delete_temp_files(
     directory: str = "./temp",

@@ -1,9 +1,8 @@
 from package import Logging
 
 from plugin.plugin_interface import AbstractPlugin, PluginResult
-from jarvis.jarvis import takecommand
 
-logger = Logging.getLogger(__name__)
+logger = Logging.get_logger(__name__)
 
 class ClearRecentMemoryPlugin(AbstractPlugin):
     def valid(self) -> bool:
@@ -11,7 +10,7 @@ class ClearRecentMemoryPlugin(AbstractPlugin):
 
     #  在 init 方法中初始化类内部的日志记录器
     def init(self, logging):
-        self.logging = Logging.getLogger(self.name)
+        self.logging = Logging.get_logger(self.name)
 
     def get_name(self):
         return "clear_recent_memory"

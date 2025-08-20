@@ -2,9 +2,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Literal, get_args
 
-from anthropic.types.beta import BetaToolTextEditor20241022Param
-
-from .base import BaseAnthropicTool, CLIResult, ToolError, ToolResult
+from .base import BaseTool, CLIResult, ToolError, ToolResult
 from .run import maybe_truncate, run
 
 Command = Literal[
@@ -17,13 +15,11 @@ Command = Literal[
 SNIPPET_LINES: int = 4
 
 
-class EditTool(BaseAnthropicTool):
+class EditTool(BaseTool):
     """
     允许代理查看、创建和编辑文件的文件系统编辑器工具。
-    刀具参数由Anthropic定义，不可编辑。
     """
 
-    api_type: Literal["text_editor_20241022"] = "text_editor_20241022"
     name: Literal["str_replace_editor"] = "str_replace_editor"
 
     _file_history: dict[Path, list[str]]
@@ -31,12 +27,6 @@ class EditTool(BaseAnthropicTool):
     def __init__(self):
         self._file_history = defaultdict(list)
         super().__init__()
-
-    def to_params(self) -> BetaToolTextEditor20241022Param:
-        return {
-            "name": self.name,
-            "type": self.api_type,
-        }
 
     async def __call__(
         self,

@@ -10,8 +10,7 @@ import tkinter as tk
 from tkinter import messagebox
 from pydub import AudioSegment
 from pydub.playback import play
-import requests  # 替换openai为requests
-from snowboy import snowboydecoder
+import requests
 import shutil
 import tempfile
 import concurrent.futures
@@ -29,38 +28,27 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 # 假设这些模块存在
 from package.thread import process_tasks
-import binary_extensions
-from package.TextEditor import TextEditor
+from . import binary_extensions
 from package.virtual_keyboard import VirtualKeyboard
 from package import Logging
-from package.schedule_management import schedule_management
-from jarvis.CommandPanel import CommandPanel
-from plugin.plugin import plugin
-from .edit import EditTool
-from .bash import BashTool
-from .collection import ToolCollection
+from butler.CommandPanel import CommandPanel
+from plugin.plugin import process_command as process_plugin_command
 
 class Jarvis:
-    def __init__(self):
+    def __init__(self, root):
+        self.root = root
         load_dotenv()
         # 替换为DeepSeek API密钥
         self.deepseek_api_key = os.getenv("DEEPSEEK_API_KEY")
         self.engine = pyttsx3.init()
-        self.logging = Logging.getLogger(__name__)
-        self.WAKE_WORD = "jarvis"
-        self.program_folder = ["./program"]
+        self.logging = Logging.get_logger(__name__)
 
         base_dir = os.path.dirname(__file__)
-        self.model = os.path.join(base_dir, "snowboy", "jarvis.umdl")
         self.JARVIS_AUDIO_FILE = os.path.join(base_dir, "resources", "jarvis.wav")
 
         # Paths for temporary files are relative to the current working directory
         self.OUTPUT_FILE = "./temp.wav"
-        self.FINAL_OUTPUT_FILE = "./final_output.wav"
 
-        self.edit_tool = EditTool()
-        self.bash_tool = BashTool()
-        self.tool_collection = ToolCollection(self.edit_tool, self.bash_tool)
         self.program_mapping = {
             "邮箱": "e-mail.py",
             "播放音乐": "music.py",
@@ -69,7 +57,6 @@ class Jarvis:
             "爬虫": "crawlpy.py",
             "终端": "terminpy.py",
             "加密": "encrypt.py",
-            "文本编辑器": "TextEditor.py",
             "物体识别": "PictureRecognition.py",
             "日程管理": "schedule_management.py",
             "二维码识别": "QR-Code-Recognitipy.py",
@@ -78,14 +65,19 @@ class Jarvis:
             "翻译": "translators.py",
             "文件转换器": "file_converter.py",
             "帐号登录": "AccountPassword.py",
-            "文本编辑器": self.edit_tool,
-            "终端命令": self.bash_tool,
-            "计算机控制": self.computer_tool
         }
         self.conversation_history = []
         self.running = True
-        self.use_voice_input = True
         self.matched_program = None
+        self.panel = None
+
+    def set_panel(self, panel):
+        self.panel = panel
+
+    def ui_print(self, message):
+        print(message)
+        if self.panel:
+            self.panel.append_to_history(message)
 
     # 1.算法实现部分
     def quick_sort(self, arr):
@@ -225,7 +217,7 @@ class Jarvis:
             result = response.json()
             return result['choices'][0]['message']['content']
         except Exception as e:
-            print(f"DeepSeek API调用失败: {e}")
+            self.ui_print(f"DeepSeek API调用失败: {e}")
             return text  # 出错时返回原始文本
 
     def generate_response(self, text):
@@ -251,49 +243,25 @@ class Jarvis:
             result = response.json()
             return result['choices'][0]['message']['content']
         except Exception as e:
-            print(f"DeepSeek API调用失败: {e}")
+            self.ui_print(f"DeepSeek API调用失败: {e}")
             return "抱歉，我暂时无法回答这个问题。"  # 出错时返回默认响应
 
     def speak(self, audio):
+        self.ui_print(f"Jarvis: {audio}")
         # 保存临时语音文件
         self.engine.save_to_file(audio, self.OUTPUT_FILE)
         self.engine.runAndWait()
         
-        # 检查音效文件是否存在
-        if not os.path.exists(self.JARVIS_AUDIO_FILE):
-            print(f"警告: 音效文件 {self.JARVIS_AUDIO_FILE} 不存在")
+        try:
             # 直接播放合成语音
             sound = AudioSegment.from_wav(self.OUTPUT_FILE)
             play(sound)
-            return
-        
-        try:
-            # 加载音效和语音
-            jarvis_sound = AudioSegment.from_wav(self.JARVIS_AUDIO_FILE)
-            synthetic_speech = AudioSegment.from_wav(self.OUTPUT_FILE)
-            
-            # 调整音量
-            synthetic_speech = synthetic_speech.apply_gain(10)  # 提高合成语音的音量
-            jarvis_sound = jarvis_sound.apply_gain(-10)  # 降低音效的音量
-            
-            # 合并音频
-            combined_sound = jarvis_sound + synthetic_speech
-            
-            # 保存并播放
-            combined_sound.export(self.FINAL_OUTPUT_FILE, format="wav")
-            play(combined_sound)
-            
         except Exception as e:
-            print(f"音频处理出错: {e}")
-            # 出错时直接播放原始语音
-            sound = AudioSegment.from_wav(self.OUTPUT_FILE)
-            play(sound)
+            self.ui_print(f"音频处理出错: {e}")
         finally:
             # 清理临时文件
             if os.path.exists(self.OUTPUT_FILE):
                 os.remove(self.OUTPUT_FILE)
-            if os.path.exists(self.FINAL_OUTPUT_FILE):
-                os.remove(self.FINAL_OUTPUT_FILE)
 
     def takecommand(self):
         speech_key = os.getenv("AZURE_SPEECH_KEY")
@@ -302,26 +270,26 @@ class Jarvis:
         speech_config.speech_synthesis_language = "zh-CN"
         recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config)
 
-        print("请说话...")
+        self.ui_print("请说话...")
 
         try:
             result = recognizer.recognize_once()
             if result.reason == speechsdk.ResultReason.RecognizedSpeech:
                 query = result.text
-                print('User: ' + query + '\n')
+                self.ui_print('User: ' + query + '\n')
                 return query
             elif result.reason == speechsdk.ResultReason.NoMatch:
-                print("对不起，我没有听清楚，请再说一遍。")
+                self.ui_print("对不起，我没有听清楚，请再说一遍。")
                 return None
             elif result.reason == speechsdk.ResultReason.Canceled:
                 cancellation_details = result.cancellation_details
-                print(f"语音识别取消: {cancellation_details.reason}")
+                self.ui_print(f"语音识别取消: {cancellation_details.reason}")
                 if cancellation_details.reason == speechsdk.CancellationReason.Error:
-                    print(f"错误详情: {cancellation_details.error_details}")
+                    self.ui_print(f"错误详情: {cancellation_details.error_details}")
                 return None
 
         except Exception as e:
-            print(f"语音识别出错: {e}")
+            self.ui_print(f"语音识别出错: {e}")
             self.logging.error(f"语音识别出错: {e}")
             return None
 
@@ -405,7 +373,7 @@ class Jarvis:
             if program_name in self.program_mapping:
                 self.execute_program(self.program_mapping[program_name])
             else:
-                print(f"未找到程序 '{program_name}'")
+                self.ui_print(f"未找到程序 '{program_name}'")
                 self.speak(f"未找到程序 {program_name}")
         elif command in self.program_mapping:
             self.execute_program(self.program_mapping[command])
@@ -414,18 +382,23 @@ class Jarvis:
             if program_name in programs:
                 self.execute_program(programs[program_name])
             else:
-                print(f"未找到程序 '{program_name}'")
+                self.ui_print(f"未找到程序 '{program_name}'")
                 self.speak(f"未找到程序 {program_name}")
         elif "退出" in command or "结束" in command:
-            self.logging.info(f"{self.program_folder}程序已退出")
+            self.logging.info(f"程序已退出")
             self.speak(f"程序已退出")
             self.running = False
+            self.root.quit()
         else:
-            print("未知指令，请重试")
-            self.logging.warning("未知指令")
-            self.speak("未识别到有效指令")
-            time.sleep(1)
-            self.match_program(command, programs)
+            plugin_result = process_plugin_command(command)
+            if "未找到匹配的插件" not in plugin_result:
+                self.speak(plugin_result)
+            else:
+                self.ui_print("未知指令，请重试")
+                self.logging.warning("未知指令")
+                self.speak("未识别到有效指令")
+                time.sleep(1)
+                self.match_program(command, programs)
 
     @lru_cache(maxsize=128)
     def open_programs(self, program_folder, external_folders=None):
@@ -434,7 +407,7 @@ class Jarvis:
         
         for folder in all_folders:
             if not os.path.exists(folder):
-                print(f"文件夹 '{folder}' 未找到。")
+                self.ui_print(f"文件夹 '{folder}' 未找到。")
                 self.logging.info(f"文件夹 '{folder}' 未找到。")
                 continue
                 
@@ -455,12 +428,12 @@ class Jarvis:
                                 spec.loader.exec_module(program_module)
                                 programs_cache[program_name] = program_module
                             except ImportError as e:
-                                print(f"加载程序模块 '{program_name}' 时出错：{e}")
+                                self.ui_print(f"加载程序模块 '{program_name}' 时出错：{e}")
                                 self.logging.info(f"加载程序模块 '{program_name}' 时出错：{e}")
                                 continue
 
                             if not hasattr(program_module, 'run'):
-                                print(f"程序模块 '{program_name}' 无效。")
+                                self.ui_print(f"程序模块 '{program_name}' 无效。")
                                 self.logging.info(f"程序模块 '{program_name}' 无效。")
                                 continue
 
@@ -470,11 +443,6 @@ class Jarvis:
         return programs
     
     def execute_program(self, program_name):
-        # 如果program_name是工具对象，直接执行
-        if isinstance(program_name, BaseAnthropicTool):
-            # 这里可以添加工具执行逻辑
-            self.speak(f"准备执行{program_name.name}工具")
-            return
         try:
             # 尝试从缓存中获取模块
             if program_name in sys.modules:
@@ -491,7 +459,7 @@ class Jarvis:
                         break
                 
                 if not program_path:
-                    print(f"未找到程序文件: {program_name}")
+                    self.ui_print(f"未找到程序文件: {program_name}")
                     self.speak(f"未找到程序 {program_name}")
                     return
                 
@@ -503,41 +471,17 @@ class Jarvis:
             
             # 执行程序
             if hasattr(program_module, 'run'):
-                print(f"执行程序: {program_name}")
+                self.ui_print(f"执行程序: {program_name}")
                 self.speak(f"正在启动 {program_name}")
                 program_module.run()
             else:
-                print(f"程序 {program_name} 没有run方法")
+                self.ui_print(f"程序 {program_name} 没有run方法")
                 self.speak(f"程序 {program_name} 无法启动")
                 
         except Exception as e:
-            print(f"执行程序出错: {e}")
+            self.ui_print(f"执行程序出错: {e}")
             self.logging.error(f"执行程序 {program_name} 出错: {e}")
             self.speak(f"启动程序时出错")
-
-    def process_text_input(self):
-        """处理文本输入的方法"""
-        root = tk.Tk()
-        root.title("文字输入")
-        root.geometry("400x300")
-        
-        label = tk.Label(root, text="请输入命令:")
-        label.pack(pady=10)
-        
-        entry = tk.Entry(root, width=40)
-        entry.pack(pady=10)
-        
-        result = [None]  # 用于存储结果的列表
-        
-        def submit():
-            result[0] = entry.get()
-            root.destroy()
-        
-        button = tk.Button(root, text="提交", command=submit)
-        button.pack(pady=10)
-        
-        root.mainloop()
-        return result[0]
 
     def manage_temp_files(self):
         """管理临时文件"""
@@ -551,7 +495,7 @@ class Jarvis:
                     elif os.path.isdir(filepath):
                         shutil.rmtree(filepath)
                 except Exception as e:
-                    print(f"删除临时文件失败: {filepath} - {e}")
+                    self.ui_print(f"删除临时文件失败: {filepath} - {e}")
 
     def match_program(self, command, programs):
         """尝试匹配程序"""
@@ -562,78 +506,31 @@ class Jarvis:
                 return
         self.speak("未找到匹配的程序")
 
+    def panel_command_handler(self, command_type, command_payload):
+        programs = self.open_programs(["./program"])
+        if command_type == "text":
+            self.ui_print(f"User: {command_payload}")
+            self.handle_user_command(command_payload, programs)
+        elif command_type == "voice":
+            command = self.takecommand()
+            if command:
+                self.handle_user_command(command, programs)
+
     def main(self):
-        plugin()
-        handler = self.ProgramHandler(self.program_folder)
-        observer = Observer()
-        for folder in self.program_folder:
-            observer.schedule(handler, folder, recursive=True)
-        observer.start()
+        # handler = self.ProgramHandler(self.program_folder)
+        # observer = Observer()
+        # for folder in self.program_folder:
+        #     observer.schedule(handler, folder, recursive=True)
+        # observer.start()
 
         process_tasks()
-        schedule_management()
+        # schedule_management() # This is a standalone command line tool, disabling for now
         self.manage_temp_files()
 
-        programs = self.open_programs(self.program_folder)
-        print("等待唤醒词")
-        if not programs:
-            print("没有找到程序模块")
-            return
+        self.speak("Jarvis 助手已启动")
         
-        while self.running:
-            print(f"等待唤醒词 '{self.WAKE_WORD}'...")
-            detector = snowboydecoder.HotwordDetector(self.model, sensitivity=0.5, audio_gain=1)
-            detector.start(detected_callback=lambda: True, interrupt_check=lambda: not self.running, sleep_time=0.03)
-            detector.terminate()
-            
-            if self.use_voice_input: 
-                self.speak("我在听")
-                wake_command = self.takecommand()
-               
-                if wake_command in ["切换文字输入", "1"]:
-                    self.use_voice_input = False
-                    print("已切换到文字手写输入模式")
-                    self.speak("已切换到文字输入模式")
-                elif wake_command and (self.WAKE_WORD in wake_command or wake_command.startswith("打开")):
-                    print("已唤醒，等待命令...")
-                    self.logging.info("已唤醒，等待命令")
-                    self.speak("请吩咐")
-
-                    command = wake_command.replace(self.WAKE_WORD, '').strip() if self.WAKE_WORD in wake_command else wake_command
-                    self.handle_user_command(command, programs)
-                elif wake_command:
-                    self.match_program(wake_command, programs)
-            else:
-                user_input = self.process_text_input()
-                if user_input in ["切换语音输入", "语音模式"]:
-                    self.use_voice_input = True
-                    print("已切换到语音输入模式")
-                    self.speak("已切换到语音输入模式")
-                elif user_input:
-                    self.handle_user_command(user_input, programs)
-
-        observer.stop()
-        observer.join()
-        if not self.running:
-            self.speak("进入待机模式")
-            try:
-                subprocess.Popen(["python", "Bide_one's_time.py"])
-            except Exception as e:
-                print(f"启动待机程序失败: {e}")
-                
-        root = tk.Tk()
-        root.title("jarvis交互面板")
-        root.geometry("800x600")
-
-        # 获取程序列表
-        program_names = list(self.program_mapping.keys()) + list(programs.keys())
-        panel = CommandPanel(root, program_names)
-        panel.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-
-        # 添加命令处理回调
-        panel.set_command_callback(lambda cmd: self.handle_user_command(cmd, programs))
-        
-        root.mainloop()
+        # observer.stop()
+        # observer.join()
 
     class ProgramHandler(FileSystemEventHandler):
         def __init__(self, program_folder, external_folders=None):
@@ -652,25 +549,26 @@ class Jarvis:
 
         @lru_cache(maxsize=128)
         def open_programs(self):
-            return Jarvis().open_programs(self.program_folder, self.external_folders)
+            return Jarvis(None).open_programs(self.program_folder, self.external_folders)
 
 def main():
     """Main entry point for the application."""
     try:
-        jarvis = Jarvis()
+        root = tk.Tk()
+        root.title("Jarvis Assistant")
+        root.geometry("800x600")
+
+        jarvis = Jarvis(root)
+
+        panel = CommandPanel(root)
+        panel.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        panel.set_command_callback(jarvis.panel_command_handler)
+        jarvis.set_panel(panel)
+
         jarvis.main()
-    except ImportError as e:
-        # A specific check for snowboy, since we know it's a problem.
-        if "snowboy" in str(e) or "snowboydecoder" in str(e):
-            print("--- FATAL ERROR ---")
-            print("Failed to import the 'snowboy' library, which is required for hotword detection.")
-            print("This is a manual dependency that cannot be installed automatically by pip.")
-            print("Please find and install a pre-compiled 'snowboy' wheel (.whl) file")
-            print("that is compatible with your Operating System and Python version.")
-            print("-------------------")
-        else:
-            print(f"An unexpected import error occurred: {e}")
-            print("Please ensure all dependencies are installed correctly.")
+
+        root.mainloop()
+
     except Exception as e:
         print(f"An unexpected error occurred during execution: {e}")
 

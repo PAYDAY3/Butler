@@ -19,9 +19,7 @@ You must have the following software installed on your system:
 
 ### Manual Python Dependencies
 
-1.  **Snowboy Hotword Detection**: This is the most critical manual dependency. The official project is no longer maintained.
-    -   You **must** find a pre-compiled Snowboy "wheel" file (`.whl`) that matches your specific Operating System (e.g., Linux, macOS, Windows) and your Python version (e.g., 3.8, 3.9).
-    -   These can sometimes be found in community-maintained GitHub repositories. This step requires manual searching.
+There are no manual Python dependencies anymore.
 
 ## 2. Installation Steps
 
@@ -31,13 +29,7 @@ You must have the following software installed on your system:
     cd <repository_name>
     ```
 
-2.  **Install Snowboy**
-    Once you have located the correct `.whl` file for your system, install it using pip:
-    ```bash
-    pip install /path/to/your/snowboy-x.x.x-your_platform.whl
-    ```
-
-3.  **Install Other Python Dependencies**
+2.  **Install Other Python Dependencies**
     Install all other required Python libraries from the `requirements.txt` file:
     ```bash
     pip install -r requirements.txt
@@ -70,11 +62,9 @@ The application requires API keys for its core services.
 
 ## 4. Data Files
 
-The application requires two custom data files to be placed in the `butler/` package directory.
+The application requires a custom data file to be placed in the `butler/` package directory.
 
-1.  **Snowboy Model**: Place your custom-trained hotword model file (e.g., `jarvis.umdl`) inside the `butler/snowboy/` directory. The application specifically looks for `butler/snowboy/jarvis.umdl`.
-
-2.  **Startup Sound**: Place your desired startup sound effect file inside the `butler/resources/` directory. The application looks for `butler/resources/jarvis.wav`.
+1.  **Startup Sound**: Place your desired startup sound effect file inside the `butler/resources/` directory. The application looks for `butler/resources/jarvis.wav`.
 
 ## 5. Running the Application
 
@@ -82,12 +72,12 @@ Once all the steps above are completed, you can run the application by simply ty
 ```bash
 butler
 ```
-The application will start, and the main entry point (`butler.main:main`) includes error handling that will provide a specific error message if the `snowboy` library was not installed correctly.
+The application will start, and you can interact with it through the GUI.
 
 ## 6. Building a Standalone Executable (Advanced)
 
 It is possible to build a standalone executable using `PyInstaller`. This guide has prepared the project structure for this. The basic command is:
 ```bash
-pyinstaller --name Butler --onefile --add-data "butler/snowboy:butler/snowboy" --add-data "butler/resources:butler/resources" butler/main.py
+pyinstaller --name Butler --onefile --add-data "butler/resources:butler/resources" butler/main.py
 ```
 **Note**: Before running this, you must ensure that the required data files (as described in Section 4) are already in place. The executable will be created in the `dist` directory.

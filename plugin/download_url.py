@@ -7,17 +7,17 @@ from package import Logging
 
 TEMP_DIR_PATH = os.getenv("TEMP_DIR_PATH", "./temp")
 
-logger = Logging.getLogger(__name__)
+logger = Logging.get_logger(__name__)
 
 class DownloadURLPlugin(AbstractPlugin):
     def valid(self) -> bool:
         return True
 
     def __init__(self):
-        self.logger = Logging.getLogger(self.__class__.__name__)
+        self.logger = Logging.get_logger(self.__class__.__name__)
 
     def init(self, logging):
-        self.logger = Logging.getLogger(self.__class__.__name__)
+        self.logger = Logging.get_logger(self.__class__.__name__)
 
     def get_name(self):
         return "download_url"

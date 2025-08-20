@@ -3,11 +3,10 @@ import time
 
 from package import Logging
 from plugin.plugin_interface import AbstractPlugin, PluginResult
-from jarvis.jarvis import takecommand
 
 TEMP_DIR_PATH = "./temp"
 
-logger = Logging.getLogger(__name__)
+logger = Logging.get_logger(__name__)
 
 class WriteFilePlugin(AbstractPlugin):
     def valid(self) -> bool:

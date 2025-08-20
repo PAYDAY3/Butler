@@ -4,7 +4,7 @@ import pickle
 import time
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-from abstract_plugin import AbstractPlugin, PluginResult
+from .abstract_plugin import AbstractPlugin, PluginResult
 
 class FileIndexer:
     def __init__(self, logger):
