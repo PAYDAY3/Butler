@@ -3,7 +3,7 @@ import shutil
 from package import Logging
 
 # 设置日志记录
-logging = Logging.getLogger(__name__)
+logging = Logging.get_logger(__name__)
 
 def load_file_list(file_list_path):
     """加载文件名列表"""

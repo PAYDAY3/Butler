@@ -8,7 +8,7 @@ Jarvis 是一个功能丰富的智能语音助手系统，基于 Python 开发�
 
 核心组件
 
-· 语音处理模块: 集成 Azure 语音服务和 Snowboy 唤醒词检测
+· 语音处理模块: 集成 Azure 语音服务
 · 自然语言处理: 使用 DeepSeek API 进行文本理解和生成
 · 程序管理: 动态加载和执行外部程序模块
 · 算法库: 内置多种常用算法实现
@@ -18,14 +18,6 @@ Jarvis 是一个功能丰富的智能语音助手系统，基于 Python 开发�
 功能详细说明
 
 1. 语音交互系统
-
-语音唤醒
-
-```python
-# 使用 Snowboy 唤醒词检测
-self.model = "my_Snowboy/jarvis.umdl"
-detector = snowboydecoder.HotwordDetector(self.model, sensitivity=0.5, audio_gain=1)
-```
 
 语音识别
 
@@ -281,9 +273,6 @@ pip install pyttsx3 pydub requests
 # 语音识别
 pip install azure-cognitiveservices-speech
 
-# 唤醒词检测
-# 需要从 https://github.com/Kitt-AI/snowboy 获取 Snowboy 相关文件
-
 # 文件监控
 pip install watchdog
 
@@ -311,15 +300,6 @@ API 密钥配置
    service_region = "您的服务区域"
    ```
 
-唤醒词模型配置
-
-1. 从 Snowboy 官网训练或下载唤醒词模型
-2. 将模型文件放置在 my_Snowboy/ 目录下
-3. 在代码中配置模型路径：
-   ```python
-   self.model = "my_Snowboy/jarvis.umdl"
-   ```
-
 使用指南
 
 启动系统
@@ -332,7 +312,6 @@ python jarvis.py
 
 基本指令
 
-· "jarvis" - 唤醒词
 · "打开 [程序名]" - 启动程序
 · "运行 [程序名]" - 运行程序
 · "切换文字输入" - 切换到文本模式
@@ -378,8 +357,6 @@ python jarvis.py
 ```
 jarvis/
 ├── jarvis.py                 # 主程序文件
-├── my_Snowboy/               # 唤醒词模型目录
-│   └── jarvis.umdl           # 唤醒词模型文件
 ├── program/                  # 程序目录
 │   ├── e-mail.py            # 邮箱程序
 │   ├── music.py             # 音乐播放程序
@@ -406,10 +383,7 @@ jarvis/
 1. 语音识别失败
    · 检查 Azure 语音服务密钥配置
    · 确认网络连接正常
-2. 唤醒词不响应
-   · 检查 Snowboy 模型文件路径
-   · 调整麦克风音量
-3. 程序加载失败
+2. 程序加载失败
    · 确认程序目录结构正确
    · 检查程序文件是否有 run() 方法
 4. 音频播放问题

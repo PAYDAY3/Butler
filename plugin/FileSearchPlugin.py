@@ -2,9 +2,8 @@ import os
 import time
 from package import Logging
 from plugin.plugin_interface import AbstractPlugin, PluginResult
-from jarvis.jarvis import takecommand,speak
 
-logging = Logging.getLogger(__name__)
+logging = Logging.get_logger(__name__)
 
 class FileSearchPlugin(AbstractPlugin):
     def __init__(self):
@@ -22,7 +21,7 @@ class FileSearchPlugin(AbstractPlugin):
         return True
 
     def init(self, logging):
-        self.logger = logging.getLogger(self.name)
+        self.logger = logging.get_logger(self.name)
 
     def get_name(self):
         return self.name

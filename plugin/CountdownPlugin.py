@@ -1,11 +1,9 @@
 from datetime import datetime, timedelta
 from package import Logging
 from abc import ABCMeta, abstractmethod
-from jarvis.jarvis import takecommand,speak
-from datetime import datetime
 from plugin.plugin_interface import AbstractPlugin, PluginResult
 
-logging = Logging.getLogger(__name__)
+logging = Logging.get_logger(__name__)
 
 class CountdownPlugin(AbstractPlugin):
     def __init__(self):
@@ -19,7 +17,7 @@ class CountdownPlugin(AbstractPlugin):
         return True
 
     def init(self, logging):
-        self.logging = Logging.getLogger(self.name)
+        self.logging = Logging.get_logger(self.name)
 
     def get_name(self):
         return self.name

@@ -5,9 +5,8 @@ import csv
 from datetime import datetime
 from package import Logging
 from plugin.plugin_interface import AbstractPlugin, PluginResult
-from jarvis.jarvis import takecommand
 
-logging = Logging.getLogger(__name__)
+logging = Logging.get_logger(__name__)
 
 # 任务类
 class Task:
@@ -38,7 +37,7 @@ class TodoPlugin(AbstractPlugin):
         return True
 
     def init(self, logging):
-        self.logger = logging.getLogger(self.name)
+        self.logger = logging.get_logger(self.name)
         
     def get_name(self):
         return self.name

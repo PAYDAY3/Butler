@@ -1,11 +1,10 @@
 from package import Logging
 from abc import ABCMeta, abstractmethod
-from jarvis.jarvis import takecommand
 from datetime import datetime
 from plugin.plugin_interface import AbstractPlugin, PluginResult
 import chardet
 
-logging = Logging.getLogger(__name__)
+logging = Logging.get_logger(__name__)
 
 
 class ReadFilePlugin(AbstractPlugin):
@@ -14,7 +13,7 @@ class ReadFilePlugin(AbstractPlugin):
         return True
 
     def init(self, logging=None):
-        self._logger = logging if logging else Logging.getLogger(__name__)
+        self._logger = logging if logging else Logging.get_logger(__name__)
 
     def get_name(self):
         return "read_file"

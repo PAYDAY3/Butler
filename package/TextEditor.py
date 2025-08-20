@@ -4,15 +4,13 @@ import time
 import shutil
 from package import Logging
 from PIL import Image
-import speech_recognition as sr
-from jarvis.jarvis import takecommand
 import zipfile
 
 # 配置
 archive_file = "archive.json"
 file_path = "/data"  # 主文件路径
 temp_folder = "temp"  # 临时文件夹
-logger = Logging.getLogger(__name__)
+logger = Logging.get_logger(__name__)
 
 class Zip:
     # 创建压缩文件方法，可指定文件路径、压缩文件路径、密码
@@ -208,120 +206,3 @@ def paste_file(src_file, dest_folder):
         logger.info(f"粘贴文件 {src_file} 到 {dest_folder}")
     except Exception as e:
         logger.error(f"粘贴文件 {src_file} 到 {dest_folder}：{e}")
-
-# 命令处理
-def process_command(command):
-    """处理收到的命令。"""
-    if "保存" in command:
-        filename = command.split("保存")[-1].strip()
-        content = input("请输入文本内容：")
-        save_text_file(filename, content)
-    elif "查找" in command:
-        filename = command.split("查找")[-1].strip()
-        find_file(filename)
-    elif "删除" in command:
-        filename = command.split("删除")[-1].strip()
-        delete_file(filename)
-    elif "打开" in command:
-        filename = command.split('打开')[-1].strip()
-        open_file(filename)
-    elif "创建" in command:
-        folder_path = command.split("创建")[-1].strip()
-        create_folder(folder_path)
-    elif "删除" in command:
-        folder_path = command.split("删除")[-1].strip()
-        delete_folder(folder_path)
-    elif "查看" in command:
-        folder_path = command.split("查看")[-1].strip()
-        list_folder(folder_path)
-    elif "重命" in command:
-        parts = command.split("重命")
-        if len(parts) < 2:
-            logger.warning("请提供文件路径和新的文件名。")
-        else:
-            src_file, new_name = map(str.strip, parts[1].split("为"))
-            rename_file(src_file, new_name)
-    elif "复制" in command:
-        parts = command.split("复制")
-        if len(parts) < 2:
-            logger.warning("请提供源文件路径和目标文件夹路径。")
-        else:
-            src_file, dest_folder = map(str.strip, parts[1].split("到"))
-            copy_file(src_file, dest_folder)
-    elif "移动" in command:
-        parts = command.split("移动")
-        if len(parts) < 2:
-            logger.warning("请提供源文件路径和目标文件夹路径。")
-        else:
-            src_file, dest_folder = map(str.strip, parts[1].split("到"))
-            move_file(src_file, dest_folder)
-    elif "粘贴" in command:
-        parts = command.split("粘贴")
-        if len(parts) < 2:
-            logger.warning("请提供源文件路径和目标文件夹路径。")
-        else:
-            src_file, dest_folder = map(str.strip, parts[1].split("到"))
-            paste_file(src_file, dest_folder)
-    elif "压缩" in command:
-        parts = command.split("压缩")
-        if len(parts) < 2:
-            logger.warning("请提供文件路径和ZIP文件名。")
-        else:
-            file_path, zip_path = map(str.strip, parts[1].split("到"))
-            Zip.create_zip(file_path, zip_path)
-    elif "解压" in command:
-        parts = command.split("解压")
-        if len(parts) < 2:
-            logger.warning("请提供ZIP文件名和目标路径。")
-        else:
-            zip_path, file_path = map(str.strip, parts[1].split("到"))
-            Zip.unzip(zip_path, file_path)
-    elif "查看压缩内容" in command:
-        zip_path = command.split("查看压缩内容")[-1].strip()
-        content = Zip.zip_content(zip_path)
-        print("压缩文件内容：", content)
-    elif "退出" in command:
-        logger.info("退出程序。")
-        return False
-    return True
-
-def move_temp_files(temp_folder, target_folder):
-    """将临时文件移动到目标文件夹。"""
-    if os.path.exists(temp_folder):
-        for filename in os.listdir(temp_folder):
-            src_path = os.path.join(temp_folder, filename)
-            dest_path = os.path.join(target_folder, filename)
-            if os.path.isfile(src_path):
-                try:
-                    shutil.move(src_path, dest_path)
-                    logger.info(f"移动临时文件 {filename} 到 {target_folder}")
-                except Exception as e:
-                    logger.error(f"移动临时文件出错：{e}")
-
-def TextEditor():
-    """主文本编辑器循环。"""
-    max_retries = 1
-    retries = 0
-
-    while True:
-        try:
-            command = takecommand()
-            if not command:
-                continue
-            if process_command(command):
-                logger.info("命令处理成功，程序继续执行。")
-            else:
-                logger.warning("命令处理失败，正在重试...")
-                time.sleep(1)
-        except Exception as e:
-            logger.error(f"发生错误：{e}")
-            retries += 1
-            if retries >= max_retries:
-                logger.error("重试次数已达上限，退出程序。")
-                break
-            time.sleep(1)
-
-    move_temp_files(temp_folder, file_path)
-
-if __name__ == "__main__":
-    TextEditor()

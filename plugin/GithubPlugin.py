@@ -2,7 +2,6 @@ import logging
 import requests
 import os
 from plugin.plugin_interface import AbstractPlugin, PluginResult
-from jarvis.jarvis import takecommand
 
 class GithubPlugin(AbstractPlugin):
     def __init__(self):

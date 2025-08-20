@@ -2,14 +2,12 @@
 
 from typing import Any
 
-from deepseek.types.beta import BetaToolUnionParam  # DeepSeek API类型
-
-from .base import BaseDeepSeekTool, ToolError, ToolFailure, ToolResult
+from .base import BaseTool, ToolError, ToolFailure, ToolResult
 
 class ToolCollection:
     """DeepSeek工具集合管理类"""
     
-    def __init__(self, *tools: BaseDeepSeekTool):
+    def __init__(self, *tools: BaseTool):
         """初始化工具集合
         
         参数:
@@ -17,11 +15,7 @@ class ToolCollection:
         """
         self.tools = tools
         # 创建工具名称到工具对象的映射
-        self.tool_map = {tool.to_params()["name"]: tool for tool in tools}
-    
-    def to_params(self) -> list[BetaToolUnionParam]:
-        """转换为DeepSeek API参数格式"""
-        return [tool.to_params() for tool in self.tools]
+        self.tool_map = {tool.name: tool for tool in tools}
     
     async def run(self, *, name: str, tool_input: dict[str, Any]) -> ToolResult:
         """执行指定工具

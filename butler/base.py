@@ -2,27 +2,17 @@ from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass, fields, replace
 from typing import Any
 
-from anthropic.types.beta import BetaToolUnionParam
-
-
-class BaseAnthropicTool(metaclass=ABCMeta):
-    """anropic定义的工具的抽象基类."""
+class BaseTool(metaclass=ABCMeta):
+    """A base class for tools."""
 
     @abstractmethod
     def __call__(self, **kwargs) -> Any:
-        """使用给定参数执行工具."""
+        """Executes the tool with the given parameters."""
         ...
-
-    @abstractmethod
-    def to_params(
-        self,
-    ) -> BetaToolUnionParam:
-        raise NotImplementedError
-
 
 @dataclass(kw_only=True, frozen=True)
 class ToolResult:
-    """表示工具执行的结果。"""
+    """Represents the result of a tool execution."""
 
     output: str | None = None
     error: str | None = None
@@ -50,20 +40,20 @@ class ToolResult:
         )
 
     def replace(self, **kwargs):
-        """返回替换了给定域的新ToolResult."""
+        """Returns a new ToolResult with the given fields replaced."""
         return replace(self, **kwargs)
 
 
 class CLIResult(ToolResult):
-    """可呈现为CLI输出的ToolResult."""
+    """A ToolResult that can be rendered as CLI output."""
 
 
 class ToolFailure(ToolResult):
-    """表示失败的ToolResult."""
+    """A ToolResult that represents a failure."""
 
 
 class ToolError(Exception):
-    """工具遇到错误时引发."""
+    """Raised when a tool encounters an error."""
 
     def __init__(self, message):
         self.message = message

@@ -10,7 +10,7 @@ from jarvis.jarvis import takecommand
 from package import Logging
 import pyperclip  # 新增剪贴板功能
 
-logging = Logging.getLogger(__name__)
+logging = Logging.get_logger(__name__)
 
 # 初始化数据库连接
 conn = sqlite3.connect('account_manager.db', check_same_thread=False)

@@ -3,13 +3,12 @@ import random
 import time
 from package import Logging
 from plugin.plugin_interface import AbstractPlugin, PluginResult
-from jarvis.jarvis import takecommand, speak
 
-logging = Logging.getLogger(__name__)
+logging = Logging.get_logger(__name__)
 
 class JokePlugin(AbstractPlugin):
     def __init__(self):
-        self.name = "JokePlugin"  
+        self.name = "JokePlugin"
         self.chinese_name = "笑话插件"
         self.description = "随机讲笑话并朗读"
         self.parameters = {}  # 此插件不需要参数
@@ -27,7 +26,7 @@ class JokePlugin(AbstractPlugin):
         return True
 
     def init(self, logging):
-        self.logger = logging.getLogger(self.name)
+        self.logger = logging.get_logger(self.name)
 
     def get_name(self):
         return self.name

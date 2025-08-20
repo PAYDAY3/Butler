@@ -63,8 +63,6 @@ setup(
     include_package_data=True,
     package_data={
         'butler': [
-            'snowboy/*.pmdl',
-            'snowboy/*.umdl',
             'resources/*.wav'
         ]
     }

@@ -5,15 +5,18 @@ import datetime
 import schedule
 import time
 import threading
-from jarvis.jarvis import takecommand,speak
 
 class ScheduleManager:
-    def __init__(self, filename='schedule.json'):
+    def __init__(self, jarvis, filename='schedule.json'):
+        self.jarvis = jarvis
         self.filename = filename
         self.load_schedule()
-        self.engine = pyttsx3.init()
-        self.engine.setProperty('rate', 150)  # 设置语速
-        self.engine.setProperty('voice', 'zh')  # 设置中文语音
+
+    def speak(self, message):
+        self.jarvis.speak(message)
+
+    def takecommand(self):
+        return self.jarvis.takecommand()
 
     def load_schedule(self):
         if os.path.exists(self.filename):
@@ -127,112 +130,3 @@ class ScheduleManager:
                 self.speak("无效的时间格式，请重新输入。")
         except ValueError:
             self.speak("时间格式错误，请重新输入。")
-
-def schedule_management(takecommand):
-    manager = ScheduleManager()
-    # 启动定时器
-    thread = threading.Thread(target=manager.run_scheduler)
-    thread.daemon = True
-    thread.start()
-
-    while True:
-        manager.speak("日程管理器。请说 '添加'、'查看'、'删除'、'编辑'、'搜索' 或 '退出'。")
-        choice = takecommand()
-
-        if choice is not None:
-            if '添加' in choice:
-                manager.speak("请输入事件的具体时间或相对时间。")
-                time_str = takecommand()
-                if time_str:
-                    manager.speak("请输入事件描述。")
-                    event = takecommand()
-                    if event:
-                        if '分钟' in time_str or '小时' in time_str or '天' in time_str:
-                            manager.add_event_relative(time_str, event)
-                        else:
-                            manager.speak("请输入具体日期和时间，格式为 YYYY-MM-DD HH:MM。")
-                            date_time = takecommand()
-                            if date_time:
-                                manager.add_event(date_time, event)
-            elif '查看' in choice:
-                manager.view_schedule()
-            elif '删除' in choice:
-                manager.view_schedule()
-                manager.speak("请输入要删除的事件编号。")
-                try:
-                    index = int(takecommand())
-                    manager.delete_event(index)
-                except ValueError:
-                    manager.speak("无效的事件编号。")
-            elif '编辑' in choice:
-                manager.view_schedule()
-                manager.speak("请输入要编辑的事件编号。")
-                try:
-                    index = int(takecommand())
-                    manager.speak("请输入新的日期和时间，格式为 YYYY-MM-DD HH:MM（如果不需要修改，请直接按回车）。")
-                    new_date_time = takecommand()
-                    manager.speak("请输入新的事件描述（如果不需要修改，请直接按回车）。")
-                    new_event = takecommand()
-                    manager.edit_event(index, new_date_time=new_date_time if new_date_time else None,
-                                       new_event=new_event if new_event else None)
-                except ValueError:
-                    manager.speak("无效的事件编号。")
-            elif '搜索' in choice:
-                manager.speak("请输入要搜索的关键字。")
-                keyword = takecommand()
-                if keyword:
-                    manager.search_event(keyword)
-            elif '输入' in choice:
-                manager.speak("请输入操作类型：'添加'、'查看'、'删除'、'编辑'、'搜索'。")
-                action = input("请输入操作类型：")
-                if action == '添加':
-                    manager.speak("请输入事件的具体时间或相对时间。")
-                    time_str = input("请输入事件的具体时间或相对时间：")
-                    manager.speak("请输入事件描述。")
-                    event = input("请输入事件描述：")
-                    if time_str and event:
-                        if '分钟' in time_str or '小时' in time_str or '天' in time_str:
-                            manager.add_event_relative(time_str, event)
-                        else:
-                            manager.speak("请输入具体日期和时间，格式为 YYYY-MM-DD HH:MM。")
-                            date_time = input("请输入日期和时间（格式 YYYY-MM-DD HH:MM）：")
-                            if date_time:
-                                manager.add_event(date_time, event)
-                elif action == '查看':
-                    manager.view_schedule()
-                elif action == '删除':
-                    manager.view_schedule()
-                    manager.speak("请输入要删除的事件编号。")
-                    try:
-                        index = int(input("请输入事件编号："))
-                        manager.delete_event(index)
-                    except ValueError:
-                        manager.speak("无效的事件编号。")
-                elif action == '编辑':
-                    manager.view_schedule()
-                    manager.speak("请输入要编辑的事件编号。")
-                    try:
-                        index = int(input("请输入事件编号："))
-                        manager.speak("请输入新的日期和时间，格式为 YYYY-MM-DD HH:MM（如果不需要修改，请直接按回车）。")
-                        new_date_time = input("请输入新的日期和时间（格式 YYYY-MM-DD HH:MM）：")
-                        manager.speak("请输入新的事件描述（如果不需要修改，请直接按回车）。")
-                        new_event = input("请输入新的事件描述：")
-                        manager.edit_event(index, new_date_time=new_date_time if new_date_time else None,
-                                           new_event=new_event if new_event else None)
-                    except ValueError:
-                        manager.speak("无效的事件编号。")
-                elif action == '搜索':
-                    manager.speak("请输入要搜索的关键字。")
-                    keyword = input("请输入要搜索的关键字：")
-                    if keyword:
-                        manager.search_event(keyword)
-                else:
-                    manager.speak("无效的操作类型。")                    
-            elif '退出' in choice:
-                manager.speak("再见！")
-                break
-            else:
-                manager.speak("无效的选择，请再试一次。")
-
-if __name__ == "__main__":
-    schedule_management(takecommand)
