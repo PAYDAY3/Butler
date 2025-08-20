@@ -14,17 +14,8 @@ class PluginManager:
         
         # 配置日志
         self.logger = logger
-        self._configure_logger()
         
         self.load_all_plugins()
-    
-    def _configure_logger(self):
-        """配置日志处理器"""
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        handler = logging.StreamHandler()
-        handler.setFormatter(formatter)
-        self.logger.addHandler(handler)
-        self.logger.setLevel(logging.INFO)
         
     def load_all_plugins(self):
         """加载所有可用插件"""
@@ -51,7 +42,16 @@ class PluginManager:
             self.logger.error(f"加载模块 {module_name} 失败: {e}")
 
     def load_plugin(self, module_name: str, class_name: str) -> Optional[AbstractPlugin]:
-        """动态加载单个插件"""
+        """
+        Loads a single plugin from a given module and class name.
+
+        Args:
+            module_name: The name of the module where the plugin is located.
+            class_name: The name of the plugin class.
+
+        Returns:
+            An instance of the plugin if it was loaded successfully, otherwise None.
+        """
         try:
             module = importlib.import_module(module_name)
             plugin_class: Type[AbstractPlugin] = getattr(module, class_name)
@@ -77,7 +77,15 @@ class PluginManager:
             return None
 
     def unload_plugin(self, name: str) -> bool:
-        """卸载插件并释放资源"""
+        """
+        Unloads a plugin and releases its resources.
+
+        Args:
+            name: The name of the plugin to unload.
+
+        Returns:
+            True if the plugin was unloaded successfully, otherwise False.
+        """
         if name in self.plugins:
             plugin = self.plugins.pop(name)
             try:
@@ -97,7 +105,17 @@ class PluginManager:
         return list(self.plugins.values())
 
     def run_plugin(self, name: str, command: str, args: dict) -> PluginResult:
-        """执行插件功能"""
+        """
+        Runs a plugin with the given command and arguments.
+
+        Args:
+            name: The name of the plugin to run.
+            command: The command to execute.
+            args: The arguments for the command.
+
+        Returns:
+            A PluginResult object with the result of the execution.
+        """
         plugin = self.get_plugin(name)
         if plugin:
             self.logger.info(f"执行插件: {name}，命令: {command}")

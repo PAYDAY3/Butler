@@ -1,9 +1,9 @@
 import os
 import time
-from package import Logging
+from package.log_manager import LogManager
 from plugin.plugin_interface import AbstractPlugin, PluginResult
 
-logging = Logging.get_logger(__name__)
+logging = LogManager.get_logger(__name__)
 
 class TimePlugin(AbstractPlugin):
     def __init__(self):
@@ -16,7 +16,7 @@ class TimePlugin(AbstractPlugin):
         return True
 
     def init(self, logging):
-        self.logger = logging.get_logger(self.name)
+        self.logger = LogManager.get_logger(self.name)
         
     def get_name(self):
         return self.name
@@ -42,7 +42,10 @@ class TimePlugin(AbstractPlugin):
     def on_resume(self):
         self.logger.info("TimePlugin resumed.")
 
+    def get_commands(self) -> list[str]:
+        return ["时间", "几点了"]
+
     def run(self, takecommand: str, args: dict) -> PluginResult:
-        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        result = f"Current time is {current_time}"
-        return PluginResult.new(result=result, need_call_brain=False, success=True)
+        now = datetime.now()
+        current_time = now.strftime("%H:%M:%S")
+        return PluginResult.new(f"现在是北京时间{current_time}", False)

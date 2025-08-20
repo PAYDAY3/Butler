@@ -6,11 +6,10 @@ import os
 import re
 from getpass import getpass
 import bcrypt
-from jarvis.jarvis import takecommand
-from package import Logging
+from package.log_manager import LogManager
 import pyperclip  # 新增剪贴板功能
 
-logging = Logging.get_logger(__name__)
+logging = LogManager.get_logger(__name__)
 
 # 初始化数据库连接
 conn = sqlite3.connect('account_manager.db', check_same_thread=False)

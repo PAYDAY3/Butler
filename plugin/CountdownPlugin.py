@@ -1,9 +1,9 @@
 from datetime import datetime, timedelta
-from package import Logging
+from package.log_manager import LogManager
 from abc import ABCMeta, abstractmethod
 from plugin.plugin_interface import AbstractPlugin, PluginResult
 
-logging = Logging.get_logger(__name__)
+logging = LogManager.get_logger(__name__)
 
 class CountdownPlugin(AbstractPlugin):
     def __init__(self):
@@ -17,7 +17,7 @@ class CountdownPlugin(AbstractPlugin):
         return True
 
     def init(self, logging):
-        self.logging = Logging.get_logger(self.name)
+        self.logging = LogManager.get_logger(self.name)
 
     def get_name(self):
         return self.name
@@ -43,22 +43,28 @@ class CountdownPlugin(AbstractPlugin):
     def on_resume(self):
         logging.info("倒计时插件恢复")
 
+    def get_commands(self) -> list[str]:
+        return ["倒计时"]
+
     def run(self, takecommand: str, args: dict) -> PluginResult:
-        if "取消" in takecommand:
-            self._is_running = False
-            return PluginResult.new("倒计时已取消", False)
-            
-        if "运行" in takecommand:
-            if "秒" in takecommand:
-                seconds = int(takecommand.split("秒")[0].split("运行")[-1])
-                end_time = datetime.now() + timedelta(seconds=seconds)
-                while datetime.now() < end_time:
-                    remaining_time = (end_time - datetime.now()).seconds
-                    speak(f"剩余时间: {remaining_time} 秒")
-                    time.sleep(1)
-                logging.info("倒计时结束")
-                return PluginResult.new("倒计时结束", False)
-            else:
-                return PluginResult.new("无效的参数", False, error_message="Missing '秒' argument")
-        else:
-            return PluginResult.new("无效的命令", False)
+        import time
+        from butler.main import Jarvis
+
+        seconds = args.get("seconds")
+        if not seconds:
+            return PluginResult.new("无效的参数", False, error_message="Missing 'seconds' argument")
+
+        try:
+            seconds = int(seconds)
+        except ValueError:
+            return PluginResult.new("无效的参数", False, error_message="Invalid 'seconds' argument")
+
+        end_time = datetime.now() + timedelta(seconds=seconds)
+        while datetime.now() < end_time:
+            if not self._is_running:
+                return PluginResult.new("倒计时已取消", False)
+            remaining_time = (end_time - datetime.now()).seconds
+            Jarvis(None).speak(f"剩余时间: {remaining_time} 秒")
+            time.sleep(1)
+        logging.info("倒计时结束")
+        return PluginResult.new("倒计时结束", False)

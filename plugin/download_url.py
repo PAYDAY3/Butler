@@ -3,21 +3,21 @@ import time
 import requests
 from uuid import uuid4
 from plugin.plugin_interface import AbstractPlugin, PluginResult
-from package import Logging
+from package.log_manager import LogManager
 
 TEMP_DIR_PATH = os.getenv("TEMP_DIR_PATH", "./temp")
 
-logger = Logging.get_logger(__name__)
+logger = LogManager.get_logger(__name__)
 
 class DownloadURLPlugin(AbstractPlugin):
     def valid(self) -> bool:
         return True
 
     def __init__(self):
-        self.logger = Logging.get_logger(self.__class__.__name__)
+        self.logger = LogManager.get_logger(self.__class__.__name__)
 
     def init(self, logging):
-        self.logger = Logging.get_logger(self.__class__.__name__)
+        self.logger = LogManager.get_logger(self.__class__.__name__)
 
     def get_name(self):
         return "download_url"

@@ -1,7 +1,7 @@
 import azure.cognitiveservices.speech as speechsdk
-from package import Logging
+from package.log_manager import LogManager
 
-logging = Logging.get_logger(__name__)
+logging = LogManager.get_logger(__name__)
 
 def takecommand():
     # 替换为你的 Azure 订阅密钥和服务区域

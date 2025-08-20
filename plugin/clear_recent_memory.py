@@ -1,8 +1,8 @@
-from package import Logging
+from package.log_manager import LogManager
 
 from plugin.plugin_interface import AbstractPlugin, PluginResult
 
-logger = Logging.get_logger(__name__)
+logger = LogManager.get_logger(__name__)
 
 class ClearRecentMemoryPlugin(AbstractPlugin):
     def valid(self) -> bool:
@@ -10,7 +10,7 @@ class ClearRecentMemoryPlugin(AbstractPlugin):
 
     #  在 init 方法中初始化类内部的日志记录器
     def init(self, logging):
-        self.logging = Logging.get_logger(self.name)
+        self.logging = LogManager.get_logger(self.name)
 
     def get_name(self):
         return "clear_recent_memory"

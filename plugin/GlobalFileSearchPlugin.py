@@ -143,27 +143,22 @@ class GlobalFileSearchPlugin(AbstractPlugin):
         
         return result_str
 
+    def get_commands(self) -> list[str]:
+        return ["搜索文件"]
+
     def run(self, command: str, args: dict) -> PluginResult:
-        original_command = args.get('original_command', '')
+        pattern = args.get("pattern")
+        if not pattern:
+            return PluginResult(
+                success=False,
+                error_message="请输入要搜索的文件名关键词"
+            )
         
-        if "搜索文件" in original_command:
-            pattern = original_command.replace("搜索文件", "").strip()
-            if not pattern:
-                return PluginResult(
-                    success=False, 
-                    error_message="请输入要搜索的文件名关键词"
-                )
-            
-            try:
-                result = self.search_files(pattern)
-                return PluginResult(success=True, result=result)
-            except Exception as e:
-                return PluginResult(success=False, error_message=f"搜索失败: {str(e)}")
-        
-        return PluginResult(
-            success=False,
-            error_message="无法识别的搜索命令，请使用'搜索文件 [关键词]'"
-        )
+        try:
+            result = self.search_files(pattern)
+            return PluginResult(success=True, result=result)
+        except Exception as e:
+            return PluginResult(success=False, error_message=f"搜索失败: {str(e)}")
 
     def cleanup(self):
         if self.indexer:

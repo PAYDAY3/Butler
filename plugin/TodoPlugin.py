@@ -3,10 +3,10 @@ import time
 import json
 import csv
 from datetime import datetime
-from package import Logging
+from package.log_manager import LogManager
 from plugin.plugin_interface import AbstractPlugin, PluginResult
 
-logging = Logging.get_logger(__name__)
+logging = LogManager.get_logger(__name__)
 
 # 任务类
 class Task:
@@ -37,7 +37,7 @@ class TodoPlugin(AbstractPlugin):
         return True
 
     def init(self, logging):
-        self.logger = logging.get_logger(self.name)
+        self.logger = LogManager.get_logger(self.name)
         
     def get_name(self):
         return self.name
@@ -106,15 +106,14 @@ class TodoPlugin(AbstractPlugin):
                 task_obj.completed = row[2] == 'True'
                 self.todo_list.append(task_obj)
 
+    def get_commands(self) -> list[str]:
+        return ["添加待办事项", "列出待办事项", "删除待办事项", "完成待办事项", "搜索待办事项", "导出待办事项", "导入待办事项"]
+
     def run(self, takecommand: str, args: dict) -> PluginResult:
-        action = args.get("action")
         task_description = args.get("task")
         priority = args.get("priority", 1)
         
-        if not action:
-            return PluginResult.new(result=None, need_call_brain=False, success=False, error_message="Action parameter is missing")
-        
-        if action == "add":
+        if "add" in takecommand or "添加" in takecommand:
             # 添加任务
             if not task_description:
                 return PluginResult.new(result=None, need_call_brain=False, success=False, error_message="Task parameter is missing")
@@ -122,11 +121,11 @@ class TodoPlugin(AbstractPlugin):
             self.todo_list.append(new_task)
             result = f"任务 '{task_description}' 添加到待办事项列表"
 
-        elif action == "list":
+        elif "list" in takecommand or "列出" in takecommand:
             # 列出任务
             result = "Todo list:\n" + "\n".join(str(task) for task in self.todo_list)
         
-        elif action == "remove":
+        elif "remove" in takecommand or "删除" in takecommand:
             if not task_description:
                 return PluginResult.new(result=None, need_call_brain=False, success=False, error_message="Task parameter is missing")
             for task in self.todo_list:
@@ -137,7 +136,7 @@ class TodoPlugin(AbstractPlugin):
             else:
                 result = f"任务 '{task_description}' 未在待办事项列表中找到"
         
-        elif action == "complete":
+        elif "complete" in takecommand or "完成" in takecommand:
             # 标记任务为已完成
             if not task_description:
                 return PluginResult.new(result=None, need_call_brain=False, success=False, error_message="Task parameter is missing")
@@ -149,19 +148,19 @@ class TodoPlugin(AbstractPlugin):
             else:
                 result = f"任务 '{task_description}' 未在待办事项列表中找到"
 
-        elif action == "search":
+        elif "search" in takecommand or "搜索" in takecommand:
             # 搜索任务
             if not task_description:
                 return PluginResult.new(result=None, need_call_brain=False, success=False, error_message="Task parameter is missing")
             matching_tasks = [task.description for task in self.todo_list if task_description in task.description]
             result = "匹配的任务:\n" + "\n".join(matching_tasks) if matching_tasks else "未找到匹配的任务"
 
-        elif action == "export":
+        elif "export" in takecommand or "导出" in takecommand:
             # 导出到 CSV 文件
             self.export_to_csv()
             result = "待办事项已导出到 todo_list.csv"
 
-        elif action == "import":
+        elif "import" in takecommand or "导入" in takecommand:
             # 从 CSV 文件导入
             self.import_from_csv()
             result = "待办事项已从 todo_list.csv 导入"

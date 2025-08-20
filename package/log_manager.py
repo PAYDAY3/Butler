@@ -10,7 +10,8 @@ import traceback
 import json
 from typing import Dict, Any, Optional, Callable
 
-class Logging:
+class LogManager:
+    """A comprehensive logging management class."""
     _configured = False
     _loggers = {}
     _log_dir = "logs"
@@ -153,14 +154,19 @@ class Logging:
     
     @classmethod
     def _compress_namer(cls, name: str) -> str:
-        """压缩日志文件的命名函数"""
+        """
+        A namer for RotatingFileHandler that gzips the rotated log file.
+        """
         if name.endswith(".gz"):
             return name
         return name + ".gz"
     
     @classmethod
     def _rotate_and_compress(cls, handler: RotatingFileHandler):
-        """轮转并压缩日志文件"""
+        """
+        Rotates and compresses the log file.
+        This is a custom rotator that adds compression to the standard rotation.
+        """
         handler.doRollover()
         if cls._compression_enabled:
             for i in range(1, cls._backup_count + 1):
@@ -275,7 +281,7 @@ class Logging:
                     handler.doRollover()
 
 # 预配置一些有用的过滤器
-Logging._custom_filters = {
+LogManager._custom_filters = {
     'sensitive_data_filter': lambda record: not any(
         secret in str(record.msg) 
         for secret in ['password', 'secret_key', 'api_key']
@@ -283,7 +289,7 @@ Logging._custom_filters = {
 }
 
 # 预定义JSON日志格式
-Logging._log_formats = {
+LogManager._log_formats = {
     'json': {
         'format': None  # 使用自定义JSON格式化器
     },
