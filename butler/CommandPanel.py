@@ -50,6 +50,10 @@ class CommandPanel(tk.Frame):
         if self.command_callback:
             self.command_callback("voice", None)
 
+    def set_input_text(self, text):
+        self.input_entry.delete(0, tk.END)
+        self.input_entry.insert(0, text)
+
     def clear_history(self):
         self.output_text.config(state='normal')
         self.output_text.delete(1.0, tk.END)
