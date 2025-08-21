@@ -6,6 +6,7 @@ import importlib.util
 import pyttsx3
 import datetime
 import subprocess
+import json
 import tkinter as tk
 from tkinter import messagebox
 from pydub import AudioSegment
@@ -70,6 +71,7 @@ class Jarvis:
         self.running = True
         self.matched_program = None
         self.panel = None
+        self.MAX_HISTORY_MESSAGES = 10
 
     def set_panel(self, panel):
         self.panel = panel
@@ -195,18 +197,45 @@ class Jarvis:
     
     # 核心功能
     def preprocess(self, text):
-        # 使用DeepSeek API
+        """
+        使用DeepSeek API将用户输入文本转换为结构化的意图和实体。
+        """
+        system_prompt = """
+        你是一个强大的NLU助手。请分析用户的文本，并返回一个包含'intent'和'entities'两个键的JSON对象。
+        'intent' 应该是预定义意图列表中的一个。'entities' 应该是一个包含提取值的字典。
+
+        可能的意图:
+        - `sort_numbers`: 对数字进行排序。需要 `numbers` 实体 (数字列表)。
+        - `find_number`: 在数字列表中查找一个数。需要 `numbers` (列表) 和 `target` (数字) 实体。
+        - `calculate_fibonacci`: 计算斐波那契数。需要 `number` 实体。
+        - `edge_detect_image`: 检测图像边缘。需要 `path` 实体。
+        - `text_similarity`: 计算文本相似度。需要 `text1` 和 `text2` 实体。
+        - `open_program`: 打开一个程序。需要 `program_name` 实体。
+        - `exit`: 退出程序。
+        - `unknown`: 无法识别意图。
+
+        如果意图不明确，请返回 'unknown'。确保返回的是一个有效的JSON对象。
+
+        例如:
+        用户: "请帮我排序这些数字：5 2 9 1"
+        助手: {"intent": "sort_numbers", "entities": {"numbers": [5, 2, 9, 1]}}
+        用户: "打开邮箱"
+        助手: {"intent": "open_program", "entities": {"program_name": "邮箱"}}
+        用户: "退出"
+        助手: {"intent": "exit", "entities": {}}
+        """
         url = "https://api.deepseek.com/v1/chat/completions"
         headers = {
             "Authorization": f"Bearer {self.deepseek_api_key}",
             "Content-Type": "application/json"
         }
+        # 构造发送给API的消息列表
+        messages = [{"role": "system", "content": system_prompt}]
+        messages.extend(self.conversation_history)
+
         payload = {
             "model": "deepseek-chat",
-            "messages": [
-                {"role": "system", "content": "你是一个AI助手，负责文本预处理。"},
-                {"role": "user", "content": text}
-            ],
+            "messages": messages,
             "max_tokens": 512,
             "temperature": 0
         }
@@ -214,11 +243,24 @@ class Jarvis:
         try:
             response = requests.post(url, headers=headers, json=payload)
             response.raise_for_status()
-            result = response.json()
-            return result['choices'][0]['message']['content']
-        except Exception as e:
-            self.ui_print(f"DeepSeek API调用失败: {e}")
-            return text  # 出错时返回原始文本
+            result_text = response.json()['choices'][0]['message']['content']
+
+            # 清理和解析JSON
+            # LLM有时会返回被markdown代码块包围的JSON
+            if result_text.strip().startswith("```json"):
+                result_text = result_text.strip()[7:-4].strip()
+
+            return json.loads(result_text)
+        except requests.exceptions.RequestException as e:
+            self.ui_print(f"DeepSeek API 请求失败: {e}")
+            return {"intent": "unknown", "entities": {"error": str(e)}}
+        except json.JSONDecodeError as e:
+            self.ui_print(f"无法解析来自API的JSON响应: {e}")
+            self.logging.error(f"原始响应文本: {result_text}")
+            return {"intent": "unknown", "entities": {"error": "Invalid JSON response"}}
+        except (KeyError, IndexError) as e:
+            self.ui_print(f"API响应格式不符合预期: {e}")
+            return {"intent": "unknown", "entities": {"error": "Unexpected API response format"}}
 
     def generate_response(self, text):
         # 使用DeepSeek API
@@ -248,6 +290,13 @@ class Jarvis:
 
     def speak(self, audio):
         self.ui_print(f"Jarvis: {audio}")
+
+        # 将助手的响应添加到历史记录
+        self.conversation_history.append({"role": "assistant", "content": audio})
+        # 裁剪历史记录，防止其无限增长
+        if len(self.conversation_history) > self.MAX_HISTORY_MESSAGES:
+            self.conversation_history = self.conversation_history[-self.MAX_HISTORY_MESSAGES:]
+
         # 保存临时语音文件
         self.engine.save_to_file(audio, self.OUTPUT_FILE)
         self.engine.runAndWait()
@@ -296,109 +345,139 @@ class Jarvis:
     def handle_user_command(self, command, programs):
         if command is None:
             return
-            
-        # 处理算法相关命令
-        if command.startswith("排序数字"):
-            try:
-                numbers = [int(n) for n in command[4:].split()]
-                sorted_nums = self.quick_sort(numbers)
-                self.speak(f"排序结果: {sorted_nums}")
-                return
-            except Exception as e:
-                self.speak("排序失败，请确保输入的是数字")
-                return
-                
-        if command.startswith("查找数字"):
-            try:
-                parts = command[4:].split()
-                target = int(parts[-1])
-                arr = [int(n) for n in parts[:-1]]
-                arr.sort()
-                index = self.binary_search(arr, target)
-                if index != -1:
-                    self.speak(f"数字 {target} 在排序后的位置是: {index}")
-                else:
-                    self.speak(f"数字 {target} 不在数组中")
-                return
-            except Exception as e:
-                self.speak("查找失败，请确保输入格式正确")
-                return
-                
-        if command.startswith("计算斐波那契"):
-            try:
-                n = int(command[6:].strip())
-                fib = self.fibonacci(n)
-                self.speak(f"斐波那契数列第{n}项是: {fib}")
-                return
-            except Exception as e:
-                self.speak("计算失败，请输入有效的数字")
-                return
-                
-        if command.startswith("检测图像边缘"):
-            try:
-                image_path = command[6:].strip()
-                if os.path.exists(image_path):
-                    edges = self.edge_detection(image_path)
-                    if edges is not None:
-                        output_path = os.path.splitext(image_path)[0] + '_edges.jpg'
-                        cv2.imwrite(output_path, edges)
-                        self.speak(f"边缘检测完成，结果已保存到: {output_path}")
-                    else:
-                        self.speak("图像处理失败")
-                else:
-                    self.speak("找不到指定的图像文件")
-                return
-            except Exception as e:
-                self.speak("图像处理出错")
-                return
-                
-        if command.startswith("计算文本相似度"):
-            try:
-                parts = command[7:].split("和")
-                if len(parts) == 2:
-                    text1 = parts[0].strip()
-                    text2 = parts[1].strip()
-                    similarity = self.cosine_similarity(text1, text2)
-                    self.speak(f"文本相似度是: {similarity:.2f}")
-                else:
-                    self.speak("请提供两段文本，用'和'分隔")
-                return
-            except Exception as e:
-                self.speak("相似度计算失败")
-                return
-            
-        # 处理普通命令
-        if command.startswith("打开"):
-            program_name = command[3:].strip()
-            if program_name in self.program_mapping:
-                self.execute_program(self.program_mapping[program_name])
-            else:
-                self.ui_print(f"未找到程序 '{program_name}'")
-                self.speak(f"未找到程序 {program_name}")
-        elif command in self.program_mapping:
-            self.execute_program(self.program_mapping[command])
-        elif command.startswith(("进行", "运行")):
-            program_name = command[2:].strip()
-            if program_name in programs:
-                self.execute_program(programs[program_name])
-            else:
-                self.ui_print(f"未找到程序 '{program_name}'")
-                self.speak(f"未找到程序 {program_name}")
-        elif "退出" in command or "结束" in command:
-            self.logging.info(f"程序已退出")
-            self.speak(f"程序已退出")
-            self.running = False
-            self.root.quit()
+
+        # 将用户的命令添加到历史记录
+        self.conversation_history.append({"role": "user", "content": command})
+
+        nlu_result = self.preprocess(command)
+        intent = nlu_result.get("intent", "unknown")
+        entities = nlu_result.get("entities", {})
+
+        intent_handlers = {
+            "sort_numbers": self._handle_sort_numbers,
+            "find_number": self._handle_find_number,
+            "calculate_fibonacci": self._handle_calculate_fibonacci,
+            "edge_detect_image": self._handle_edge_detect_image,
+            "text_similarity": self._handle_text_similarity,
+            "open_program": self._handle_open_program,
+            "exit": self._handle_exit,
+        }
+
+        handler = intent_handlers.get(intent)
+
+        if handler:
+            handler(entities=entities, programs=programs)
         else:
+            # Fallback to plugin or unknown command
             plugin_result = process_plugin_command(command)
             if "未找到匹配的插件" not in plugin_result:
                 self.speak(plugin_result)
             else:
-                self.ui_print("未知指令，请重试")
-                self.logging.warning("未知指令")
-                self.speak("未识别到有效指令")
-                time.sleep(1)
-                self.match_program(command, programs)
+                self.ui_print(f"未知指令或意图: {command}")
+                self.logging.warning(f"未知指令或意图: {intent}")
+                self.speak("抱歉，我不太理解您的意思，请换一种方式表达。")
+
+    def _handle_sort_numbers(self, entities, **kwargs):
+        try:
+            numbers = entities.get("numbers", [])
+            if not numbers or not all(isinstance(n, (int, float)) for n in numbers):
+                 self.speak("排序失败，请提供有效的数字列表。")
+                 return
+            sorted_nums = self.quick_sort(numbers)
+            self.speak(f"排序结果: {sorted_nums}")
+        except Exception as e:
+            self.speak(f"排序时发生错误: {e}")
+
+    def _handle_find_number(self, entities, **kwargs):
+        try:
+            numbers = entities.get("numbers", [])
+            target = entities.get("target")
+            if not numbers or target is None:
+                self.speak("查找失败，请提供数字列表和目标数字。")
+                return
+
+            numbers.sort()
+            index = self.binary_search(numbers, target)
+            if index != -1:
+                self.speak(f"数字 {target} 在排序后的位置是: {index}")
+            else:
+                self.speak(f"数字 {target} 不在数组中")
+        except Exception as e:
+            self.speak(f"查找时发生错误: {e}")
+
+    def _handle_calculate_fibonacci(self, entities, **kwargs):
+        try:
+            n = entities.get("number")
+            if n is None or not isinstance(n, int):
+                self.speak("计算失败，请输入一个有效的整数。")
+                return
+            fib = self.fibonacci(n)
+            self.speak(f"斐波那契数列第{n}项是: {fib}")
+        except Exception as e:
+            self.speak(f"计算斐波那契数时出错: {e}")
+
+    def _handle_edge_detect_image(self, entities, **kwargs):
+        try:
+            image_path = entities.get("path")
+            if not image_path or not isinstance(image_path, str):
+                self.speak("图像处理失败，请提供有效的路径。")
+                return
+
+            if os.path.exists(image_path):
+                edges = self.edge_detection(image_path)
+                if edges is not None:
+                    output_path = os.path.splitext(image_path)[0] + '_edges.jpg'
+                    cv2.imwrite(output_path, edges)
+                    self.speak(f"边缘检测完成，结果已保存到: {output_path}")
+                else:
+                    self.speak("图像处理失败，无法读取图片。")
+            else:
+                self.speak("找不到指定的图像文件。")
+        except Exception as e:
+            self.speak(f"图像处理时出错: {e}")
+
+    def _handle_text_similarity(self, entities, **kwargs):
+        try:
+            text1 = entities.get("text1")
+            text2 = entities.get("text2")
+            if not text1 or not text2:
+                self.speak("相似度计算失败，请提供两段文本。")
+                return
+            similarity = self.cosine_similarity(text1, text2)
+            self.speak(f"文本相似度是: {similarity:.2f}")
+        except Exception as e:
+            self.speak(f"计算相似度时出错: {e}")
+
+    def _handle_open_program(self, entities, programs, **kwargs):
+        program_name = entities.get("program_name")
+        if not program_name:
+            self.speak("无法打开程序，未指定程序名称。")
+            return
+
+        # 优先匹配程序映射表
+        if program_name in self.program_mapping:
+            self.execute_program(self.program_mapping[program_name])
+            return
+
+        # 其次匹配动态加载的程序
+        if program_name in programs:
+            self.execute_program(programs[program_name])
+            return
+
+        # 最后模糊匹配
+        for key in self.program_mapping:
+            if program_name in key:
+                self.execute_program(self.program_mapping[key])
+                return
+
+        self.ui_print(f"未找到程序 '{program_name}'")
+        self.speak(f"未找到程序 {program_name}")
+
+    def _handle_exit(self, **kwargs):
+        self.logging.info("程序已退出")
+        self.speak("再见")
+        self.running = False
+        self.root.quit()
 
     @lru_cache(maxsize=128)
     def open_programs(self, program_folder, external_folders=None):
@@ -507,14 +586,14 @@ class Jarvis:
         self.speak("未找到匹配的程序")
 
     def panel_command_handler(self, command_type, command_payload):
-        programs = self.open_programs(["./program"])
+        programs = self.open_programs(["./package"])
         if command_type == "text":
             self.ui_print(f"User: {command_payload}")
             self.handle_user_command(command_payload, programs)
         elif command_type == "voice":
             command = self.takecommand()
-            if command:
-                self.handle_user_command(command, programs)
+            if command and self.panel:
+                self.panel.set_input_text(command)
 
     def main(self):
         # handler = self.ProgramHandler(self.program_folder)
