@@ -126,7 +126,19 @@ The application will start, and you can begin interacting with it through the GU
 
 ---
 
-## 7. Building a Standalone Executable (Advanced)
+## 7. Customizing Assistant Behavior with Prompts
+
+Butler's behavior and personality are controlled by system prompts that are sent to the DeepSeek language model. You can customize these prompts by editing the `butler/prompts.json` file.
+
+This file contains different prompts for different tasks:
+-   `nlu_intent_extraction`: This prompt instructs the AI on how to analyze user commands to determine intent and extract information. Modifying this can improve command recognition.
+-   `general_response`: This prompt defines the assistant's default personality for conversational replies. You can change this to make the assistant more formal, creative, or humorous.
+
+To change a prompt, simply edit the `prompt` value for the desired key in the JSON file. The changes will take effect the next time you start the application.
+
+---
+
+## 8. Building a Standalone Executable (Advanced)
 
 For easier distribution, you can build a standalone executable using `PyInstaller`.
 
