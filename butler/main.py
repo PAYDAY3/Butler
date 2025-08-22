@@ -47,6 +47,16 @@ class Jarvis:
         base_dir = os.path.dirname(__file__)
         self.JARVIS_AUDIO_FILE = os.path.join(base_dir, "resources", "jarvis.wav")
 
+        # Load prompts from the JSON file
+        try:
+            prompts_path = os.path.join(base_dir, "prompts.json")
+            with open(prompts_path, 'r', encoding='utf-8') as f:
+                self.prompts = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            self.logging.error(f"Failed to load prompts: {e}")
+            # Fallback to empty prompts if loading fails
+            self.prompts = {}
+
         # Paths for temporary files are relative to the current working directory
         self.OUTPUT_FILE = "./temp.wav"
 
@@ -200,30 +210,13 @@ class Jarvis:
         """
         使用DeepSeek API将用户输入文本转换为结构化的意图和实体。
         """
-        system_prompt = """
-        你是一个强大的NLU助手。请分析用户的文本，并返回一个包含'intent'和'entities'两个键的JSON对象。
-        'intent' 应该是预定义意图列表中的一个。'entities' 应该是一个包含提取值的字典。
+        # 从加载的配置中获取系统提示
+        system_prompt = self.prompts.get("nlu_intent_extraction", {}).get("prompt")
+        if not system_prompt:
+            self.logging.error("NLU intent extraction prompt not found. Using fallback.")
+            # Provide a minimal fallback prompt to avoid crashing
+            system_prompt = "You are an NLU assistant. Return JSON with 'intent' and 'entities'."
 
-        可能的意图:
-        - `sort_numbers`: 对数字进行排序。需要 `numbers` 实体 (数字列表)。
-        - `find_number`: 在数字列表中查找一个数。需要 `numbers` (列表) 和 `target` (数字) 实体。
-        - `calculate_fibonacci`: 计算斐波那契数。需要 `number` 实体。
-        - `edge_detect_image`: 检测图像边缘。需要 `path` 实体。
-        - `text_similarity`: 计算文本相似度。需要 `text1` 和 `text2` 实体。
-        - `open_program`: 打开一个程序。需要 `program_name` 实体。
-        - `exit`: 退出程序。
-        - `unknown`: 无法识别意图。
-
-        如果意图不明确，请返回 'unknown'。确保返回的是一个有效的JSON对象。
-
-        例如:
-        用户: "请帮我排序这些数字：5 2 9 1"
-        助手: {"intent": "sort_numbers", "entities": {"numbers": [5, 2, 9, 1]}}
-        用户: "打开邮箱"
-        助手: {"intent": "open_program", "entities": {"program_name": "邮箱"}}
-        用户: "退出"
-        助手: {"intent": "exit", "entities": {}}
-        """
         url = "https://api.deepseek.com/v1/chat/completions"
         headers = {
             "Authorization": f"Bearer {self.deepseek_api_key}",
@@ -269,10 +262,16 @@ class Jarvis:
             "Authorization": f"Bearer {self.deepseek_api_key}",
             "Content-Type": "application/json"
         }
+        # 从加载的配置中获取系统提示
+        system_prompt = self.prompts.get("general_response", {}).get("prompt")
+        if not system_prompt:
+            self.logging.error("General response prompt not found. Using fallback.")
+            system_prompt = "You are a helpful AI assistant."
+
         payload = {
             "model": "deepseek-chat",
             "messages": [
-                {"role": "system", "content": "你是一个AI助手，负责生成自然语言响应。"},
+                {"role": "system", "content": system_prompt},
                 {"role": "user", "content": text}
             ],
             "max_tokens": 150,
