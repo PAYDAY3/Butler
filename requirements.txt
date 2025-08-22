@@ -28,3 +28,6 @@ pypinyin
 chardet
 anthropic
 deepseek
+Flask
+opencv-python
+scikit-learn

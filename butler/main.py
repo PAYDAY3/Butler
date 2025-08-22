@@ -29,7 +29,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 # 假设这些模块存在
 from package.thread import process_tasks
-from . import binary_extensions
+from .binary_extensions import binary_extensions
 from package.virtual_keyboard import VirtualKeyboard
 from package.log_manager import LogManager
 from butler.CommandPanel import CommandPanel
@@ -583,7 +583,7 @@ class Jarvis:
         self.speak("未找到匹配的程序")
 
     def panel_command_handler(self, command_type, command_payload):
-        programs = self.open_programs(["./package"])
+        programs = self.open_programs("./package")
         if command_type == "text":
             self.ui_print(f"User: {command_payload}")
             self.handle_user_command(command_payload, programs)
