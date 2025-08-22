@@ -3,6 +3,9 @@ import getpass
 import time
 import json
 import os
+from package.log_manager import LogManager
+
+logger = LogManager.get_logger(__name__)
 
 # 权限级别定义
 PERMISSIONS = {
@@ -132,14 +135,17 @@ def is_session_valid(username):
 
 def verify_permission(username, required_permission):
     """验证用户权限"""
+    logger.info(f"Verifying permission for user '{username}' for permission level {required_permission}")
     try:
         # 检查用户是否存在
         if username not in USERS:
+            logger.warning(f"Permission check for non-existent user '{username}'")
             print("用户不存在")
             return False
         
         # 检查会话是否有效
         if is_session_valid(username):
+            logger.info(f"Session is still valid for user '{username}'")
             print("权限仍然有效")
             return True
         
@@ -153,22 +159,28 @@ def verify_permission(username, required_permission):
             user_permission = USERS[username]["permission"]
             if user_permission >= required_permission:
                 update_session(username)  # 更新会话时间
+                logger.info(f"Permission granted for user '{username}'")
                 print("权限验证成功")
                 return True
             else:
+                logger.warning(f"Permission denied for user '{username}' - insufficient permission")
                 print("权限不足")
                 return False
         else:
+            logger.warning(f"Permission denied for user '{username}' - invalid key")
             print("密钥无效")
             return False
             
     except KeyError as e:
+        logger.error(f"User configuration error: {e}")
         print(f"用户配置错误: {e}")
         return False
     except PermissionError as e:
+        logger.error(f"Permission system error: {e}")
         print(f"权限系统错误: {e}")
         return False
     except Exception as e:
+        logger.error(f"An error occurred during permission verification: {e}")
         print(f"权限验证过程中出错: {e}")
         return False
 
@@ -258,14 +270,21 @@ def login():
     
     if username in USERS and USERS[username]["key_hash"] == hashed_pw:
         update_session(username)
+        logger.info(f"User '{username}' logged in successfully")
         print(f"登录成功! 欢迎 {username}")
         return username
     else:
+        logger.warning(f"Failed login attempt for username '{username}'")
         print("登录失败: 用户名或密码错误")
         return None
 
 # 主程序
+def run():
+    logger.info("Limits of authority tool started")
+    main()
+
 def main():
+    logger.info("Limits of authority main function started")
     print("=== 权限控制系统 ===")
     
     # 初始化文件哈希存储

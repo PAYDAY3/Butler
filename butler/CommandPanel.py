@@ -2,6 +2,9 @@ import tkinter as tk
 from tkinter import scrolledtext
 import sys
 import os
+from package.log_manager import LogManager
+
+logger = LogManager.get_logger(__name__)
 
 class CommandPanel(tk.Frame):
     def __init__(self, master, **kwargs):
@@ -43,11 +46,13 @@ class CommandPanel(tk.Frame):
     def send_text_command(self, event=None):
         command = self.input_entry.get().strip()
         if command and self.command_callback:
+            logger.info(f"Sending text command: {command}")
             self.command_callback("text", command)
             self.input_entry.delete(0, tk.END)
 
     def send_listen_command(self):
         if self.command_callback:
+            logger.info("Initiating voice command")
             self.command_callback("voice", None)
 
     def set_input_text(self, text):
@@ -55,11 +60,13 @@ class CommandPanel(tk.Frame):
         self.input_entry.insert(0, text)
 
     def clear_history(self):
+        logger.info("Clearing history")
         self.output_text.config(state='normal')
         self.output_text.delete(1.0, tk.END)
         self.output_text.config(state='disabled')
 
     def restart_application(self):
+        logger.info("Restarting application")
         python = sys.executable
         os.execl(python, python, *sys.argv)
 

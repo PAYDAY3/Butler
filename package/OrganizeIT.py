@@ -1,6 +1,14 @@
 import os
 import hashlib
-from jarvis.jarvis import takecommand
+from package.log_manager import LogManager
+
+logger = LogManager.get_logger(__name__)
+
+def run(folder_path=None):
+    logger.info("OrganizeIT tool started")
+    if not folder_path:
+        folder_path = input("Please enter the folder path to organize: ")
+    organize_files(folder_path)
 
 def get_file_hash(file_path):
     """
@@ -16,6 +24,7 @@ def organize_files(folder_path):
     整理指定文件夹中的文件，按字母大小顺序排列，名字长短
     :param folder_path: 需要整理的文件夹路径
     """
+    logger.info(f"Organizing files in folder: {folder_path}")
     # 创建一个字典来存储基于文件扩展名的目标文件夹
     extension_folders = {}
 
@@ -56,7 +65,7 @@ def organize_files(folder_path):
                     new_file_path = os.path.join(destination_folder, new_filename)
                 
                 os.rename(file_path, new_file_path)
-                print(f"已将重复文件 {filename} 重命名为 {new_filename} 在 {destination_folder}")
+                logger.info(f"Renamed duplicate file {filename} to {new_filename} in {destination_folder}")
             else:
                 # 存储文件哈希值
                 file_hashes[file_hash] = filename
@@ -76,10 +85,10 @@ def organize_files(folder_path):
                         new_file_path = os.path.join(destination_folder, new_filename)
                     
                     os.rename(file_path, new_file_path)
-                    print(f"目标存在同名文件，已将 {filename} 重命名为 {new_filename} 在 {destination_folder}")
+                    logger.info(f"Renamed {filename} to {new_filename} in {destination_folder} due to existing file")
                 else:
                     os.rename(file_path, new_file_path)
-                    print(f"已将 {filename} 移动到 {destination_folder}")
+                    logger.info(f"Moved {filename} to {destination_folder}")
 
     # 对每个目标文件夹中的文件进行排序
     for folder in extension_folders.values():
@@ -95,16 +104,6 @@ def organize_files(folder_path):
             temp_path = os.path.join(folder, f"temp_{i}")
             os.rename(old_path, temp_path)
             os.rename(temp_path, new_path)
-            print(f"已重命名 {filename} 为 {new_filename}")
+            logger.info(f"Renamed {filename} to {new_filename}")
 
 
-if __name__ == "__main__":
-    command = takecommand()
-    # 解析用户指令
-    if command and "整理" in command:
-        # 提取用户指令中的文件夹路径
-        parts = command.split("整理", 1)
-        folder_path = parts[1].strip() if len(parts) > 1 else "./my_package/downloaded"
-        organize_files(folder_path)
-    else:
-        print("无效指令，请说 '整理 [文件夹路径]'")

@@ -1,11 +1,11 @@
 import importlib
 import pkgutil
 import inspect
-import logging
 from typing import Type, Optional, List, Dict
 from .abstract_plugin import AbstractPlugin, PluginResult
+from package.log_manager import LogManager
 
-logger = logging.getLogger(__name__)
+logger = LogManager.get_logger(__name__)
 
 class PluginManager:
     def __init__(self, plugin_package: str):

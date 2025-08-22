@@ -6,6 +6,9 @@ from openpyxl import load_workbook
 from openpyxl import Workbook
 from collections import Counter
 import re
+from package.log_manager import LogManager
+
+logger = LogManager.get_logger(__name__)
 
 
 # 定义文件类型常量
@@ -16,18 +19,23 @@ FILE_TYPE_CSV = 'csv'
 FILE_TYPE_XLSX = 'xlsx'
 
 def read_text_file(file_path):
+    logger.info(f"Reading text file: {file_path}")
     try:
         with open(file_path, 'r', encoding='utf-8') as file:
             return file.read()
     except FileNotFoundError:
+        logger.error(f"File not found: {file_path}")
         print(f"文件 '{file_path}' 未找到.")
     except PermissionError:
+        logger.error(f"Permission denied: {file_path}")
         print(f"没有权限访问文件 '{file_path}'.")            
     except Exception as e:
+        logger.error(f"Error reading file '{file_path}': {e}")
         print(f"读取文件 '{file_path}' 时出现错误: {e}")
     return None
 
 def extract_text_from_pdf(file_path):
+    logger.info(f"Extracting text from PDF: {file_path}")
     try:
         with open(file_path, 'rb') as f:
             reader = PyPDF2.PdfFileReader(f)
@@ -38,12 +46,15 @@ def extract_text_from_pdf(file_path):
                 text += page.extract_text()
             return text
     except FileNotFoundError:
+        logger.error(f"File not found: {file_path}")
         print(f"文件 '{file_path}' 未找到.")
     except Exception as e:
+        logger.error(f"Error extracting text from PDF '{file_path}': {e}")
         print(f"从文件 '{file_path}' 提取文本时出现错误: {e}")
     return None
 
 def read_docx(file_path):
+    logger.info(f"Reading docx file: {file_path}")
     try:
         doc = docx.Document(file_path)
         full_text = []
@@ -51,25 +62,31 @@ def read_docx(file_path):
             full_text.append(para.text)
         return '\n'.join(full_text)
     except FileNotFoundError:
+        logger.error(f"File not found: {file_path}")
         print(f"文件 '{file_path}' 未找到.")
     except Exception as e:
+        logger.error(f"Error reading docx file '{file_path}': {e}")
         print(f"读取文件 '{file_path}' 时出现错误: {e}")
     return None
 
 def read_csv(file_path):
+    logger.info(f"Reading csv file: {file_path}")
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             reader = csv.reader(f)
             lines = [','.join(row) for row in reader]
             return '\n'.join(lines)
     except FileNotFoundError:
+        logger.error(f"File not found: {file_path}")
         print(f"文件 '{file_path}' 未找到.")
     except Exception as e:
+        logger.error(f"Error reading csv file '{file_path}': {e}")
         print(f"读取文件 '{file_path}' 时出现错误: {e}")
     return None
 
 
 def read_xlsx(file_path):
+    logger.info(f"Reading xlsx file: {file_path}")
     try:
         wb = load_workbook(file_path)
         ws = wb.active
@@ -81,8 +98,10 @@ def read_xlsx(file_path):
             data.append(','.join(row_data))
         return '\n'.join(data)
     except FileNotFoundError:
+        logger.error(f"File not found: {file_path}")
         print(f"文件 '{file_path}' 未找到.")
     except Exception as e:
+        logger.error(f"Error reading xlsx file '{file_path}': {e}")
         print(f"读取文件 '{file_path}' 时出现错误: {e}")
     return None
 
@@ -199,8 +218,14 @@ def get_file_type(file_path):
     else:
         return None
 
+def run():
+    logger.info("Document Interpreter tool started")
+    main()
+
 def main():
+    logger.info("Document Interpreter main function started")
     file_path = input("请输入文件路径: ")
+    logger.info(f"User provided file path: {file_path}")
     file_type = get_file_type(file_path)
     file_contents = None
     
