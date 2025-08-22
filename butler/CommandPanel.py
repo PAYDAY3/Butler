@@ -15,67 +15,78 @@ class CommandPanel(tk.Frame):
         self.program_mapping = program_mapping or {}
         self.config(bg='white')
 
-        # Input Frame (at the bottom)
+        # --- Configure top-level grid ---
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+
+        # --- Main layout using a PanedWindow (placed in grid) ---
+        self.main_paned_window = tk.PanedWindow(self, orient=tk.HORIZONTAL, sashrelief=tk.RAISED, bg='white')
+        self.main_paned_window.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
+
+        # --- Input Frame (at the bottom, placed in grid) ---
         self.input_frame = tk.Frame(self, bg='white')
-        self.input_frame.pack(side=tk.BOTTOM, fill=tk.X, padx=5, pady=5)
+        self.input_frame.grid(row=1, column=0, sticky="ew", padx=5, pady=5)
+        self.input_frame.grid_columnconfigure(0, weight=1) # Make entry field expandable
 
         self.input_entry = tk.Entry(self.input_frame, bg='white', fg='black')
-        self.input_entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        self.input_entry.grid(row=0, column=0, sticky="ew")
         self.input_entry.bind("<Return>", self.send_text_command)
 
         self.send_button = tk.Button(self.input_frame, text="Send", command=self.send_text_command)
-        self.send_button.pack(side=tk.LEFT, padx=(5, 0))
+        self.send_button.grid(row=0, column=1, padx=(5, 0))
 
         self.listen_button = tk.Button(self.input_frame, text="Listen", command=self.send_listen_command)
-        self.listen_button.pack(side=tk.LEFT, padx=(5, 0))
+        self.listen_button.grid(row=0, column=2, padx=(5, 0))
 
         self.clear_button = tk.Button(self.input_frame, text="Clear", command=self.clear_history)
-        self.clear_button.pack(side=tk.LEFT, padx=(5, 0))
+        self.clear_button.grid(row=0, column=3, padx=(5, 0))
 
         self.restart_button = tk.Button(self.input_frame, text="Restart", command=self.restart_application)
-        self.restart_button.pack(side=tk.LEFT, padx=(5, 0))
+        self.restart_button.grid(row=0, column=4, padx=(5, 0))
 
-        # Main layout using a PanedWindow
-        self.main_paned_window = tk.PanedWindow(self, orient=tk.HORIZONTAL, sashrelief=tk.RAISED, bg='white')
-        self.main_paned_window.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=5, pady=5)
+        # --- PanedWindow Content ---
 
         # Left frame for functions
         self.functions_frame = tk.Frame(self.main_paned_window, bg='white')
-        self.functions_frame.pack(fill=tk.BOTH, expand=True)
-        self.main_paned_window.add(self.functions_frame, width=150)
+        self.functions_frame.grid_rowconfigure(1, weight=1)
+        self.functions_frame.grid_columnconfigure(0, weight=1)
+        self.main_paned_window.add(self.functions_frame, width=200)
 
         # Middle frame for logs and output
         self.middle_paned_window = tk.PanedWindow(self.main_paned_window, orient=tk.VERTICAL, sashrelief=tk.RAISED, bg='white')
-        self.middle_paned_window.pack(fill=tk.BOTH, expand=True)
         self.main_paned_window.add(self.middle_paned_window)
 
         # Log frame
         self.log_frame = tk.Frame(self.middle_paned_window, bg='white')
-        self.log_frame.pack(fill=tk.BOTH, expand=True)
-        self.middle_paned_window.add(self.log_frame, height=200)
+        self.log_frame.grid_rowconfigure(1, weight=1)
+        self.log_frame.grid_columnconfigure(0, weight=1)
+        self.middle_paned_window.add(self.log_frame, height=250)
 
         # Output frame
         self.output_frame = tk.Frame(self.middle_paned_window, bg='white')
-        self.output_frame.pack(fill=tk.BOTH, expand=True)
+        self.output_frame.grid_rowconfigure(0, weight=1)
+        self.output_frame.grid_columnconfigure(0, weight=1)
         self.middle_paned_window.add(self.output_frame)
 
-        # Add widgets to the new frames
-        self.output_text = scrolledtext.ScrolledText(self.output_frame, bg='white', fg='black', state='disabled')
-        self.output_text.pack(fill=tk.BOTH, expand=True)
+        # --- Widgets within the frames ---
 
-        # Populate functions list
+        # Output text widget
+        self.output_text = scrolledtext.ScrolledText(self.output_frame, bg='white', fg='black', state='disabled')
+        self.output_text.grid(row=0, column=0, sticky="nsew")
+
+        # Functions list widgets
         self.functions_label = tk.Label(self.functions_frame, text="功能列表", bg='white', font=('Arial', 12, 'bold'))
-        self.functions_label.pack(pady=5)
+        self.functions_label.grid(row=0, column=0, pady=5, sticky="ew")
         self.functions_listbox = tk.Listbox(self.functions_frame, bg='white', fg='black', selectbackground='#cce5ff')
-        self.functions_listbox.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        self.functions_listbox.grid(row=1, column=0, padx=5, pady=5, sticky="nsew")
         for name in self.program_mapping.keys():
             self.functions_listbox.insert(tk.END, name)
 
-        # Populate logs view
+        # Logs view widgets
         self.logs_label = tk.Label(self.log_frame, text="日志记录", bg='white', font=('Arial', 12, 'bold'))
-        self.logs_label.pack(pady=5)
+        self.logs_label.grid(row=0, column=0, pady=5, sticky="ew")
         self.logs_tree = ttk.Treeview(self.log_frame, show='tree')
-        self.logs_tree.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        self.logs_tree.grid(row=1, column=0, padx=5, pady=5, sticky="nsew")
         self._populate_logs()
 
     def _populate_logs(self):
