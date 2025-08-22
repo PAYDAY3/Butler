@@ -1,6 +1,6 @@
 import concurrent.futures  # 添加缺失的并发库导入
 from datetime import datetime  # 添加时间戳功能
-from my_package import Logging
+from package import Logging
 from jarvis import takecommand
 
 logging = Logging.get_logger(__name__)
