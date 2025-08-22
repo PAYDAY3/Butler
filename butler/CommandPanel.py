@@ -1,19 +1,21 @@
 import tkinter as tk
-from tkinter import scrolledtext
+from tkinter import scrolledtext, ttk
 import sys
 import os
+import json
 from package.log_manager import LogManager
 
 logger = LogManager.get_logger(__name__)
 
 class CommandPanel(tk.Frame):
-    def __init__(self, master, **kwargs):
+    def __init__(self, master, program_mapping=None, **kwargs):
         super().__init__(master, **kwargs)
         self.master = master
         self.command_callback = None
+        self.program_mapping = program_mapping or {}
         self.config(bg='white')
 
-        # Input Frame
+        # Input Frame (at the bottom)
         self.input_frame = tk.Frame(self, bg='white')
         self.input_frame.pack(side=tk.BOTTOM, fill=tk.X, padx=5, pady=5)
 
@@ -33,12 +35,104 @@ class CommandPanel(tk.Frame):
         self.restart_button = tk.Button(self.input_frame, text="Restart", command=self.restart_application)
         self.restart_button.pack(side=tk.LEFT, padx=(5, 0))
 
-        # Output Frame
-        self.output_frame = tk.Frame(self, bg='white')
-        self.output_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=5, pady=5)
+        # Main layout using a PanedWindow
+        self.main_paned_window = tk.PanedWindow(self, orient=tk.HORIZONTAL, sashrelief=tk.RAISED, bg='white')
+        self.main_paned_window.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=5, pady=5)
 
+        # Left frame for functions
+        self.functions_frame = tk.Frame(self.main_paned_window, bg='white')
+        self.functions_frame.pack(fill=tk.BOTH, expand=True)
+        self.main_paned_window.add(self.functions_frame, width=150)
+
+        # Middle frame for logs and output
+        self.middle_paned_window = tk.PanedWindow(self.main_paned_window, orient=tk.VERTICAL, sashrelief=tk.RAISED, bg='white')
+        self.middle_paned_window.pack(fill=tk.BOTH, expand=True)
+        self.main_paned_window.add(self.middle_paned_window)
+
+        # Log frame
+        self.log_frame = tk.Frame(self.middle_paned_window, bg='white')
+        self.log_frame.pack(fill=tk.BOTH, expand=True)
+        self.middle_paned_window.add(self.log_frame, height=200)
+
+        # Output frame
+        self.output_frame = tk.Frame(self.middle_paned_window, bg='white')
+        self.output_frame.pack(fill=tk.BOTH, expand=True)
+        self.middle_paned_window.add(self.output_frame)
+
+        # Add widgets to the new frames
         self.output_text = scrolledtext.ScrolledText(self.output_frame, bg='white', fg='black', state='disabled')
-        self.output_text.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        self.output_text.pack(fill=tk.BOTH, expand=True)
+
+        # Populate functions list
+        self.functions_label = tk.Label(self.functions_frame, text="功能列表", bg='white', font=('Arial', 12, 'bold'))
+        self.functions_label.pack(pady=5)
+        self.functions_listbox = tk.Listbox(self.functions_frame, bg='white', fg='black', selectbackground='#cce5ff')
+        self.functions_listbox.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        for name in self.program_mapping.keys():
+            self.functions_listbox.insert(tk.END, name)
+
+        # Populate logs view
+        self.logs_label = tk.Label(self.log_frame, text="日志记录", bg='white', font=('Arial', 12, 'bold'))
+        self.logs_label.pack(pady=5)
+        self.logs_tree = ttk.Treeview(self.log_frame, show='tree')
+        self.logs_tree.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        self._populate_logs()
+
+    def _populate_logs(self):
+        log_file_path = "logs/application.json"
+        if not os.path.exists(log_file_path):
+            return
+
+        # Clear existing logs
+        for i in self.logs_tree.get_children():
+            self.logs_tree.delete(i)
+
+        logs_by_date = {}
+        try:
+            with open(log_file_path, 'r', encoding='utf-8') as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+
+                    try:
+                        # Try to parse as JSON
+                        log_entry = json.loads(line)
+                        timestamp = log_entry.get('timestamp', '')
+                        message = log_entry.get('message', '')
+                        date_str = timestamp.split('T')[0]
+                    except (json.JSONDecodeError, AttributeError):
+                        # Fallback for plain text lines
+                        # Attempt to extract a date-like pattern from the start of the line
+                        parts = line.split(' | ')
+                        if len(parts) > 1 and len(parts[0]) > 10:
+                            # Assuming format 'YYYY-MM-DD HH:MM:SS | ...'
+                            date_str = parts[0][:10]
+                            message = ' | '.join(parts[1:])
+                        else:
+                            # If no timestamp, use a generic key or skip
+                            date_str = "Unknown Date"
+                            message = line
+
+                    if date_str not in logs_by_date:
+                        logs_by_date[date_str] = []
+
+                    # Remove time from the message if it's there
+                    if len(message) > 9 and message[2] == ':' and message[5] == ':':
+                         message = message[9:].lstrip()
+
+                    logs_by_date[date_str].append(message)
+
+        except Exception as e:
+            logger.error(f"Failed to read or parse log file: {e}")
+            return
+
+        # Populate the treeview
+        for date_str in sorted(logs_by_date.keys(), reverse=True):
+            date_node = self.logs_tree.insert('', 'end', text=date_str, open=False)
+            for msg in logs_by_date[date_str]:
+                self.logs_tree.insert(date_node, 'end', text=msg)
+
 
     def set_command_callback(self, callback):
         self.command_callback = callback

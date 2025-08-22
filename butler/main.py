@@ -61,23 +61,14 @@ class Jarvis:
         # Paths for temporary files are relative to the current working directory
         self.OUTPUT_FILE = "./temp.wav"
 
-        self.program_mapping = {
-            "邮箱": "e-mail.py",
-            "播放音乐": "music.py",
-            "虚拟键盘": "virtual_keyboapy.py",
-            "组织文件": "Organizepy.py",
-            "爬虫": "crawlpy.py",
-            "终端": "terminpy.py",
-            "加密": "encrypt.py",
-            "物体识别": "PictureRecognition.py",
-            "日程管理": "schedule_management.py",
-            "二维码识别": "QR-Code-Recognitipy.py",
-            "网络程序": "network_apy.py",
-            "天气预报": "weathpy.py",
-            "翻译": "translators.py",
-            "文件转换器": "file_converter.py",
-            "帐号登录": "AccountPassword.py",
-        }
+        try:
+            mapping_path = os.path.join(base_dir, "program_mapping.json")
+            with open(mapping_path, 'r', encoding='utf-8') as f:
+                self.program_mapping = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            self.logging.error(f"Failed to load program mapping: {e}")
+            self.program_mapping = {}
+
         self.conversation_history = []
         self.running = True
         self.matched_program = None
@@ -658,7 +649,7 @@ def main():
 
             jarvis = Jarvis(root)
 
-            panel = CommandPanel(root)
+            panel = CommandPanel(root, program_mapping=jarvis.program_mapping)
             panel.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
             panel.set_command_callback(jarvis.panel_command_handler)
             jarvis.set_panel(panel)
