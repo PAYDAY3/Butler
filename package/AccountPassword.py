@@ -98,6 +98,7 @@ def auto_login():
 
 # 创建新账号
 def create_account():
+    logging.info("Attempting to create a new account")
     print("\n" + "="*50)
     print("创建新账号")
     print("="*50)
@@ -162,6 +163,7 @@ def create_account():
 
 # 修改密码
 def change_password():
+    logging.info("Attempting to change a password")
     print("\n" + "="*50)
     print("修改密码")
     print("="*50)
@@ -201,6 +203,7 @@ def change_password():
 
 # 修改账号信息
 def update_account():
+    logging.info("Attempting to update an account")
     print("\n" + "="*50)
     print("修改账号信息")
     print("="*50)
@@ -249,6 +252,7 @@ def update_account():
 
 # 复制密码到剪贴板
 def copy_password():
+    logging.info("Attempting to copy a password")
     print("\n" + "="*50)
     print("复制密码")
     print("="*50)
@@ -277,6 +281,7 @@ def copy_password():
 
 # 删除指定的账号
 def delete_account():
+    logging.info("Attempting to delete an account")
     print("\n" + "="*50)
     print("删除账号")
     print("="*50)
@@ -302,6 +307,7 @@ def delete_account():
 
 # 查看账号
 def view_accounts():
+    logging.info("Viewing accounts")
     print("\n" + "="*50)
     print("查看账号")
     print("="*50)
@@ -360,6 +366,7 @@ def view_accounts():
 
 # 导出账号数据
 def export_accounts():
+    logging.info("Exporting accounts")
     print("\n" + "="*50)
     print("导出账号数据")
     print("="*50)
@@ -382,6 +389,7 @@ def export_accounts():
 
 # 生成强密码
 def generate_password():
+    logging.info("Generating a new password")
     print("\n" + "="*50)
     print("生成强密码")
     print("="*50)
@@ -451,6 +459,7 @@ def display_menu():
 
 # 主菜单
 def AccountPassword():
+    logging.info("AccountPassword tool started")
     while True:
         display_menu()
         choice = input("请选择操作 (0-9): ")

@@ -33,7 +33,7 @@ from . import binary_extensions
 from package.virtual_keyboard import VirtualKeyboard
 from package.log_manager import LogManager
 from butler.CommandPanel import CommandPanel
-from plugin.plugin import process_command as process_plugin_command
+from plugin.PluginManager import PluginManager
 
 class Jarvis:
     def __init__(self, root):
@@ -43,6 +43,7 @@ class Jarvis:
         self.deepseek_api_key = os.getenv("DEEPSEEK_API_KEY")
         self.engine = pyttsx3.init()
         self.logging = LogManager.get_logger(__name__)
+        self.plugin_manager = PluginManager("plugin")
 
         base_dir = os.path.dirname(__file__)
         self.JARVIS_AUDIO_FILE = os.path.join(base_dir, "resources", "jarvis.wav")
@@ -368,10 +369,16 @@ class Jarvis:
             handler(entities=entities, programs=programs)
         else:
             # Fallback to plugin or unknown command
-            plugin_result = process_plugin_command(command)
-            if "未找到匹配的插件" not in plugin_result:
-                self.speak(plugin_result)
-            else:
+            plugin_found = False
+            for plugin in self.plugin_manager.get_all_plugins():
+                if plugin.get_name().lower() in command.lower():
+                    plugin_result = self.plugin_manager.run_plugin(plugin.get_name(), command, entities)
+                    if plugin_result.success:
+                        self.speak(plugin_result.result)
+                        plugin_found = True
+                        break
+
+            if not plugin_found:
                 self.ui_print(f"未知指令或意图: {command}")
                 self.logging.warning(f"未知指令或意图: {intent}")
                 self.speak("抱歉，我不太理解您的意思，请换一种方式表达。")
@@ -631,21 +638,34 @@ class Jarvis:
 
 def main():
     """Main entry point for the application."""
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--headless", action="store_true", help="Run in headless mode without GUI")
+    args = parser.parse_args()
+
     try:
-        root = tk.Tk()
-        root.title("Jarvis Assistant")
-        root.geometry("800x600")
+        if args.headless:
+            print("Running in headless mode")
+            jarvis = Jarvis(None)
+            jarvis.main()
+            # Keep the application running for testing
+            while True:
+                time.sleep(1)
+        else:
+            root = tk.Tk()
+            root.title("Jarvis Assistant")
+            root.geometry("800x600")
 
-        jarvis = Jarvis(root)
+            jarvis = Jarvis(root)
 
-        panel = CommandPanel(root)
-        panel.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-        panel.set_command_callback(jarvis.panel_command_handler)
-        jarvis.set_panel(panel)
+            panel = CommandPanel(root)
+            panel.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+            panel.set_command_callback(jarvis.panel_command_handler)
+            jarvis.set_panel(panel)
 
-        jarvis.main()
+            jarvis.main()
 
-        root.mainloop()
+            root.mainloop()
 
     except Exception as e:
         print(f"An unexpected error occurred during execution: {e}")
