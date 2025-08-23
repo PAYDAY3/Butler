@@ -31,6 +31,7 @@ from package.log_manager import LogManager
 from butler.CommandPanel import CommandPanel
 from plugin.PluginManager import PluginManager
 from . import algorithms
+from local_interpreter.interpreter import Interpreter
 
 class Jarvis:
     def __init__(self, root):
@@ -71,6 +72,7 @@ class Jarvis:
         self.matched_program = None
         self.panel = None
         self.MAX_HISTORY_MESSAGES = 10
+        self.interpreter = Interpreter()
 
     def set_panel(self, panel):
         self.panel = panel
@@ -79,56 +81,6 @@ class Jarvis:
         print(message)
         if self.panel:
             self.panel.append_to_history(message)
-    
-    # 核心功能
-    def preprocess(self, text):
-        """
-        使用DeepSeek API将用户输入文本转换为结构化的意图和实体。
-        """
-        # 从加载的配置中获取系统提示
-        system_prompt = self.prompts.get("nlu_intent_extraction", {}).get("prompt")
-        if not system_prompt:
-            self.logging.error("NLU intent extraction prompt not found. Using fallback.")
-            # Provide a minimal fallback prompt to avoid crashing
-            system_prompt = "You are an NLU assistant. Return JSON with 'intent' and 'entities'."
-
-        url = "https://api.deepseek.com/v1/chat/completions"
-        headers = {
-            "Authorization": f"Bearer {self.deepseek_api_key}",
-            "Content-Type": "application/json"
-        }
-        # 构造发送给API的消息列表
-        messages = [{"role": "system", "content": system_prompt}]
-        messages.extend(self.conversation_history)
-
-        payload = {
-            "model": "deepseek-chat",
-            "messages": messages,
-            "max_tokens": 512,
-            "temperature": 0
-        }
-        
-        try:
-            response = requests.post(url, headers=headers, json=payload)
-            response.raise_for_status()
-            result_text = response.json()['choices'][0]['message']['content']
-
-            # 清理和解析JSON
-            # LLM有时会返回被markdown代码块包围的JSON
-            if result_text.strip().startswith("```json"):
-                result_text = result_text.strip()[7:-4].strip()
-
-            return json.loads(result_text)
-        except requests.exceptions.RequestException as e:
-            self.ui_print(f"DeepSeek API 请求失败: {e}")
-            return {"intent": "unknown", "entities": {"error": str(e)}}
-        except json.JSONDecodeError as e:
-            self.ui_print(f"无法解析来自API的JSON响应: {e}")
-            self.logging.error(f"原始响应文本: {result_text}")
-            return {"intent": "unknown", "entities": {"error": "Invalid JSON response"}}
-        except (KeyError, IndexError) as e:
-            self.ui_print(f"API响应格式不符合预期: {e}")
-            return {"intent": "unknown", "entities": {"error": "Unexpected API response format"}}
 
     def generate_response(self, text):
         # 使用DeepSeek API
@@ -224,147 +176,21 @@ class Jarvis:
             return None
 
     def handle_user_command(self, command, programs):
+        """
+        Handles a command from the user by passing it to the local interpreter
+        and displaying the result.
+        """
         if command is None:
             return
 
-        # 将用户的命令添加到历史记录
-        self.conversation_history.append({"role": "user", "content": command})
+        self.ui_print(f"User: {command}")
 
-        nlu_result = self.preprocess(command)
-        intent = nlu_result.get("intent", "unknown")
-        entities = nlu_result.get("entities", {})
-
-        intent_handlers = {
-            "sort_numbers": self._handle_sort_numbers,
-            "find_number": self._handle_find_number,
-            "calculate_fibonacci": self._handle_calculate_fibonacci,
-            "edge_detect_image": self._handle_edge_detect_image,
-            "text_similarity": self._handle_text_similarity,
-            "open_program": self._handle_open_program,
-            "exit": self._handle_exit,
-        }
-
-        handler = intent_handlers.get(intent)
-
-        if handler:
-            handler(entities=entities, programs=programs)
+        # The new, simplified logic: just run the command through the interpreter.
+        if self.interpreter.is_ready:
+            result = self.interpreter.run(command)
+            self.ui_print(f"Jarvis: {result}")
         else:
-            # Fallback to plugin or unknown command
-            plugin_found = False
-            for plugin in self.plugin_manager.get_all_plugins():
-                if plugin.get_name().lower() in command.lower():
-                    plugin_result = self.plugin_manager.run_plugin(plugin.get_name(), command, entities)
-                    if plugin_result.success:
-                        self.speak(plugin_result.result)
-                        plugin_found = True
-                        break
-
-            if not plugin_found:
-                self.ui_print(f"未知指令或意图: {command}")
-                self.logging.warning(f"未知指令或意图: {intent}")
-                self.speak("抱歉，我不太理解您的意思，请换一种方式表达。")
-
-    def _handle_sort_numbers(self, entities, **kwargs):
-        try:
-            numbers = entities.get("numbers", [])
-            if not numbers or not all(isinstance(n, (int, float)) for n in numbers):
-                 self.speak("排序失败，请提供有效的数字列表。")
-                 return
-            sorted_nums = algorithms.quick_sort(numbers)
-            self.speak(f"排序结果: {sorted_nums}")
-        except Exception as e:
-            self.speak(f"排序时发生错误: {e}")
-
-    def _handle_find_number(self, entities, **kwargs):
-        try:
-            numbers = entities.get("numbers", [])
-            target = entities.get("target")
-            if not numbers or target is None:
-                self.speak("查找失败，请提供数字列表和目标数字。")
-                return
-
-            numbers.sort()
-            index = algorithms.binary_search(numbers, target)
-            if index != -1:
-                self.speak(f"数字 {target} 在排序后的位置是: {index}")
-            else:
-                self.speak(f"数字 {target} 不在数组中")
-        except Exception as e:
-            self.speak(f"查找时发生错误: {e}")
-
-    def _handle_calculate_fibonacci(self, entities, **kwargs):
-        try:
-            n = entities.get("number")
-            if n is None or not isinstance(n, int):
-                self.speak("计算失败，请输入一个有效的整数。")
-                return
-            fib = algorithms.fibonacci(n)
-            self.speak(f"斐波那契数列第{n}项是: {fib}")
-        except Exception as e:
-            self.speak(f"计算斐波那契数时出错: {e}")
-
-    def _handle_edge_detect_image(self, entities, **kwargs):
-        try:
-            image_path = entities.get("path")
-            if not image_path or not isinstance(image_path, str):
-                self.speak("图像处理失败，请提供有效的路径。")
-                return
-
-            if os.path.exists(image_path):
-                edges = algorithms.edge_detection(image_path)
-                if edges is not None:
-                    output_path = os.path.splitext(image_path)[0] + '_edges.jpg'
-                    cv2.imwrite(output_path, edges)
-                    self.speak(f"边缘检测完成，结果已保存到: {output_path}")
-                else:
-                    self.speak("图像处理失败，无法读取图片。")
-            else:
-                self.speak("找不到指定的图像文件。")
-        except Exception as e:
-            self.speak(f"图像处理时出错: {e}")
-
-    def _handle_text_similarity(self, entities, **kwargs):
-        try:
-            text1 = entities.get("text1")
-            text2 = entities.get("text2")
-            if not text1 or not text2:
-                self.speak("相似度计算失败，请提供两段文本。")
-                return
-            similarity = algorithms.text_cosine_similarity(text1, text2)
-            self.speak(f"文本相似度是: {similarity:.2f}")
-        except Exception as e:
-            self.speak(f"计算相似度时出错: {e}")
-
-    def _handle_open_program(self, entities, programs, **kwargs):
-        program_name = entities.get("program_name")
-        if not program_name:
-            self.speak("无法打开程序，未指定程序名称。")
-            return
-
-        # 优先匹配程序映射表
-        if program_name in self.program_mapping:
-            self.execute_program(self.program_mapping[program_name])
-            return
-
-        # 其次匹配动态加载的程序
-        if program_name in programs:
-            self.execute_program(programs[program_name])
-            return
-
-        # 最后模糊匹配
-        for key in self.program_mapping:
-            if program_name in key:
-                self.execute_program(self.program_mapping[key])
-                return
-
-        self.ui_print(f"未找到程序 '{program_name}'")
-        self.speak(f"未找到程序 {program_name}")
-
-    def _handle_exit(self, **kwargs):
-        self.logging.info("程序已退出")
-        self.speak("再见")
-        self.running = False
-        self.root.quit()
+            self.ui_print("Jarvis: Interpreter is not ready. Please check API key.")
 
     @lru_cache(maxsize=128)
     def open_programs(self, program_folder, external_folders=None):
