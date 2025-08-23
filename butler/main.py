@@ -34,6 +34,7 @@ from package.virtual_keyboard import VirtualKeyboard
 from package.log_manager import LogManager
 from butler.CommandPanel import CommandPanel
 from plugin.PluginManager import PluginManager
+from . import algorithms
 
 class Jarvis:
     def __init__(self, root):
@@ -82,120 +83,6 @@ class Jarvis:
         print(message)
         if self.panel:
             self.panel.append_to_history(message)
-
-    # 1.算法实现部分
-    def quick_sort(self, arr):
-        """快速排序算法"""
-        if len(arr) <= 1:
-            return arr
-        pivot = arr[len(arr) // 2]
-        left = [x for x in arr if x < pivot]
-        middle = [x for x in arr if x == pivot]
-        right = [x for x in arr if x > pivot]
-        return self.quick_sort(left) + middle + self.quick_sort(right)
-    
-    def merge_sort(self, arr):
-        """归并排序算法"""
-        if len(arr) <= 1:
-            return arr
-        
-        mid = len(arr) // 2
-        left = arr[:mid]
-        right = arr[mid:]
-        
-        left = self.merge_sort(left)
-        right = self.merge_sort(right)
-        
-        return self.merge(left, right)
-    
-    def merge(self, left, right):
-        """归并排序的合并操作"""
-        result = []
-        i = j = 0
-        
-        while i < len(left) and j < len(right):
-            if left[i] < right[j]:
-                result.append(left[i])
-                i += 1
-            else:
-                result.append(right[j])
-                j += 1
-        
-        result.extend(left[i:])
-        result.extend(right[j:])
-        return result
-    
-    # 2. 搜索算法
-    def binary_search(self, arr, target):
-        """二分查找算法"""
-        low, high = 0, len(arr) - 1
-        
-        while low <= high:
-            mid = (low + high) // 2
-            mid_val = arr[mid]
-            
-            if mid_val == target:
-                return mid
-            elif mid_val < target:
-                low = mid + 1
-            else:
-                high = mid - 1
-        
-        return -1
-    
-    # 3. 路径规划算法
-    def dijkstra(self, graph, start):
-        """Dijkstra最短路径算法"""
-        distances = {node: float('infinity') for node in graph}
-        distances[start] = 0
-        priority_queue = [(0, start)]
-        
-        while priority_queue:
-            current_distance, current_node = heapq.heappop(priority_queue)
-            
-            if current_distance > distances[current_node]:
-                continue
-                
-            for neighbor, weight in graph[current_node].items():
-                distance = current_distance + weight
-                
-                if distance < distances[neighbor]:
-                    distances[neighbor] = distance
-                    heapq.heappush(priority_queue, (distance, neighbor))
-        
-        return distances
-    
-    # 4. 文本相似度算法
-    def cosine_similarity(self, text1, text2):
-        """计算两个文本的余弦相似度"""
-        vectorizer = TfidfVectorizer()
-        tfidf_matrix = vectorizer.fit_transform([text1, text2])
-        similarity = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:2])
-        return similarity[0][0]
-    
-    # 5. 图像处理算法
-    def edge_detection(self, image_path):
-        """边缘检测算法"""
-        image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-        if image is None:
-            return None
-            
-        # 应用Canny边缘检测
-        edges = cv2.Canny(image, 100, 200)
-        return edges
-    
-    # 6. 数学算法
-    def fibonacci(self, n):
-        """计算斐波那契数列第n项"""
-        if n <= 0:
-            return 0
-        elif n == 1:
-            return 1
-            
-        a, b = 0, 1
-        for _ in range(2, n+1):
-            a, b = b, a + b
-        return b
     
     # 核心功能
     def preprocess(self, text):
@@ -380,7 +267,7 @@ class Jarvis:
             if not numbers or not all(isinstance(n, (int, float)) for n in numbers):
                  self.speak("排序失败，请提供有效的数字列表。")
                  return
-            sorted_nums = self.quick_sort(numbers)
+            sorted_nums = algorithms.quick_sort(numbers)
             self.speak(f"排序结果: {sorted_nums}")
         except Exception as e:
             self.speak(f"排序时发生错误: {e}")
@@ -394,7 +281,7 @@ class Jarvis:
                 return
 
             numbers.sort()
-            index = self.binary_search(numbers, target)
+            index = algorithms.binary_search(numbers, target)
             if index != -1:
                 self.speak(f"数字 {target} 在排序后的位置是: {index}")
             else:
@@ -408,7 +295,7 @@ class Jarvis:
             if n is None or not isinstance(n, int):
                 self.speak("计算失败，请输入一个有效的整数。")
                 return
-            fib = self.fibonacci(n)
+            fib = algorithms.fibonacci(n)
             self.speak(f"斐波那契数列第{n}项是: {fib}")
         except Exception as e:
             self.speak(f"计算斐波那契数时出错: {e}")
@@ -421,7 +308,7 @@ class Jarvis:
                 return
 
             if os.path.exists(image_path):
-                edges = self.edge_detection(image_path)
+                edges = algorithms.edge_detection(image_path)
                 if edges is not None:
                     output_path = os.path.splitext(image_path)[0] + '_edges.jpg'
                     cv2.imwrite(output_path, edges)
@@ -440,7 +327,7 @@ class Jarvis:
             if not text1 or not text2:
                 self.speak("相似度计算失败，请提供两段文本。")
                 return
-            similarity = self.cosine_similarity(text1, text2)
+            similarity = algorithms.text_cosine_similarity(text1, text2)
             self.speak(f"文本相似度是: {similarity:.2f}")
         except Exception as e:
             self.speak(f"计算相似度时出错: {e}")
