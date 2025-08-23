@@ -1,15 +1,12 @@
 import subprocess
 import platform
+from .tool_decorator import tool
 
+@tool
 def run_shell(command: str) -> str:
     """
     Executes a shell command and returns its output.
-
-    Args:
-        command: The shell command to execute.
-
-    Returns:
-        The stdout and stderr from the command.
+    Useful for general-purpose commands when a specific tool is not available.
     """
     try:
         # For cross-platform compatibility, split the command into a list.
