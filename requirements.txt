@@ -23,6 +23,7 @@ pypinyin
 chardet
 anthropic
 deepseek
+openai
 Flask
 opencv-python
 scikit-learn

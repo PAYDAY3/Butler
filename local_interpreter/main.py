@@ -16,12 +16,13 @@ class colors:
 def main_loop():
     """
     The main loop of the local interpreter.
-    Connects all the components.
+    Connects all the components and maintains conversation history.
     """
-    print(f"{colors.HEADER}{colors.BOLD}Welcome to Local Interpreter MVP{colors.ENDC}")
+    print(f"{colors.HEADER}{colors.BOLD}Welcome to Local Interpreter{colors.ENDC}")
     print("Type 'exit' to quit.")
 
     orchestrator = Orchestrator()
+    conversation_history = []
 
     while True:
         try:
@@ -30,29 +31,27 @@ def main_loop():
                 print(f"{colors.WARNING}Exiting...{colors.ENDC}")
                 break
 
-            # In a real app, you might have a debug flag for this.
-            # For now, we've commented out the internal "thinking" process for a cleaner UI.
-            # print(f"DEBUG: Passing to orchestrator: '{user_input}'")
-            generated_code = orchestrator.process_user_input(user_input)
+            # Append the user's message to the history
+            conversation_history.append({"role": "user", "content": user_input})
+
+            generated_code = orchestrator.process_user_input(conversation_history)
+
+            # Optional: Display the code that is about to be run
+            print(f"{colors.OKCYAN}Running code:\n---\n{generated_code}\n---{colors.ENDC}")
 
             output, success = execute_python_code(generated_code)
 
             print(f"{colors.OKBLUE}--- Result ---{colors.ENDC}")
             if success:
-                # Pretty print for dictionaries or lists
-                if output.strip().startswith(('{', '[')):
-                     import json
-                     try:
-                         # Attempt to parse and pretty-print JSON-like strings
-                         parsed = json.loads(output.replace("'", "\"")) # Allow single quotes
-                         print(json.dumps(parsed, indent=2))
-                     except json.JSONDecodeError:
-                         print(output) # Fallback to raw print if not valid JSON
-                else:
-                    print(output)
+                print(output)
             else:
                 print(f"{colors.FAIL}An error occurred:\n{output}{colors.ENDC}")
             print(f"{colors.OKBLUE}--------------{colors.ENDC}\n")
+
+            # Append the assistant's response (the code and its output) to the history
+            # This helps the model understand the result of its previous actions
+            assistant_response = f"Executed Code:\n```python\n{generated_code}```\nOutput:\n```\n{output}```"
+            conversation_history.append({"role": "assistant", "content": assistant_response})
 
         except KeyboardInterrupt:
             print(f"\n{colors.WARNING}Exiting...{colors.ENDC}")

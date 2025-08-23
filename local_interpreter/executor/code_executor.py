@@ -8,6 +8,7 @@ import math
 from contextlib import redirect_stdout
 
 from ..tools.safe_tools import safe_tool_list
+from ..tools.shell_tool import run_shell
 
 def execute_python_code(code: str) -> tuple[str, bool]:
     """
@@ -57,6 +58,7 @@ def execute_python_code(code: str) -> tuple[str, bool]:
     # own curated dictionary of safe functions.
     sandboxed_globals = {
         "__builtins__": safe_builtins,
+        "run_shell": run_shell,  # Add the shell tool here
         **safe_modules,
         **safe_tool_list,
     }
