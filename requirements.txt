@@ -31,3 +31,5 @@ deepseek
 Flask
 opencv-python
 scikit-learn
+tqdm
+pandas

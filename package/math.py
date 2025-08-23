@@ -212,12 +212,24 @@ def mean_(args):
         raise TypeError("所有参数必须是数字")
     return normalize(sum(args) / len(args))
 
-# 标准差
+# 标准差 (Welford's algorithm for numerical stability)
 def stddev_(args):
     if not all(isinstance(arg, (int, float)) for arg in args):
         raise TypeError("所有参数必须是数字")
-    mean = sum(args) / len(args)
-    variance = sum((x - mean) ** 2 for x in args) / len(args)
+    n = 0
+    mean = 0.0
+    m2 = 0.0
+    for x in args:
+        n += 1
+        delta = x - mean
+        mean += delta / n
+        delta2 = x - mean
+        m2 += delta * delta2
+
+    if n < 2:
+        return 0.0
+
+    variance = m2 / n
     return normalize(math.sqrt(variance))
 
 # n次方根

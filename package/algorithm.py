@@ -1,12 +1,20 @@
 from typing import List, Tuple
 import importlib
+from tqdm import tqdm
 
 def read_file_list(file_path: str) -> List[Tuple[str, int, str]]:
     """读取文件列表，并获取每个文件的优先级、插入位置标识符。"""
     with open(file_path, 'r') as file:
         return [(line.split()[0], int(line.split()[1]), line.split()[2]) for line in file if line.strip()]
 
-def hybridSort(arr: List[Tuple[str, int, str]], left=None, right=None, depth=0):
+def hybrid_sort_with_progress(arr: List[Tuple[str, int, str]]):
+    """
+    使用tqdm包装hybridSort以显示进度条。
+    """
+    with tqdm(total=len(arr), desc="Sorting modules") as pbar:
+        hybridSort(arr, pbar=pbar)
+
+def hybridSort(arr: List[Tuple[str, int, str]], left=None, right=None, depth=0, pbar=None):
     """
     混合排序算法，结合快速排序和插入排序。
 
@@ -15,9 +23,7 @@ def hybridSort(arr: List[Tuple[str, int, str]], left=None, right=None, depth=0):
         left: 排序子数组的起始索引。
         right: 排序子数组的结束索引。
         depth: 递归深度（用于调试输出缩进）。
-
-    Returns:
-        排序后的列表。
+        pbar: tqdm progress bar instance.
     """
     if left is None:
         left = 0
@@ -27,19 +33,21 @@ def hybridSort(arr: List[Tuple[str, int, str]], left=None, right=None, depth=0):
     # 插入排序优化: 对于小数组使用插入排序
     if right - left < 10:
         insertionSort(arr, left, right)
+        if pbar:
+            pbar.update(right - left + 1)
         return
 
     if left < right:
-        pivot_index = partition(arr, left, right, depth)
+        pivot_index = partition(arr, left, right, depth, pbar)
         # 优化：先对较短的一边进行排序，减少递归深度
         if pivot_index - left < right - pivot_index:
-            hybridSort(arr, left, pivot_index - 1, depth + 1)
-            hybridSort(arr, pivot_index + 1, right, depth + 1)
+            hybridSort(arr, left, pivot_index - 1, depth + 1, pbar)
+            hybridSort(arr, pivot_index + 1, right, depth + 1, pbar)
         else:
-            hybridSort(arr, pivot_index + 1, right, depth + 1)
-            hybridSort(arr, left, pivot_index - 1, depth + 1)
+            hybridSort(arr, pivot_index + 1, right, depth + 1, pbar)
+            hybridSort(arr, left, pivot_index - 1, depth + 1, pbar)
 
-def partition(arr: List[Tuple[str, int, str]], left: int, right: int, depth: int) -> int:
+def partition(arr: List[Tuple[str, int, str]], left: int, right: int, depth: int, pbar=None) -> int:
     """
     对列表进行分区，并将枢轴放置在正确的位置。
 
@@ -48,6 +56,7 @@ def partition(arr: List[Tuple[str, int, str]], left: int, right: int, depth: int
         left: 分区子数组的起始索引。
         right: 分区子数组的结束索引。
         depth: 递归深度（用于调试输出缩进）。
+        pbar: tqdm progress bar instance.
 
     Returns:
         枢轴的最终位置。
@@ -71,6 +80,8 @@ def partition(arr: List[Tuple[str, int, str]], left: int, right: int, depth: int
         else:
             break
     arr[pivot], arr[j] = arr[j], arr[pivot]
+    if pbar:
+        pbar.update(1)
     return j
 
 def median_of_three(arr: List[Tuple[str, int, str]], left: int, mid: int, right: int) -> int:
@@ -118,16 +129,19 @@ def insertionSort(arr: List[Tuple[str, int, str]], left: int, right: int):
             j -= 1
         arr[j + 1] = key
         
-def execute_program(module_name: str, modules: List[Tuple[str, int, str]], position_mapping: dict):
+def execute_program(module_name: str, modules: List[Tuple[str, int, str]], position_mapping: dict, pbar=None):
     """执行指定模块，并在适当位置插入和执行其他模块。"""
-    print(f"正在执行模块: {module_name}")
+    print(f"--- 开始执行模块: {module_name} ---")
     try:
         module = importlib.import_module(module_name)
         module.run()  # 假设模块中有一个名为 run 的函数
+        print(f"--- 模块 {module_name} 执行完毕 ---")
     except ImportError as error:
         print(f"导入模块失败: {error}")
     except AttributeError:
         print(f"模块中未找到运行函数: {module_name}")
+    if pbar:
+        pbar.update(1)
 
     # 执行后检查是否有其他模块插入到该模块后
     for mod, _, position_key in modules:
@@ -159,27 +173,29 @@ if __name__ == "__main__":
     file_list_path = "file_list.txt"
     
     # 读取文件列表（包括优先级）
-    files_with_priority = read_file_list(file_list_path)
+    try:
+        files_with_priority = read_file_list(file_list_path)
+    except FileNotFoundError:
+        print(f"Error: {file_list_path} not found. Please create it.")
+        # 创建一个示例 file_list.txt
+        with open(file_list_path, "w") as f:
+            f.write("package.module1 1 pos1\n")
+            f.write("package.module2 3 pos2\n")
+            f.write("package.module3 2 pos3\n")
+        files_with_priority = read_file_list(file_list_path)
 
-    # 将优先级转换为整数
-    files_with_priority = [(f, int(p)) for f, p in files_with_priority]
 
     # 使用混合排序算法排序文件列表（按优先级排序）
-    hybridSort(files_with_priority)
+    hybrid_sort_with_progress(files_with_priority)
 
-    # 将排序后的列表写入新文件
-    write_sorted_list(sorted_list_path, files_with_priority)
-
-    # 创建 Handler 实例
-    handler = Handler(program_folder="programs")  # 假设所有的程序模块都在 programs 目录下
-    
     # 插入位置映射表：映射位置标识符到文件和占位符
     position_mapping = {
-        "module1": ("main.py", "#PLACEHOLDER_1"),
-        "module2": ("utils.py", "#PLACEHOLDER_2"),
-        "module3": ("config.py", "#PLACEHOLDER_3")
+        "pos1": ("main.py", "#PLACEHOLDER_1"),
+        "pos2": ("utils.py", "#PLACEHOLDER_2"),
+        "pos3": ("config.py", "#PLACEHOLDER_3")
     }
     
     # 执行排序后的程序文件
-    for module_name, _, _ in files_with_priority:
-        execute_program(module_name, files_with_priority, position_mapping)
+    with tqdm(total=len(files_with_priority), desc="Executing modules") as pbar:
+        for module_name, _, _ in files_with_priority:
+            execute_program(module_name, files_with_priority, position_mapping, pbar)
