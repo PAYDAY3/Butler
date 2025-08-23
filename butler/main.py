@@ -3,14 +3,11 @@ import sys
 import time
 import importlib
 import importlib.util
-import pyttsx3
 import datetime
 import subprocess
 import json
 import tkinter as tk
 from tkinter import messagebox
-from pydub import AudioSegment
-from pydub.playback import play
 import requests
 import shutil
 import tempfile
@@ -19,7 +16,6 @@ from functools import lru_cache
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from dotenv import load_dotenv
-import azure.cognitiveservices.speech as speechsdk
 import numpy as np
 import heapq
 import math
@@ -42,7 +38,7 @@ class Jarvis:
         load_dotenv()
         # 替换为DeepSeek API密钥
         self.deepseek_api_key = os.getenv("DEEPSEEK_API_KEY")
-        self.engine = pyttsx3.init()
+        self.engine = None # Will be initialized in speak()
         self.logging = LogManager.get_logger(__name__)
         self.plugin_manager = PluginManager("plugin")
 
@@ -167,6 +163,7 @@ class Jarvis:
             return "抱歉，我暂时无法回答这个问题。"  # 出错时返回默认响应
 
     def speak(self, audio):
+        import pyttsx3
         self.ui_print(f"Jarvis: {audio}")
 
         # 将助手的响应添加到历史记录
@@ -175,11 +172,16 @@ class Jarvis:
         if len(self.conversation_history) > self.MAX_HISTORY_MESSAGES:
             self.conversation_history = self.conversation_history[-self.MAX_HISTORY_MESSAGES:]
 
+        if not self.engine:
+            self.engine = pyttsx3.init()
+
         # 保存临时语音文件
         self.engine.save_to_file(audio, self.OUTPUT_FILE)
         self.engine.runAndWait()
         
         try:
+            from pydub import AudioSegment
+            from pydub.playback import play
             # 直接播放合成语音
             sound = AudioSegment.from_wav(self.OUTPUT_FILE)
             play(sound)
@@ -191,6 +193,7 @@ class Jarvis:
                 os.remove(self.OUTPUT_FILE)
 
     def takecommand(self):
+        import azure.cognitiveservices.speech as speechsdk
         speech_key = os.getenv("AZURE_SPEECH_KEY")
         service_region = os.getenv("AZURE_SERVICE_REGION", "chinaeast2")
         speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=service_region)

@@ -280,7 +280,7 @@ def process_excel_files(directory, filter_column=None, filter_condition=None, me
     
     print("正在创建可视化...")
     output_dir = os.path.join(directory, "可视化结果")
-    os.makedirs(output_dir, exist_ok=True)  
+    os.makedirs(output_dir, exist_ok=True)
     create_visualizations(df, analysis, output_dir)
     
     print("正在导出结果...")
