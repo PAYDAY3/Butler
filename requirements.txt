@@ -1,13 +1,8 @@
-pyttsx3
-pydub
-playsound==1.2.2
-pyaudio
 prompt_toolkit
 Pillow
 pygame
 watchdog
 python-dateutil
-sounddevice
 openpyxl
 python-docx
 PyPDF2

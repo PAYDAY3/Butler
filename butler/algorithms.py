@@ -6,6 +6,16 @@ from tqdm import tqdm
 
 # 1. Sorting Algorithms
 def _insertion_sort(arr, low, high, pbar=None):
+    """
+    An internal helper for introsort. Sorts a subsection of an array using insertion sort.
+    内部辅助函数，用于内省排序。使用插入排序对数组的子切片进行排序。
+
+    Args:
+        arr (list): The array to sort. / 要排序的数组。
+        low (int): The starting index. / 起始索引。
+        high (int): The ending index. / 结束索引。
+        pbar (tqdm, optional): Progress bar instance. / 进度条实例。
+    """
     for i in range(low + 1, high + 1):
         key = arr[i]
         j = i - 1
@@ -17,7 +27,19 @@ def _insertion_sort(arr, low, high, pbar=None):
             pbar.update(1)
 
 def _partition(arr, low, high, pbar=None):
-    """Hoare partition scheme"""
+    """
+    An internal helper for introsort. Partitions the array using Hoare partition scheme with median-of-three pivot.
+    内部辅助函数，用于内省排序。使用中值三数枢轴的霍尔分区方案对数组进行分区。
+
+    Args:
+        arr (list): The array to partition. / 要分区的数组。
+        low (int): The starting index. / 起始索引。
+        high (int): The ending index. / 结束索引。
+        pbar (tqdm, optional): Progress bar instance. / 进度条实例。
+
+    Returns:
+        int: The partition index. / 分区索引。
+    """
     # Median-of-three pivot selection
     mid = (low + high) // 2
     if arr[mid] < arr[low]:
@@ -46,7 +68,17 @@ def _partition(arr, low, high, pbar=None):
     return i
 
 def _introsort_util(arr, low, high, depth_limit, pbar=None):
-    """A hybrid sorting algorithm (Introsort)"""
+    """
+    The core recursive utility for introsort. Switches to insertion sort for small partitions.
+    内省排序的核心递归工具。对于小分区，切换到插入排序。
+
+    Args:
+        arr (list): The array to sort. / 要排序的数组。
+        low (int): The starting index. / 起始索引。
+        high (int): The ending index. / 结束索引。
+        depth_limit (int): Recursion depth limit to prevent worst-case quicksort performance. / 递归深度限制，以防止最坏情况下的快速排序性能。
+        pbar (tqdm, optional): Progress bar instance. / 进度条实例。
+    """
     while high - low > 16: # Threshold for switching to insertion sort
         if depth_limit == 0:
             # If recursion depth is too high, switch to heapsort
@@ -62,8 +94,18 @@ def _introsort_util(arr, low, high, depth_limit, pbar=None):
 
 def quick_sort(arr, use_progress_bar=False):
     """
-    Performs an in-place introsort on the array.
-    Set use_progress_bar to True to display a progress bar.
+    Sorts an array using Introsort, a hybrid algorithm that combines Quicksort, Heapsort, and Insertion Sort.
+    It provides fast average performance while avoiding Quicksort's worst-case O(n^2) time complexity.
+
+    使用内省排序（Introsort）对数组进行排序，这是一种结合了快速排序、堆排序和插入排序的混合算法。
+    它提供了快速的平均性能，同时避免了快速排序O(n^2)的最坏情况时间复杂度。
+
+    Args:
+        arr (list): The list of numbers to sort. / 需要排序的数字列表。
+        use_progress_bar (bool, optional): If True, displays a progress bar. Defaults to False. / 如果为True，则显示进度条。默认为False。
+
+    Returns:
+        list: A new list containing the sorted elements. / 包含已排序元素的新列表。
     """
     import math
     if not arr:
@@ -81,7 +123,16 @@ def quick_sort(arr, use_progress_bar=False):
     return arr_copy
 
 def merge_sort(arr):
-    """归并排序算法"""
+    """
+    Sorts an array using the Merge Sort algorithm. It's a stable, comparison-based sorting algorithm with O(n log n) time complexity.
+    使用归并排序算法对数组进行排序。它是一种稳定的、基于比较的排序算法，时间复杂度为O(n log n)。
+
+    Args:
+        arr (list): The list of numbers to sort. / 需要排序的数字列表。
+
+    Returns:
+        list: A new list containing the sorted elements. / 包含已排序元素的新列表。
+    """
     if len(arr) <= 1:
         return arr
 
@@ -95,7 +146,17 @@ def merge_sort(arr):
     return _merge(left, right)
 
 def _merge(left, right):
-    """归并排序的合并操作"""
+    """
+    An internal helper for merge_sort. Merges two sorted lists into one sorted list.
+    归并排序的内部辅助函数。将两个已排序的列表合并为一个已排序的列表。
+
+    Args:
+        left (list): The left sorted list. / 左侧已排序列表。
+        right (list): The right sorted list. / 右侧已排序列表。
+
+    Returns:
+        list: The merged sorted list. / 合并后的已排序列表。
+    """
     result = []
     i = j = 0
 
@@ -113,7 +174,17 @@ def _merge(left, right):
 
 # 2. Searching Algorithm
 def binary_search(arr, target):
-    """二分查找算法"""
+    """
+    Searches for a target value in a sorted array using the Binary Search algorithm.
+    使用二分查找算法在已排序的数组中搜索目标值。
+
+    Args:
+        arr (list): The sorted list of numbers to search in. / 要搜索的已排序数字列表。
+        target: The value to search for. / 要搜索的值。
+
+    Returns:
+        int: The index of the target if found, otherwise -1. / 如果找到目标，则返回其索引，否则返回-1。
+    """
     low, high = 0, len(arr) - 1
 
     while low <= high:
@@ -131,7 +202,23 @@ def binary_search(arr, target):
 
 # 3. Pathfinding Algorithm
 def a_star(graph, start, goal, heuristic, use_progress_bar=False):
-    """A*最短路径算法"""
+    """
+    Finds the shortest path between two nodes in a graph using the A* algorithm.
+    使用A*算法查找图中两个节点之间的最短路径。
+
+    Args:
+        graph (dict): A dictionary representing the graph, where keys are node IDs and values are dictionaries of neighbors and their weights.
+                      Example: {'A': {'B': 1, 'C': 4}, 'B': {'A': 1, 'D': 2}}
+                      表示图形的字典，其中键是节点ID，值是邻居及其权重的字典。
+        start: The starting node. / 起始节点。
+        goal: The goal node. / 目标节点。
+        heuristic (function): A heuristic function that estimates the cost from a node to the goal. It should take two nodes as arguments.
+                              一个启发式函数，用于估计从一个节点到目标的成本。它应该接受两个节点作为参数。
+        use_progress_bar (bool, optional): If True, displays a progress bar. Defaults to False. / 如果为True，则显示进度条。默认为False。
+
+    Returns:
+        list or None: The list of nodes representing the shortest path, or None if no path is found. / 表示最短路径的节点列表，如果找不到路径则为None。
+    """
     open_set = [(0, start)]
     came_from = {}
 
@@ -177,8 +264,19 @@ def a_star(graph, start, goal, heuristic, use_progress_bar=False):
 
 def dijkstra(graph, start):
     """
-    Dijkstra's algorithm implemented as a special case of A*
-    with a zero heuristic.
+    Finds the shortest paths from a start node to all other nodes in a graph using Dijkstra's algorithm.
+    This implementation uses the A* algorithm with a zero heuristic.
+
+    使用Dijkstra算法查找从起始节点到图中所有其他节点的最短路径。
+    此实现使用A*算法和零启发式函数。
+
+    Args:
+        graph (dict): The graph representation (same as a_star). / 图形表示（与a_star相同）。
+        start: The starting node. / 起始节点。
+
+    Returns:
+        dict: A dictionary where keys are goal nodes and values are the paths (list of nodes) from the start node.
+              一个字典，其中键是目标节点，值是从起始节点出发的路径（节点列表）。
     """
     # Dijkstra is A* with h(n) = 0 for all n.
     # This implementation of A* finds a path to a single goal.
@@ -206,7 +304,17 @@ def dijkstra(graph, start):
 
 # 4. Text Similarity Algorithm
 def text_cosine_similarity(text1, text2):
-    """计算两个文本的余弦相似度"""
+    """
+    Calculates the cosine similarity between two text strings using TF-IDF vectors.
+    使用TF-IDF向量计算两个文本字符串之间的余弦相似度。
+
+    Args:
+        text1 (str): The first text string. / 第一个文本字符串。
+        text2 (str): The second text string. / 第二个文本字符串。
+
+    Returns:
+        float: The cosine similarity score between 0.0 and 1.0. / 介于0.0和1.0之间的余弦相似度得分。
+    """
     vectorizer = TfidfVectorizer()
     tfidf_matrix = vectorizer.fit_transform([text1, text2])
     similarity = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:2])
@@ -214,7 +322,16 @@ def text_cosine_similarity(text1, text2):
 
 # 5. Image Processing Algorithm
 def edge_detection(image_path):
-    """边缘检测算法"""
+    """
+    Detects edges in an image using the Canny edge detection algorithm.
+    使用Canny边缘检测算法检测图像中的边缘。
+
+    Args:
+        image_path (str): The file path to the input image. / 输入图像的文件路径。
+
+    Returns:
+        numpy.ndarray or None: A new image with edges highlighted, or None if the image cannot be read. / 突出显示边缘的新图像，如果无法读取图像则为None。
+    """
     image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
     if image is None:
         return None
@@ -225,7 +342,10 @@ def edge_detection(image_path):
 
 # 6. Mathematical Algorithm
 def _multiply_matrices(F, M):
-    """Helper function to multiply two 2x2 matrices."""
+    """
+    An internal helper for fibonacci. Multiplies two 2x2 matrices.
+    斐波那契的内部辅助函数。将两个2x2矩阵相乘。
+    """
     x = F[0][0] * M[0][0] + F[0][1] * M[1][0]
     y = F[0][0] * M[0][1] + F[0][1] * M[1][1]
     z = F[1][0] * M[0][0] + F[1][1] * M[1][0]
@@ -237,7 +357,10 @@ def _multiply_matrices(F, M):
     F[1][1] = w
 
 def _power(F, n):
-    """Helper function to calculate matrix exponentiation."""
+    """
+    An internal helper for fibonacci. Calculates matrix exponentiation.
+    斐波那契的内部辅助函数。计算矩阵的幂。
+    """
     if n == 0 or n == 1:
         return
     M = [[1, 1], [1, 0]]
@@ -250,8 +373,14 @@ def _power(F, n):
 
 def fibonacci(n):
     """
-    Calculates the n-th Fibonacci number using matrix exponentiation.
-    This is an O(log n) implementation.
+    Calculates the n-th Fibonacci number using matrix exponentiation, which is an O(log n) algorithm.
+    使用矩阵求幂计算第n个斐波那契数，这是一个O(log n)的算法。
+
+    Args:
+        n (int): The index of the Fibonacci number to calculate (non-negative). / 要计算的斐波那契数的索引（非负）。
+
+    Returns:
+        int: The n-th Fibonacci number. / 第n个斐波那契数。
     """
     if n <= 0:
         return 0
