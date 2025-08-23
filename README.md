@@ -56,7 +56,20 @@ The project is organized into several key directories:
 
 ## Usage
 
-### Butler Assistant
+### Easy Launch (Recommended)
+
+Once you have installed the dependencies and configured your API keys, you can start the application easily:
+
+*   **On Windows:** Simply double-click the `run.bat` file.
+*   **On macOS or Linux:** Run the `run.sh` script from your terminal with `./run.sh`, or double-click it in your file manager (you may need to grant it execute permissions first with `chmod +x run.sh`).
+
+These scripts will open the main application with its graphical user interface.
+
+### Manual Launch
+
+If you prefer, you can still run the application manually from the command line.
+
+#### Butler Assistant
 
 To start the Butler assistant with its GUI:
 
