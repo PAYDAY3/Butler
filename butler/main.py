@@ -31,6 +31,7 @@ from package.log_manager import LogManager
 from butler.CommandPanel import CommandPanel
 from plugin.PluginManager import PluginManager
 from . import algorithms
+from local_interpreter.interpreter import Interpreter
 
 class Jarvis:
     def __init__(self, root):
@@ -71,6 +72,7 @@ class Jarvis:
         self.matched_program = None
         self.panel = None
         self.MAX_HISTORY_MESSAGES = 10
+        self.interpreter = Interpreter()
 
     def set_panel(self, panel):
         self.panel = panel
@@ -79,7 +81,7 @@ class Jarvis:
         print(message)
         if self.panel:
             self.panel.append_to_history(message)
-    
+
     # 核心功能
     def preprocess(self, text):
         """
@@ -107,7 +109,7 @@ class Jarvis:
             "max_tokens": 512,
             "temperature": 0
         }
-        
+
         try:
             response = requests.post(url, headers=headers, json=payload)
             response.raise_for_status()
@@ -227,42 +229,58 @@ class Jarvis:
         if command is None:
             return
 
-        # 将用户的命令添加到历史记录
-        self.conversation_history.append({"role": "user", "content": command})
+        self.ui_print(f"User: {command}")
 
-        nlu_result = self.preprocess(command)
-        intent = nlu_result.get("intent", "unknown")
-        entities = nlu_result.get("entities", {})
+        # New hybrid handler logic: Interpreter is the default.
+        if command.strip().startswith("/legacy "):
+            # Route to the old intent-based system
+            legacy_command = command.strip()[8:] # Get the command without the prefix
+            self.ui_print(f"Jarvis (Legacy Mode): Processing '{legacy_command}'")
 
-        intent_handlers = {
-            "sort_numbers": self._handle_sort_numbers,
-            "find_number": self._handle_find_number,
-            "calculate_fibonacci": self._handle_calculate_fibonacci,
-            "edge_detect_image": self._handle_edge_detect_image,
-            "text_similarity": self._handle_text_similarity,
-            "open_program": self._handle_open_program,
-            "exit": self._handle_exit,
-        }
+            # --- Start of original logic ---
+            self.conversation_history.append({"role": "user", "content": legacy_command})
+            nlu_result = self.preprocess(legacy_command)
+            intent = nlu_result.get("intent", "unknown")
+            entities = nlu_result.get("entities", {})
 
-        handler = intent_handlers.get(intent)
+            intent_handlers = {
+                "sort_numbers": self._handle_sort_numbers,
+                "find_number": self._handle_find_number,
+                "calculate_fibonacci": self._handle_calculate_fibonacci,
+                "edge_detect_image": self._handle_edge_detect_image,
+                "text_similarity": self._handle_text_similarity,
+                "open_program": self._handle_open_program,
+                "exit": self._handle_exit,
+            }
 
-        if handler:
-            handler(entities=entities, programs=programs)
+            handler = intent_handlers.get(intent)
+
+            if handler:
+                handler(entities=entities, programs=programs)
+            else:
+                # Fallback to plugin or unknown command
+                plugin_found = False
+                for plugin in self.plugin_manager.get_all_plugins():
+                    if plugin.get_name().lower() in legacy_command.lower():
+                        plugin_result = self.plugin_manager.run_plugin(plugin.get_name(), legacy_command, entities)
+                        if plugin_result.success:
+                            self.speak(plugin_result.result)
+                            plugin_found = True
+                            break
+
+                if not plugin_found:
+                    self.ui_print(f"未知指令或意图: {legacy_command}")
+                    self.logging.warning(f"未知指令或意图: {intent}")
+                    self.speak("抱歉，我不太理解您的意思，请换一种方式表达。")
+            # --- End of original logic ---
+
         else:
-            # Fallback to plugin or unknown command
-            plugin_found = False
-            for plugin in self.plugin_manager.get_all_plugins():
-                if plugin.get_name().lower() in command.lower():
-                    plugin_result = self.plugin_manager.run_plugin(plugin.get_name(), command, entities)
-                    if plugin_result.success:
-                        self.speak(plugin_result.result)
-                        plugin_found = True
-                        break
-
-            if not plugin_found:
-                self.ui_print(f"未知指令或意图: {command}")
-                self.logging.warning(f"未知指令或意图: {intent}")
-                self.speak("抱歉，我不太理解您的意思，请换一种方式表达。")
+            # Default to the new interpreter
+            if self.interpreter.is_ready:
+                result = self.interpreter.run(command)
+                self.ui_print(f"Jarvis: {result}")
+            else:
+                self.ui_print("Jarvis: Interpreter is not ready. Please check API key.")
 
     def _handle_sort_numbers(self, entities, **kwargs):
         try:
