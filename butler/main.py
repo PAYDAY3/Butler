@@ -1,3 +1,4 @@
+print("Reloading butler/main.py")
 import os
 import sys
 import time
@@ -77,10 +78,10 @@ class Jarvis:
     def set_panel(self, panel):
         self.panel = panel
 
-    def ui_print(self, message):
+    def ui_print(self, message, tag='ai_response'):
         print(message)
         if self.panel:
-            self.panel.append_to_history(message)
+            self.panel.append_to_history(message, tag)
 
     # 核心功能
     def preprocess(self, text):
@@ -166,7 +167,7 @@ class Jarvis:
 
     def speak(self, audio):
         import pyttsx3
-        self.ui_print(f"Jarvis: {audio}")
+        self.ui_print(audio, tag='ai_response')
 
         # 将助手的响应添加到历史记录
         self.conversation_history.append({"role": "assistant", "content": audio})
@@ -208,7 +209,10 @@ class Jarvis:
             result = recognizer.recognize_once()
             if result.reason == speechsdk.ResultReason.RecognizedSpeech:
                 query = result.text
-                self.ui_print('User: ' + query + '\n')
+                if self.panel:
+                    self.panel.append_to_history(f"You: {query}", "user_prompt")
+                else:
+                    print('User: ' + query)
                 return query
             elif result.reason == speechsdk.ResultReason.NoMatch:
                 self.ui_print("对不起，我没有听清楚，请再说一遍。")
@@ -229,7 +233,8 @@ class Jarvis:
         if command is None:
             return
 
-        self.ui_print(f"User: {command}")
+        # The user command is already displayed on the panel by `send_text_command`
+        # self.ui_print(f"User: {command}", tag='user_prompt')
 
         # New hybrid handler logic: Interpreter is the default.
         if command.strip().startswith("/legacy "):
@@ -493,7 +498,6 @@ class Jarvis:
     def panel_command_handler(self, command_type, command_payload):
         programs = self.open_programs("./package")
         if command_type == "text":
-            self.ui_print(f"User: {command_payload}")
             self.handle_user_command(command_payload, programs)
         elif command_type == "voice":
             command = self.takecommand()
@@ -507,7 +511,7 @@ class Jarvis:
         #     observer.schedule(handler, folder, recursive=True)
         # observer.start()
 
-        process_tasks()
+        # process_tasks() # Temporarily disabled for UI testing
         # schedule_management() # This is a standalone command line tool, disabling for now
         self.manage_temp_files()
 
@@ -538,6 +542,7 @@ class Jarvis:
 def main():
     """Main entry point for the application."""
     import argparse
+    import traceback
     parser = argparse.ArgumentParser()
     parser.add_argument("--headless", action="store_true", help="Run in headless mode without GUI")
     args = parser.parse_args()
@@ -568,6 +573,7 @@ def main():
 
     except Exception as e:
         print(f"An unexpected error occurred during execution: {e}")
+        traceback.print_exc()
 
 if __name__ == "__main__":
     main()

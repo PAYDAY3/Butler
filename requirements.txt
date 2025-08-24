@@ -29,3 +29,5 @@ opencv-python
 scikit-learn
 tqdm
 pandas
+Pygments
+pyttsx3
