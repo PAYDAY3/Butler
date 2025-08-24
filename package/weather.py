@@ -1,6 +1,5 @@
 import requests
 from bs4 import BeautifulSoup
-from jarvis.jarvis import takecommand, speak
 
 def get_weather_from_web(city):
     # 定义目标网页的URL，假设使用一个实际的天气API或网页
@@ -35,14 +34,3 @@ def get_weather_from_web(city):
     except AttributeError as e:
         print(f"解析天气数据错误: {e}")
         return None
-
-def display_weather_info(weather_info, jarvis):
-    if weather_info:
-        weather_text = f"{weather_info['description']}，" \
-                       f"温度: {weather_info['temperature']} 摄氏度，" \
-                       f"湿度: {weather_info['humidity']}%，" \
-                       f"风速: {weather_info['wind']}"
-        print(weather_text)
-        speak(weather_text)
-    else:
-        speak("没有找到城市的天气信息。")
