@@ -10,7 +10,6 @@
     "日程管理": "schedule_management.py",
     "二维码识别": "QR-Code-Recognitipy.py",
     "网络程序": "network_apy.py",
-    "天气预报": "main.py",
     "翻译": "translators.py",
     "文件转换器": "file_converter.py",
     "帐号登录": "AccountPassword.py",
