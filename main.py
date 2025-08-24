@@ -2,9 +2,9 @@ import tkinter as tk
 from package.weather import get_weather_from_web
 from package.virtual_keyboard import VirtualKeyboard
 
-class WeatherApp(tk.Tk):
-    def __init__(self):
-        super().__init__()
+class WeatherApp(tk.Toplevel):
+    def __init__(self, master=None):
+        super().__init__(master)
         self.title("Weather App")
         self.geometry("800x600")
 
@@ -69,25 +69,17 @@ class WeatherApp(tk.Tk):
             details_label = tk.Label(details_window, text=details_text, font=("Helvetica", 16), justify=tk.LEFT)
             details_label.pack(padx=20, pady=20)
 
-        self.active_frame = self.weather_frame
-        self.focusable_widgets = [self.city_entry, self.search_button, self.details_button]
-        self.current_focus_index = 0
-        self.focusable_widgets[self.current_focus_index].focus_set()
-
-        self.bind("<Tab>", self.switch_focus)
-        self.activate_weather_navigation()
-
     def switch_focus(self, event):
         if self.active_frame == self.weather_frame:
             self.active_frame = self.keyboard_frame
-            self.keyboard.buttons[self.keyboard.current_row][self.keyboard.current_col].focus_set()
             self.keyboard.activate_navigation()
+            self.keyboard.button_grid[self.keyboard.current_row][self.keyboard.current_col].focus_set()
             self.deactivate_weather_navigation()
         else:
             self.active_frame = self.weather_frame
-            self.focusable_widgets[self.current_focus_index].focus_set()
             self.keyboard.deactivate_navigation()
             self.activate_weather_navigation()
+            self.focusable_widgets[self.current_focus_index].focus_set()
 
     def navigate(self, event):
         if self.active_frame == self.weather_frame:
@@ -114,6 +106,15 @@ class WeatherApp(tk.Tk):
         self.unbind("<Down>")
         self.unbind("<Return>")
 
+def run(master=None):
+    if master is None:
+        root = tk.Tk()
+        app = WeatherApp(root)
+        root.withdraw() # Hide the root window
+        app.protocol("WM_DELETE_WINDOW", lambda: root.destroy())
+        root.mainloop()
+    else:
+        app = WeatherApp(master)
+
 if __name__ == "__main__":
-    app = WeatherApp()
-    app.mainloop()
+    run()

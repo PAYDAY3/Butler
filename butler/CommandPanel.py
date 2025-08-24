@@ -81,6 +81,19 @@ class CommandPanel(tk.Frame):
         self.functions_listbox.grid(row=1, column=0, padx=5, pady=5, sticky="nsew")
         for name in self.program_mapping.keys():
             self.functions_listbox.insert(tk.END, name)
+        self.functions_listbox.bind("<Double-1>", self.launch_selected_function)
+
+    def launch_selected_function(self, event=None):
+        selected_indices = self.functions_listbox.curselection()
+        if not selected_indices:
+            return
+
+        selected_name = self.functions_listbox.get(selected_indices[0])
+        program_file = self.program_mapping.get(selected_name)
+
+        if program_file and self.command_callback:
+            logger.info(f"Launching program: {selected_name} -> {program_file}")
+            self.command_callback("launch_program", program_file)
 
         # Logs view widgets
         self.logs_label = tk.Label(self.log_frame, text="日志记录", bg='white', font=('Arial', 12, 'bold'))

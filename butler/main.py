@@ -457,7 +457,17 @@ class Jarvis:
             if hasattr(program_module, 'run'):
                 self.ui_print(f"执行程序: {program_name}")
                 self.speak(f"正在启动 {program_name}")
-                program_module.run()
+                # Pass the root window to the run function if it accepts it
+                try:
+                    import inspect
+                    sig = inspect.signature(program_module.run)
+                    if 'master' in sig.parameters:
+                        program_module.run(master=self.root)
+                    else:
+                        program_module.run()
+                except Exception as e:
+                    self.logging.error(f"Error inspecting or running program {program_name}: {e}")
+                    program_module.run() # Fallback to run without master
             else:
                 self.ui_print(f"程序 {program_name} 没有run方法")
                 self.speak(f"程序 {program_name} 无法启动")
@@ -499,6 +509,8 @@ class Jarvis:
             command = self.takecommand()
             if command and self.panel:
                 self.panel.set_input_text(command)
+        elif command_type == "launch_program":
+            self.execute_program(command_payload)
 
     def main(self):
         # handler = self.ProgramHandler(self.program_folder)
