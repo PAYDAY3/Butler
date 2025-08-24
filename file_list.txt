@@ -1,3 +1,0 @@
-package.module1 1 pos1
-package.module2 3 pos2
-package.module3 2 pos3
