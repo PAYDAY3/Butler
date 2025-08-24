@@ -1,7 +1,7 @@
 import os
 import re
 import importlib
-from openai import OpenAI
+from deepseek import DeepSeekAPI
 from ..tools.tool_decorator import TOOL_REGISTRY
 
 def load_all_tools():
@@ -60,7 +60,7 @@ class Orchestrator:
             self.api_key = os.getenv("DEEPSEEK_API_KEY")
             if not self.api_key:
                 raise ValueError("DEEPSEEK_API_KEY not found in environment variables.")
-            self.client = OpenAI(api_key=self.api_key, base_url="https://api.deepseek.com")
+            self.client = DeepSeekAPI(api_key=self.api_key)
         except Exception as e:
             print(f"Error initializing Orchestrator: {e}")
             self.client = None
