@@ -1,7 +1,11 @@
 import heapq
+from collections import deque
+
+import cv2
+import numpy as np
+from sklearn.cluster import KMeans
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-import cv2
 from tqdm import tqdm
 
 # 1. Sorting Algorithms
@@ -82,9 +86,8 @@ def _introsort_util(arr, low, high, depth_limit, pbar=None):
     while high - low > 16: # Threshold for switching to insertion sort
         if depth_limit == 0:
             # If recursion depth is too high, switch to heapsort
-            # (Heapsort not implemented here for simplicity, can be added)
-            # For now, we'll just continue with quicksort
-            pass
+            _heap_sort_range(arr, low, high, pbar)
+            return
 
         pivot_index = _partition(arr, low, high, pbar)
         _introsort_util(arr, pivot_index + 1, high, depth_limit - 1, pbar)
@@ -171,6 +174,84 @@ def _merge(left, right):
     result.extend(left[i:])
     result.extend(right[j:])
     return result
+
+def _heapify(arr, n, i, low, pbar=None):
+    """
+    Internal helper for heap_sort. Ensures the subtree at index i is a max-heap.
+    堆排序的内部辅助函数。确保索引i处的子树是最大堆。
+
+    Args:
+        arr (list): The array containing the heap. / 包含堆的数组。
+        n (int): The size of the heap. / 堆的大小。
+        i (int): The root index of the subtree. / 子树的根索引。
+        low (int): The offset for sorting a sub-array (for introsort). / 用于对子数组进行排序的偏移量（用于内省排序）。
+        pbar (tqdm, optional): Progress bar instance. / 进度条实例。
+    """
+    largest = i
+    left = 2 * i + 1
+    right = 2 * i + 2
+
+    # Check if left child exists and is greater than root
+    if left < n and arr[low + left] > arr[low + largest]:
+        largest = left
+
+    # Check if right child exists and is greater than root
+    if right < n and arr[low + right] > arr[low + largest]:
+        largest = right
+
+    # Change root if needed
+    if largest != i:
+        arr[low + i], arr[low + largest] = arr[low + largest], arr[low + i]
+        # Heapify the root.
+        _heapify(arr, n, largest, low, pbar)
+
+def _heap_sort_range(arr, low, high, pbar=None):
+    """
+    An internal helper for introsort. Sorts a subsection of an array using heapsort.
+    内省排序的内部辅助函数。使用堆排序对数组的子切片进行排序。
+    """
+    n = high - low + 1
+    # Build a max-heap from the unsorted array.
+    # We start from the last non-leaf node.
+    for i in range(n // 2 - 1, -1, -1):
+        _heapify(arr, n, i, low, pbar)
+
+    # Extract elements one by one from the heap
+    for i in range(n - 1, 0, -1):
+        # Move current root (max element) to the end
+        arr[low], arr[low + i] = arr[low + i], arr[low]
+        if pbar:
+            pbar.update(1)
+        # Call max _heapify on the reduced heap
+        _heapify(arr, i, 0, low, pbar)
+
+def heap_sort(arr, use_progress_bar=False):
+    """
+    Sorts an array using the Heapsort algorithm. It's an in-place, non-stable sorting algorithm.
+    使用堆排序算法对数组进行排序。它是一种不稳定的、基于比较的原地排序算法，时间复杂度为O(n log n)。
+
+    Args:
+        arr (list): The list of numbers to sort. / 需要排序的数字列表。
+        use_progress_bar (bool, optional): If True, displays a progress bar. Defaults to False. / 如果为True，则显示进度条。默认为False。
+
+    Returns:
+        list: A new list containing the sorted elements. / 包含已排序元素的新列表。
+    """
+    if not arr:
+        return arr
+    arr_copy = list(arr)
+    n = len(arr_copy)
+
+    pbar = None
+    if use_progress_bar:
+        pbar = tqdm(total=n, desc="Sorting")
+
+    _heap_sort_range(arr_copy, 0, n - 1, pbar)
+
+    if pbar:
+        pbar.close()
+
+    return arr_copy
 
 # 2. Searching Algorithm
 def binary_search(arr, target):
@@ -262,45 +343,114 @@ def a_star(graph, start, goal, heuristic, use_progress_bar=False):
         if pbar:
             pbar.close()
 
-def dijkstra(graph, start):
+def dijkstra(graph, start_node):
     """
-    Finds the shortest paths from a start node to all other nodes in a graph using Dijkstra's algorithm.
-    This implementation uses the A* algorithm with a zero heuristic.
+    Finds the shortest paths from a start node to all other nodes in a weighted graph using Dijkstra's algorithm.
+    This implementation uses a min-priority queue for efficiency.
 
-    使用Dijkstra算法查找从起始节点到图中所有其他节点的最短路径。
-    此实现使用A*算法和零启发式函数。
+    使用Dijkstra算法在加权图中查找从起始节点到所有其他节点的最短路径。
+    此实现使用最小优先队列以提高效率。
 
     Args:
-        graph (dict): The graph representation (same as a_star). / 图形表示（与a_star相同）。
-        start: The starting node. / 起始节点。
+        graph (dict): The graph representation where keys are node IDs and values are dictionaries
+                      of neighbors and their edge weights.
+                      Example: {'A': {'B': 1, 'C': 4}, 'B': {'A': 1, 'D': 2, 'C': 5}, ...}
+                      图形表示，其中键是节点ID，值是邻居及其边权重的字典。
+        start_node: The node from which to start the search. / 开始搜索的节点。
 
     Returns:
-        dict: A dictionary where keys are goal nodes and values are the paths (list of nodes) from the start node.
-              一个字典，其中键是目标节点，值是从起始节点出发的路径（节点列表）。
+        tuple: A tuple containing two dictionaries:
+               - distances (dict): A dictionary mapping each node to its shortest distance from the start_node.
+               - predecessors (dict): A dictionary mapping each node to its predecessor in the shortest path.
+               一个包含两个字典的元组：
+               - distances (dict): 将每个节点映射到其与起始节点最短距离的字典。
+               - predecessors (dict): 将每个节点映射到其在最短路径中的前驱节点的字典。
     """
-    # Dijkstra is A* with h(n) = 0 for all n.
-    # This implementation of A* finds a path to a single goal.
-    # A classical Dijkstra finds shortest paths to all nodes.
-    # This is kept for compatibility, but its behavior is now goal-oriented.
-    # To find all paths, a goal would need to be specified and the function
-    # run for all possible goals, or the a_star function modified.
+    # Initialize distances to all nodes as infinity, except for the start_node
+    distances = {node: float('infinity') for node in graph}
+    distances[start_node] = 0
 
-    # This is a simplified placeholder. For a true Dijkstra implementation
-    # that returns distances to all nodes, the original implementation was more accurate.
-    # We are choosing to replace it with the more powerful A*.
-    # If all-pairs shortest path is needed, a different algorithm should be used.
+    # Priority queue to store (distance, node)
+    priority_queue = [(0, start_node)]
 
-    # A dummy heuristic for Dijkstra
-    def zero_heuristic(a, b):
-        return 0
+    # Dictionary to store the shortest path tree
+    predecessors = {}
 
-    # Find path to all nodes by iterating through them as goals
-    paths = {}
-    for goal_node in graph:
-        if start != goal_node:
-             paths[goal_node] = a_star(graph, start, goal_node, zero_heuristic)
+    while priority_queue:
+        # Get the node with the smallest distance
+        current_distance, current_node = heapq.heappop(priority_queue)
 
-    return paths
+        # If we have already found a shorter path, skip
+        if current_distance > distances[current_node]:
+            continue
+
+        # Explore neighbors
+        for neighbor, weight in graph[current_node].items():
+            distance = current_distance + weight
+
+            # If a shorter path to the neighbor is found
+            if distance < distances[neighbor]:
+                distances[neighbor] = distance
+                predecessors[neighbor] = current_node
+                heapq.heappush(priority_queue, (distance, neighbor))
+
+    return distances, predecessors
+
+def breadth_first_search(graph, start_node):
+    """
+    Performs a Breadth-First Search on a graph from a starting node.
+    从起始节点对图执行广度优先搜索（BFS）。
+
+    Args:
+        graph (dict): The graph representation (adjacency list). / 图形表示（邻接表）。
+        start_node: The node to start the search from. / 开始搜索的节点。
+
+    Returns:
+        list: A list of nodes in the order they were visited. / 按访问顺序排列的节点列表。
+    """
+    if start_node not in graph:
+        return []
+
+    visited = set()
+    queue = deque([start_node])
+    visited.add(start_node)
+    order_visited = []
+
+    while queue:
+        vertex = queue.popleft()
+        order_visited.append(vertex)
+
+        for neighbor in graph.get(vertex, []):
+            if neighbor not in visited:
+                visited.add(neighbor)
+                queue.append(neighbor)
+
+    return order_visited
+
+def depth_first_search(graph, start_node, visited=None):
+    """
+    Performs a Depth-First Search on a graph from a starting node.
+    从起始节点对图执行深度优先搜索（DFS）。
+
+    Args:
+        graph (dict): The graph representation (adjacency list). / 图形表示（邻接表）。
+        start_node: The node to start the search from. / 开始搜索的节点。
+        visited (set, optional): A set of already visited nodes. Defaults to None. / 已访问节点的集合。默认为None。
+
+    Returns:
+        list: A list of nodes in the order they were visited. / 按访问顺序排列的节点列表。
+    """
+    if visited is None:
+        visited = set()
+
+    order_visited = []
+    if start_node not in visited:
+        visited.add(start_node)
+        order_visited.append(start_node)
+        for neighbor in graph.get(start_node, []):
+            order_visited.extend(depth_first_search(graph, neighbor, visited))
+
+    return order_visited
 
 # 4. Text Similarity Algorithm
 def text_cosine_similarity(text1, text2):
@@ -391,3 +541,31 @@ def fibonacci(n):
     _power(F, n - 1)
 
     return F[0][0]
+
+
+# 7. Clustering Algorithm
+def k_means_clustering(data, n_clusters, random_state=None):
+    """
+    Performs K-Means clustering on a dataset.
+    对数据集执行K-Means聚类。
+
+    Args:
+        data (array-like or sparse matrix, shape (n_samples, n_features)): The input data. / 输入数据。
+        n_clusters (int): The number of clusters to form. / 要形成的簇数。
+        random_state (int, RandomState instance or None, optional): Determines random number generation for centroid initialization.
+                                                                    Use an int to make the randomness deterministic. Defaults to None.
+                                                                    确定质心初始化的随机数生成。使用整数可使随机性具有确定性。默认为None。
+
+    Returns:
+        tuple: A tuple containing:
+               - labels (numpy.ndarray): Index of the cluster each sample belongs to. / 每个样本所属的簇的索引。
+               - cluster_centers (numpy.ndarray): Coordinates of cluster centers. / 簇中心的坐标。
+    """
+    if not isinstance(data, np.ndarray):
+        data = np.array(data)
+
+    # n_init='auto' is the future default, but 10 is the current default and setting it suppresses a warning.
+    kmeans = KMeans(n_clusters=n_clusters, random_state=random_state, n_init=10)
+    kmeans.fit(data)
+
+    return kmeans.labels_, kmeans.cluster_centers_
