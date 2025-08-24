@@ -230,6 +230,10 @@ class WeatherApp(tk.Toplevel):
         # Link keyboard to city entry
         self.keyboard.entry_text = self.city_entry_str
 
+        # Hide keyboard by default
+        self.keyboard_frame.grid_remove()
+        self.grid_rowconfigure(1, weight=0)
+
     def create_weather_widgets(self):
         # City entry
         self.city_entry_str = tk.StringVar()
@@ -247,6 +251,20 @@ class WeatherApp(tk.Toplevel):
         # Details button
         self.details_button = tk.Button(self.weather_frame, text="Details", command=self.show_details, state=tk.DISABLED)
         self.details_button.pack(pady=5)
+
+        # Toggle keyboard button
+        self.toggle_keyboard_button = tk.Button(self.weather_frame, text="Show Keyboard", command=self.toggle_keyboard)
+        self.toggle_keyboard_button.pack(pady=5)
+
+    def toggle_keyboard(self):
+        if self.keyboard_frame.winfo_viewable():
+            self.keyboard_frame.grid_remove()
+            self.toggle_keyboard_button.config(text="Show Keyboard")
+            self.grid_rowconfigure(1, weight=0)
+        else:
+            self.keyboard_frame.grid()
+            self.toggle_keyboard_button.config(text="Hide Keyboard")
+            self.grid_rowconfigure(1, weight=1)
 
     def search_weather(self):
         city = self.city_entry.get()
