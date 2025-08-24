@@ -97,19 +97,19 @@ class VirtualKeyboard(tk.Frame):
         self.language_button.grid(row=special_button_row, column=1)
 
         # 中间的空格按钮
-        tk.Button(self, text=self.special_keys['space'], width=25, height=2, font=("Helvetica", 18),
+        tk.Button(self, text=self.special_keys['space'], width=20, height=2, font=("Helvetica", 18),
                   command=lambda: self.on_key_press(self.special_keys['space']),
-                  activebackground='lightblue', activeforeground='black').grid(row=special_button_row, column=2, columnspan=5)
-
-        # 右下角的表情按钮
-        tk.Button(self, text=self.special_keys['emoji'], width=5, height=2, font=("Helvetica", 18),
-                  command=lambda: self.on_key_press(self.special_keys['emoji']),
-                  activebackground='lightblue', activeforeground='black').grid(row=special_button_row, column=7)
+                  activebackground='lightblue', activeforeground='black').grid(row=special_button_row, column=2, columnspan=4)
 
         # 右下角的符号按钮
         tk.Button(self, text=self.special_keys['symbols'], width=5, height=2, font=("Helvetica", 18),
                   command=lambda: self.on_key_press(self.special_keys['symbols']),
                   activebackground='lightblue', activeforeground='black').grid(row=special_button_row, column=6)
+
+        # 右下角的表情按钮
+        tk.Button(self, text=self.special_keys['emoji'], width=5, height=2, font=("Helvetica", 18),
+                  command=lambda: self.on_key_press(self.special_keys['emoji']),
+                  activebackground='lightblue', activeforeground='black').grid(row=special_button_row, column=7)
 
         # 右下角的换行按钮
         tk.Button(self, text=self.special_keys['enter'], width=5, height=2, font=("Helvetica", 18),
@@ -204,6 +204,122 @@ class VirtualKeyboard(tk.Frame):
 
     def get_text(self):
         return self.entry_text.get()
+
+        self._build_button_grid()
+        self.current_row = 0
+        self.current_col = 0
+        self.active = False
+        # Deactivate navigation by default, main app will activate it.
+        # self.activate_navigation()
+
+    def _build_button_grid(self):
+        all_children = self.winfo_children()
+        button_info = []
+        for child in all_children:
+            if isinstance(child, tk.Button) and child.winfo_manager() == 'grid':
+                info = child.grid_info()
+                if info and 'row' in info and 'column' in info:
+                    button_info.append((info['row'], info['column'], child))
+
+        if not button_info:
+            self.button_grid = []
+            return
+
+        button_info.sort()
+        max_row = max(info[0] for info in button_info)
+        max_col = max(info[1] for info in button_info)
+
+        # Adjust for 0-based index if buttons start at row 1
+        row_offset = min(info[0] for info in button_info)
+
+        grid = [[None] * (max_col + 1) for _ in range(max_row - row_offset + 1)]
+
+        for r, c, button in button_info:
+            grid[r - row_offset][c] = button
+
+        self.button_grid = [row for row in grid if any(row)]
+
+    def update_keyboard(self):
+        if self.emoji_mode:
+            keys = self.keys_emojis
+        elif self.symbol_mode:
+            keys = self.keys_symbols
+        elif self.number_mode:
+            keys = self.keys_numbers
+        else:
+            keys = self.keys_lower if not self.shift_mode else self.keys_upper
+
+        for i, row in enumerate(self.buttons):
+            for j, button in enumerate(row):
+                if i < len(keys) and j < len(keys[i]):
+                    button.config(text=keys[i][j])
+                    button.grid()
+                else:
+                    button.grid_remove()
+
+        self._build_button_grid()
+
+    def activate_navigation(self):
+        self.active = True
+        self.bind("<Up>", self.navigate_keyboard)
+        self.bind("<Down>", self.navigate_keyboard)
+        self.bind("<Left>", self.navigate_keyboard)
+        self.bind("<Right>", self.navigate_keyboard)
+        self.bind("<Return>", self.press_key)
+        self.button_grid[self.current_row][self.current_col].focus_set()
+
+    def deactivate_navigation(self):
+        self.active = False
+        self.unbind("<Up>")
+        self.unbind("<Down>")
+        self.unbind("<Left>")
+        self.unbind("<Right>")
+        self.unbind("<Return>")
+
+    def navigate_keyboard(self, event):
+        if not self.active:
+            return
+
+        rows = len(self.button_grid)
+        if not rows: return
+
+        cols = len(self.button_grid[self.current_row])
+
+        if event.keysym == 'Down':
+            self.current_row = (self.current_row + 1) % rows
+        elif event.keysym == 'Up':
+            self.current_row = (self.current_row - 1 + rows) % rows
+        elif event.keysym == 'Right':
+            self.current_col = (self.current_col + 1) % cols
+        elif event.keysym == 'Left':
+            self.current_col = (self.current_col - 1 + cols) % cols
+
+        # Find next available button in the new row/col
+        # This is a simple implementation, it might not be perfect for all layouts.
+        while self.button_grid[self.current_row][self.current_col] is None:
+            if event.keysym == 'Right':
+                self.current_col = (self.current_col + 1) % cols
+            elif event.keysym == 'Left':
+                self.current_col = (self.current_col - 1 + cols) % cols
+            else: # Up/Down
+                # This part is tricky. A simple linear search might be confusing.
+                # For now, we just land on the first available button in the row.
+                try:
+                    self.current_col = next(i for i, v in enumerate(self.button_grid[self.current_row]) if v is not None)
+                except StopIteration:
+                    # Row has no buttons, this shouldn't happen with the current build_grid logic.
+                    # We can try to find another row.
+                    return
+
+        self.button_grid[self.current_row][self.current_col].focus_set()
+
+    def press_key(self, event):
+        if not self.active:
+            return
+
+        focused_widget = self.focus_get()
+        if isinstance(focused_widget, tk.Button):
+            focused_widget.invoke()
 
 if __name__ == '__main__':
     root = tk.Tk()
