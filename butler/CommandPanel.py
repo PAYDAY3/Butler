@@ -209,12 +209,17 @@ class WeatherApp(tk.Toplevel):
         self.title("Weather App")
         self.geometry("800x600")
 
+        # Configure grid layout
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+
         # Create main frames
         self.weather_frame = tk.Frame(self, bd=2, relief=tk.SUNKEN)
-        self.weather_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=10, pady=10)
+        self.weather_frame.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
 
         self.keyboard_frame = tk.Frame(self)
-        self.keyboard_frame.pack(side=tk.BOTTOM, fill=tk.X)
+        self.keyboard_frame.grid(row=1, column=0, sticky="nsew", padx=10)
 
         self.create_weather_widgets()
 

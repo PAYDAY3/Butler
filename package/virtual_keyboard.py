@@ -70,15 +70,21 @@ class VirtualKeyboard(tk.Frame):
         entry = tk.Entry(self, textvariable=self.entry_text, font=("Helvetica", 24))
         entry.grid(row=0, column=0, columnspan=10)
 
+        # Configure grid weights
+        for i in range(4): # 4 rows of keys
+            self.grid_rowconfigure(i + 1, weight=1)
+        for i in range(10): # 10 columns of keys
+            self.grid_columnconfigure(i, weight=1)
+
         # 创建键盘按钮
         self.buttons = []
         for i, row in enumerate(self.keys_lower):
             button_row = []
             for j, key in enumerate(row):
-                button = tk.Button(self, text=key, width=5, height=2, font=("Helvetica", 18),
+                button = tk.Button(self, text=key, font=("Helvetica", 18),
                                    command=lambda key=key: self.on_key_press(key),
                                    activebackground='lightblue', activeforeground='black')
-                button.grid(row=i+1, column=j)
+                button.grid(row=i+1, column=j, sticky="nsew")
                 button_row.append(button)
             self.buttons.append(button_row)
 
@@ -86,45 +92,45 @@ class VirtualKeyboard(tk.Frame):
         special_button_row = len(self.keys_lower) + 1
 
         # 左下角的123按钮
-        tk.Button(self, text=self.special_keys['123'], width=5, height=2, font=("Helvetica", 18),
+        tk.Button(self, text=self.special_keys['123'], font=("Helvetica", 18),
                   command=lambda: self.on_key_press(self.special_keys['123']),
-                  activebackground='lightblue', activeforeground='black').grid(row=special_button_row, column=0)
+                  activebackground='lightblue', activeforeground='black').grid(row=special_button_row, column=0, sticky="nsew")
 
         # 语言切换按钮
-        self.language_button = tk.Button(self, text="EN", width=5, height=2, font=("Helvetica", 18),
+        self.language_button = tk.Button(self, text="EN", font=("Helvetica", 18),
                                     command=lambda: self.on_key_press('🌐'),
                                     activebackground='lightblue', activeforeground='black')
-        self.language_button.grid(row=special_button_row, column=1)
+        self.language_button.grid(row=special_button_row, column=1, sticky="nsew")
 
         # 中间的空格按钮
-        tk.Button(self, text=self.special_keys['space'], width=20, height=2, font=("Helvetica", 18),
+        tk.Button(self, text=self.special_keys['space'], font=("Helvetica", 18),
                   command=lambda: self.on_key_press(self.special_keys['space']),
-                  activebackground='lightblue', activeforeground='black').grid(row=special_button_row, column=2, columnspan=4)
+                  activebackground='lightblue', activeforeground='black').grid(row=special_button_row, column=2, columnspan=4, sticky="nsew")
 
         # 右下角的符号按钮
-        tk.Button(self, text=self.special_keys['symbols'], width=5, height=2, font=("Helvetica", 18),
+        tk.Button(self, text=self.special_keys['symbols'], font=("Helvetica", 18),
                   command=lambda: self.on_key_press(self.special_keys['symbols']),
-                  activebackground='lightblue', activeforeground='black').grid(row=special_button_row, column=6)
+                  activebackground='lightblue', activeforeground='black').grid(row=special_button_row, column=6, sticky="nsew")
 
         # 右下角的表情按钮
-        tk.Button(self, text=self.special_keys['emoji'], width=5, height=2, font=("Helvetica", 18),
+        tk.Button(self, text=self.special_keys['emoji'], font=("Helvetica", 18),
                   command=lambda: self.on_key_press(self.special_keys['emoji']),
-                  activebackground='lightblue', activeforeground='black').grid(row=special_button_row, column=7)
+                  activebackground='lightblue', activeforeground='black').grid(row=special_button_row, column=7, sticky="nsew")
 
         # 右下角的换行按钮
-        tk.Button(self, text=self.special_keys['enter'], width=5, height=2, font=("Helvetica", 18),
+        tk.Button(self, text=self.special_keys['enter'], font=("Helvetica", 18),
                   command=lambda: self.on_key_press(self.special_keys['enter']),
-                  activebackground='lightblue', activeforeground='black').grid(row=special_button_row, column=8)
+                  activebackground='lightblue', activeforeground='black').grid(row=special_button_row, column=8, sticky="nsew")
 
         # 右下角的删除按钮
-        tk.Button(self, text=self.special_keys['backspace'], width=5, height=2, font=("Helvetica", 18),
+        tk.Button(self, text=self.special_keys['backspace'], font=("Helvetica", 18),
                   command=lambda: self.on_key_press(self.special_keys['backspace']),
-                  activebackground='lightblue', activeforeground='black').grid(row=special_button_row, column=9)
+                  activebackground='lightblue', activeforeground='black').grid(row=special_button_row, column=9, sticky="nsew")
 
         # 右边的Shift按钮
-        tk.Button(self, text=self.special_keys['shift'], width=5, height=2, font=("Helvetica", 18),
+        tk.Button(self, text=self.special_keys['shift'], font=("Helvetica", 18),
                   command=lambda: self.on_key_press(self.special_keys['shift']),
-                  activebackground='lightblue', activeforeground='black').grid(row=special_button_row - 1, column=9)
+                  activebackground='lightblue', activeforeground='black').grid(row=special_button_row - 1, column=9, sticky="nsew")
 
 
     def on_key_press(self, value):
@@ -209,8 +215,22 @@ class VirtualKeyboard(tk.Frame):
         self.current_row = 0
         self.current_col = 0
         self.active = False
-        # Deactivate navigation by default, main app will activate it.
-        # self.activate_navigation()
+
+        self.button_font = ("Helvetica", 18)
+        self.bind("<Configure>", self.on_resize)
+
+    def on_resize(self, event):
+        new_height = event.height
+
+        # Assuming 5 rows (1 entry, 4 key rows)
+        button_height = new_height // 5
+        new_font_size = max(8, int(button_height * 0.5))
+
+        self.button_font = ("Helvetica", new_font_size)
+
+        for child in self.winfo_children():
+            if isinstance(child, (tk.Button, tk.Entry)):
+                child.config(font=self.button_font)
 
     def _build_button_grid(self):
         all_children = self.winfo_children()
