@@ -393,17 +393,21 @@ class Jarvis:
     def open_programs(self, program_folder, external_folders=None):
         programs_cache = {}
         all_folders = [program_folder] + (external_folders or [])
-        
+        programs = {}  # FIX: Initialize programs outside the loop
+
         for folder in all_folders:
             if not os.path.exists(folder):
                 self.ui_print(f"文件夹 '{folder}' 未找到。")
                 self.logging.info(f"文件夹 '{folder}' 未找到。")
                 continue
-                
-            programs = {}
+
             for root, dirs, files in os.walk(folder):
+                if folder == "." and root != ".":  # Don't go into subdirs for root
+                    dirs.clear()
+
                 for file in files:
-                    if file.endswith(('.py', 'invoke.py')) or file.split('.')[-1] in binary_extensions:
+                    if file.endswith(('.py', 'invoke.py')) and file != '__init__.py':
+                        # Keep original naming scheme for compatibility
                         program_name = os.path.basename(root) + '.' + file[:-3]
                         program_path = os.path.join(root, file)
 
@@ -422,12 +426,12 @@ class Jarvis:
                                 continue
 
                             if not hasattr(program_module, 'run'):
-                                self.ui_print(f"程序模块 '{program_name}' 无效。")
-                                self.logging.info(f"程序模块 '{program_name}' 无效。")
+                                # self.ui_print(f"程序模块 '{program_name}' 无效。")
+                                # self.logging.info(f"程序模块 '{program_name}' 无效。")
                                 continue
 
                         programs[program_name] = program_module
-                    
+
         programs = dict(sorted(programs.items()))
         return programs
     
@@ -496,13 +500,16 @@ class Jarvis:
         self.speak("未找到匹配的程序")
 
     def panel_command_handler(self, command_type, command_payload):
-        programs = self.open_programs("./package")
         if command_type == "text":
-            self.handle_user_command(command_payload, programs)
+            # Pass the programs stored in the panel
+            self.handle_user_command(command_payload, self.panel.programs)
         elif command_type == "voice":
             command = self.takecommand()
             if command and self.panel:
                 self.panel.set_input_text(command)
+        elif command_type == "execute_program":
+            # command_payload should be the name of the program to run
+            self.execute_program(command_payload)
 
     def main(self):
         # handler = self.ProgramHandler(self.program_folder)
@@ -562,7 +569,9 @@ def main():
 
             jarvis = Jarvis(root)
 
-            panel = CommandPanel(root, program_mapping=jarvis.program_mapping)
+            # Load programs once and pass them to the panel
+            programs = jarvis.open_programs("./package", external_folders=["."])
+            panel = CommandPanel(root, program_mapping=jarvis.program_mapping, programs=programs)
             panel.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
             panel.set_command_callback(jarvis.panel_command_handler)
             jarvis.set_panel(panel)

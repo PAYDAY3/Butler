@@ -19,11 +19,13 @@ except ImportError:
 logger = LogManager.get_logger(__name__)
 
 class CommandPanel(tk.Frame):
-    def __init__(self, master, program_mapping=None, **kwargs):
+    def __init__(self, master, program_mapping=None, programs=None, **kwargs):
         super().__init__(master, **kwargs)
         self.master = master
         self.command_callback = None
         self.program_mapping = program_mapping or {}
+        self.programs = programs or {}
+        self.all_program_names = sorted(list(self.programs.keys()))
 
         # --- Theme and Styling ---
         self.background_color = '#282c34'
@@ -32,16 +34,59 @@ class CommandPanel(tk.Frame):
         self.button_bg_color = '#3e4451'
         self.button_fg_color = self.foreground_color
         self.code_bg_color = '#21252b'
+        self.menu_bg_color = '#21252b'
+        self.menu_fg_color = self.foreground_color
 
         self.config(bg=self.background_color)
-
-        # --- Configure top-level grid ---
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
+        # --- Main PanedWindow for collapsible menu ---
+        self.main_paned_window = tk.PanedWindow(self, orient=tk.HORIZONTAL, sashrelief=tk.RAISED, bg=self.background_color, sashwidth=4)
+        self.main_paned_window.grid(row=0, column=0, sticky="nsew")
+
+        # --- Left Pane: Menu ---
+        self.menu_frame = tk.Frame(self.main_paned_window, bg=self.menu_bg_color, width=200)
+        self.menu_frame.grid_rowconfigure(2, weight=1)  # Make listbox expandable
+        self.menu_frame.grid_columnconfigure(0, weight=1)
+        self.main_paned_window.add(self.menu_frame, stretch="never", minsize=200)
+
+        tk.Label(self.menu_frame, text="Programs", font=("Arial", 12, "bold"), bg=self.menu_bg_color, fg=self.menu_fg_color).grid(row=0, column=0, pady=5, padx=5, sticky="ew")
+
+        self.search_entry = tk.Entry(self.menu_frame, bg=self.input_bg_color, fg=self.foreground_color, insertbackground=self.foreground_color, borderwidth=0, highlightthickness=1)
+        self.search_entry.grid(row=1, column=0, pady=(0, 5), padx=5, sticky="ew")
+        self.search_entry.bind("<KeyRelease>", self.filter_programs)
+
+        self.program_listbox = tk.Listbox(
+            self.menu_frame,
+            bg=self.menu_bg_color,
+            fg=self.menu_fg_color,
+            selectbackground="#4f5b70",
+            selectforeground=self.menu_fg_color,
+            highlightthickness=0,
+            borderwidth=0,
+            font=("Arial", 10)
+        )
+        self.program_listbox.grid(row=2, column=0, sticky="nsew", padx=(5, 0), pady=(0, 5))
+        self.program_listbox.bind("<<ListboxSelect>>", self.on_program_select)
+
+        scrollbar = tk.Scrollbar(self.menu_frame, orient="vertical", command=self.program_listbox.yview)
+        scrollbar.grid(row=2, column=1, sticky="ns", pady=(0, 5))
+        self.program_listbox.config(yscrollcommand=scrollbar.set)
+
+        for prog_name in self.all_program_names:
+            self.program_listbox.insert(tk.END, prog_name)
+
+        # --- Right Pane: Main Content ---
+        self.main_content_frame = tk.Frame(self.main_paned_window, bg=self.background_color)
+        self.main_content_frame.grid_rowconfigure(0, weight=1)
+        self.main_content_frame.grid_columnconfigure(0, weight=1)
+        self.main_paned_window.add(self.main_content_frame, stretch="always")
+
+
         # --- Main output text area ---
         self.output_text = scrolledtext.ScrolledText(
-            self,
+            self.main_content_frame, # Parent is now main_content_frame
             bg=self.background_color,
             fg=self.foreground_color,
             state='disabled',
@@ -54,7 +99,7 @@ class CommandPanel(tk.Frame):
         self.output_text.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
 
         # --- Input Frame (at the bottom) ---
-        self.input_frame = tk.Frame(self, bg=self.background_color)
+        self.input_frame = tk.Frame(self.main_content_frame, bg=self.background_color) # Parent is now main_content_frame
         self.input_frame.grid(row=1, column=0, sticky="ew", padx=5, pady=5)
         self.input_frame.grid_columnconfigure(0, weight=1)
 
@@ -90,6 +135,34 @@ class CommandPanel(tk.Frame):
         self.restart_button.grid(row=0, column=4, padx=(5, 0))
 
         self._configure_styles_and_tags()
+
+    def on_program_select(self, event=None):
+        """Handle program selection from the listbox."""
+        # Get selected indices
+        selected_indices = self.program_listbox.curselection()
+        if not selected_indices:
+            return
+
+        # Get the program name from the index
+        selected_index = selected_indices[0]
+        program_name = self.program_listbox.get(selected_index)
+
+        if program_name and self.command_callback:
+            logger.info(f"Executing program from menu: {program_name}")
+            self.append_to_history(f"Executing: {program_name}", "system_message")
+            self.command_callback("execute_program", program_name)
+
+    def filter_programs(self, event=None):
+        """Filter the program listbox based on the search entry."""
+        search_term = self.search_entry.get().lower()
+
+        # Clear the listbox
+        self.program_listbox.delete(0, tk.END)
+
+        # Repopulate with matching items
+        for name in self.all_program_names:
+            if search_term in name.lower():
+                self.program_listbox.insert(tk.END, name)
 
     def _configure_styles_and_tags(self):
         """Configure text tags for styling the output."""
