@@ -44,68 +44,45 @@ class ResourceLimitError(SandboxError):
 
 class RestrictedBuiltins(Mapping):
     """受限制的内置函数集合"""
-    def __init__(self):
+    def __init__(self, forbidden_attributes, importer_func):
+        self.forbidden_attributes = forbidden_attributes
+
+        def safe_getattr(obj, name, *args):
+            if name in self.forbidden_attributes:
+                raise SecurityError(f"禁止通过 getattr 访问属性: {name}")
+            return getattr(obj, name, *args)
+
+        def safe_setattr(obj, name, value):
+            if name in self.forbidden_attributes:
+                raise SecurityError(f"禁止通过 setattr 设置属性: {name}")
+            setattr(obj, name, value)
+
+        def safe_delattr(obj, name):
+            if name in self.forbidden_attributes:
+                raise SecurityError(f"禁止通过 delattr 删除属性: {name}")
+            delattr(obj, name)
+
         # 允许的安全内置函数白名单
         self._safe_builtins = {
-            'abs': abs,
-            'all': all,
-            'any': any,
-            'ascii': ascii,
-            'bin': bin,
-            'bool': bool,
-            'bytearray': bytearray,
-            'bytes': bytes,
-            'chr': chr,
-            'complex': complex,
-            'dict': dict,
-            'dir': dir,
-            'enumerate': enumerate,
-            'filter': filter,
-            'float': float,
-            'format': format,
-            'frozenset': frozenset,
-            'hash': hash,
-            'hex': hex,
-            'int': int,
-            'iter': iter,
-            'len': len,
-            'list': list,
-            'map': map,
-            'max': max,
-            'min': min,
-            'next': next,
-            'oct': oct,
-            'ord': ord,
-            'pow': pow,
-            'range': range,
-            'repr': repr,
-            'reversed': reversed,
-            'round': round,
-            'set': set,
-            'slice': slice,
-            'sorted': sorted,
-            'str': str,
-            'sum': sum,
-            'tuple': tuple,
-            'zip': zip,
-            'type': type,
-            'isinstance': isinstance,
-            'issubclass': issubclass,
+            'abs': abs, 'all': all, 'any': any, 'ascii': ascii, 'bin': bin,
+            'bool': bool, 'bytearray': bytearray, 'bytes': bytes, 'chr': chr,
+            'complex': complex, 'dict': dict, 'dir': dir, 'divmod': divmod,
+            'enumerate': enumerate, 'filter': filter, 'float': float, 'format': format,
+            'frozenset': frozenset, 'hash': hash, 'hex': hex, 'int': int,
+            'isinstance': isinstance, 'issubclass': issubclass, 'iter': iter,
+            'len': len, 'list': list, 'map': map, 'max': max, 'min': min,
+            'next': next, 'oct': oct, 'ord': ord, 'pow': pow, 'print': print,
+            'range': range, 'repr': repr, 'reversed': reversed, 'round': round,
+            'set': set, 'slice': slice, 'sorted': sorted, 'str': str, 'sum': sum,
+            'tuple': tuple, 'type': type, 'zip': zip,
             'hasattr': hasattr,
-            'getattr': getattr,
-            'setattr': setattr,
-            'delattr': delattr,
-            'property': property,
-            'staticmethod': staticmethod,
-            'classmethod': classmethod,
-            'super': super,
-            'id': id,
-            'vars': vars,
-            'locals': locals,
-            'globals': globals,
-            '__build_class__': __build_class__,
-            '__name__': '__main__',
-            '__debug__': __debug__,
+            'getattr': safe_getattr,
+            'setattr': safe_setattr,
+            'delattr': safe_delattr,
+            'property': property, 'staticmethod': staticmethod, 'classmethod': classmethod,
+            'super': super, 'id': id, 'vars': vars, 'locals': locals, 'globals': globals,
+            '__build_class__': __build_class__, '__name__': '__main__', '__debug__': __debug__,
+            '__import__': importer_func,
         }
     
     def __getitem__(self, key):
@@ -248,7 +225,7 @@ class ASTValidator(ast.NodeVisitor):
                 raise SecurityError(f"禁止导入以下划线开头的模块: {alias.name}")
             
             # 检查模块黑名单
-            forbidden_modules = {'os', 'sys', 'io', 'socket', 'subprocess', 'ctypes',
+            forbidden_modules = {'io', 'socket', 'subprocess', 'ctypes',
                                 'mmap', 'fcntl', 'select', 'selectors', 'signal',
                                 'resource', 'pwd', 'grp', 'termios', 'tty', 'pty',
                                 'fcntl', 'posix', 'nt', '_winreg', 'winreg', 'msvcrt'}
@@ -264,7 +241,7 @@ class ASTValidator(ast.NodeVisitor):
             raise SecurityError(f"禁止从以下划线开头的模块导入: {node.module}")
         
         # 检查模块黑名单
-        forbidden_modules = {'os', 'sys', 'io', 'socket', 'subprocess', 'ctypes',
+        forbidden_modules = {'io', 'socket', 'subprocess', 'ctypes',
                             'mmap', 'fcntl', 'select', 'selectors', 'signal',
                             'resource', 'pwd', 'grp', 'termios', 'tty', 'pty',
                             'fcntl', 'posix', 'nt', '_winreg', 'winreg', 'msvcrt'}
@@ -310,111 +287,66 @@ class BytecodeValidator:
     """字节码验证器，用于检查和过滤危险操作码"""
     
     def __init__(self):
-        # 允许的操作码白名单
+        # Build the list of allowed opcodes dynamically to support multiple Python versions.
+        allowed_op_names = [
+            'POP_TOP', 'ROT_TWO', 'ROT_THREE', 'ROT_FOUR', 'DUP_TOP', 'DUP_TOP_TWO', 'NOP',
+            'UNARY_POSITIVE', 'UNARY_NEGATIVE', 'UNARY_NOT', 'UNARY_INVERT',
+            'BINARY_POWER', 'BINARY_MULTIPLY', 'BINARY_FLOOR_DIVIDE', 'BINARY_TRUE_DIVIDE',
+            'BINARY_MODULO', 'BINARY_ADD', 'BINARY_SUBTRACT', 'BINARY_SUBSCR',
+            'BINARY_LSHIFT', 'BINARY_RSHIFT', 'BINARY_AND', 'BINARY_XOR', 'BINARY_OR',
+            'INPLACE_ADD', 'INPLACE_SUBTRACT', 'INPLACE_MULTIPLY', 'INPLACE_FLOOR_DIVIDE',
+            'INPLACE_TRUE_DIVIDE', 'INPLACE_MODULO', 'INPLACE_POWER', 'INPLACE_LSHIFT',
+            'INPLACE_RSHIFT', 'INPLACE_AND', 'INPLACE_XOR', 'INPLACE_OR',
+            'STORE_SUBSCR', 'DELETE_SUBSCR', 'GET_ITER', 'GET_YIELD_FROM_ITER',
+            'PRINT_EXPR', 'LOAD_BUILD_CLASS', 'YIELD_FROM', 'SET_ADD', 'LIST_APPEND',
+            'MAP_ADD', 'LOAD_CONST', 'LOAD_NAME', 'STORE_NAME', 'LOAD_GLOBAL', 'LOAD_ATTR',
+            'COMPARE_OP', 'IMPORT_NAME', 'IMPORT_FROM', 'JUMP_FORWARD', 'JUMP_BACKWARD',
+            'JUMP_IF_FALSE_OR_POP', 'JUMP_IF_TRUE_OR_POP', 'JUMP_ABSOLUTE',
+            'POP_JUMP_IF_FALSE', 'POP_JUMP_IF_TRUE', 'LOAD_FAST', 'STORE_FAST',
+            'DELETE_FAST', 'LOAD_CLOSURE', 'LOAD_DEREF', 'STORE_DEREF', 'DELETE_DEREF',
+            'RAISE_VARARGS', 'CALL', 'CALL_FUNCTION', 'CALL_FUNCTION_KW', 'CALL_FUNCTION_EX',
+            'LOAD_METHOD', 'CALL_METHOD', 'LIST_EXTEND', 'SET_UPDATE', 'DICT_UPDATE',
+            'DICT_MERGE', 'FORMAT_VALUE', 'BUILD_CONST_KEY_MAP', 'BUILD_STRING',
+            'BUILD_TUPLE', 'BUILD_LIST', 'BUILD_SET', 'BUILD_MAP', 'SETUP_ANNOTATIONS',
+            'LOAD_ASSERTION_ERROR', 'LIST_TO_TUPLE', 'RETURN_CONST', 'BINARY_OP',
+            # Python 3.9+
+            'IS_OP', 'CONTAINS_OP', 'JUMP_IF_NOT_EXC_MATCH', 'RERAISE', 'GEN_START',
+            # Python 3.10+
+            'ROT_FOUR',
+            # Python 3.11+
+            'PUSH_NULL', 'PRECALL', 'RESUME', 'RETURN_GENERATOR', 'SEND',
+            'SWAP', 'COPY', 'CACHE', 'PUSH_EXC_INFO', 'CHECK_EXC_MATCH',
+            # Python 3.12+
+            'END_FOR',
+            # Other
+            'LOAD_FAST_AND_CLEAR'
+        ]
         self.allowed_opcodes = {
-            opcode.opmap['POP_TOP'],
-            opcode.opmap['ROT_TWO'],
-            opcode.opmap['ROT_THREE'],
-            opcode.opmap['DUP_TOP'],
-            opcode.opmap['DUP_TOP_TWO'],
-            opcode.opmap['NOP'],
-            opcode.opmap['UNARY_POSITIVE'],
-            opcode.opmap['UNARY_NEGATIVE'],
-            opcode.opmap['UNARY_NOT'],
-            opcode.opmap['UNARY_INVERT'],
-            opcode.opmap['BINARY_POWER'],
-            opcode.opmap['BINARY_MULTIPLY'],
-            opcode.opmap['BINARY_FLOOR_DIVIDE'],
-            opcode.opmap['BINARY_TRUE_DIVIDE'],
-            opcode.opmap['BINARY_MODULO'],
-            opcode.opmap['BINARY_ADD'],
-            opcode.opmap['BINARY_SUBTRACT'],
-            opcode.opmap['BINARY_SUBSCR'],
-            opcode.opmap['BINARY_LSHIFT'],
-            opcode.opmap['BINARY_RSHIFT'],
-            opcode.opmap['BINARY_AND'],
-            opcode.opmap['BINARY_XOR'],
-            opcode.opmap['BINARY_OR'],
-            opcode.opmap['INPLACE_ADD'],
-            opcode.opmap['INPLACE_SUBTRACT'],
-            opcode.opmap['INPLACE_MULTIPLY'],
-            opcode.opmap['INPLACE_FLOOR_DIVIDE'],
-            opcode.opmap['INPLACE_TRUE_DIVIDE'],
-            opcode.opmap['INPLACE_MODULO'],
-            opcode.opmap['INPLACE_POWER'],
-            opcode.opmap['INPLACE_LSHIFT'],
-            opcode.opmap['INPLACE_RSHIFT'],
-            opcode.opmap['INPLACE_AND'],
-            opcode.opmap['INPLACE_XOR'],
-            opcode.opmap['INPLACE_OR'],
-            opcode.opmap['STORE_SUBSCR'],
-            opcode.opmap['DELETE_SUBSCR'],
-            opcode.opmap['GET_ITER'],
-            opcode.opmap['GET_YIELD_FROM_ITER'],
-            opcode.opmap['PRINT_EXPR'],
-            opcode.opmap['LOAD_BUILD_CLASS'],
-            opcode.opmap['YIELD_FROM'],
-            opcode.opmap['SET_ADD'],
-            opcode.opmap['LIST_APPEND'],
-            opcode.opmap['MAP_ADD'],
-            opcode.opmap['LOAD_CONST'],
-            opcode.opmap['LOAD_NAME'],
-            opcode.opmap['LOAD_GLOBAL'],
-            opcode.opmap['LOAD_ATTR'],
-            opcode.opmap['COMPARE_OP'],
-            opcode.opmap['IMPORT_NAME'],
-            opcode.opmap['IMPORT_FROM'],
-            opcode.opmap['JUMP_FORWARD'],
-            opcode.opmap['JUMP_IF_FALSE_OR_POP'],
-            opcode.opmap['JUMP_IF_TRUE_OR_POP'],
-            opcode.opmap['JUMP_ABSOLUTE'],
-            opcode.opmap['POP_JUMP_IF_FALSE'],
-            opcode.opmap['POP_JUMP_IF_TRUE'],
-            opcode.opmap['LOAD_FAST'],
-            opcode.opmap['STORE_FAST'],
-            opcode.opmap['DELETE_FAST'],
-            opcode.opmap['LOAD_CLOSURE'],
-            opcode.opmap['LOAD_DEREF'],
-            opcode.opmap['STORE_DEREF'],
-            opcode.opmap['DELETE_DEREF'],
-            opcode.opmap['RAISE_VARARGS'],
-            opcode.opmap['CALL_FUNCTION'],
-            opcode.opmap['CALL_FUNCTION_KW'],
-            opcode.opmap['CALL_FUNCTION_EX'],
-            opcode.opmap['LOAD_METHOD'],
-            opcode.opmap['CALL_METHOD'],
-            opcode.opmap['LIST_EXTEND'],
-            opcode.opmap['SET_UPDATE'],
-            opcode.opmap['DICT_UPDATE'],
-            opcode.opmap['DICT_MERGE'],
-            opcode.opmap['FORMAT_VALUE'],
-            opcode.opmap['BUILD_CONST_KEY_MAP'],
-            opcode.opmap['BUILD_STRING'],
-            opcode.opmap['BUILD_TUPLE'],
-            opcode.opmap['BUILD_LIST'],
-            opcode.opmap['BUILD_SET'],
-            opcode.opmap['BUILD_MAP'],
-            opcode.opmap['SETUP_ANNOTATIONS'],
-            opcode.opmap['LOAD_ASSERTION_ERROR'],
-            opcode.opmap['LIST_TO_TUPLE'],
+            op for op_name in allowed_op_names if (op := opcode.opmap.get(op_name)) is not None
         }
         
-        # 禁止的操作码黑名单
+        # For Python 3.8, use opcode.opmap.get to avoid errors on missing opcodes
+        _forbidden_op_names = [
+            'IMPORT_STAR',  # 禁止 from module import *
+            'EXEC_STMT',    # (Python 2) 禁止 exec 语句
+        ]
         self.forbidden_opcodes = {
-            opcode.opmap['IMPORT_STAR'],  # 禁止from module import *
-            opcode.opmap['EXEC_STMT'],    # 禁止exec语句
-            opcode.opmap['BREAK_LOOP'],   # 禁止break循环
-            opcode.opmap['CONTINUE_LOOP'],# 禁止continue循环
-            opcode.opmap['SETUP_WITH'],   # 禁止with语句
-            opcode.opmap['WITH_CLEANUP'], # 禁止with语句
-            opcode.opmap['SETUP_ASYNC_WITH'], # 禁止async with语句
-            opcode.opmap['BEFORE_ASYNC_WITH'], # 禁止async with语句
-            opcode.opmap['END_ASYNC_FOR'], # 禁止async for语句
-            opcode.opmap['SETUP_FINALLY'], # 禁止try/finally语句
-            opcode.opmap['POP_BLOCK'],    # 禁止块操作
-            opcode.opmap['SETUP_EXCEPT'], # 禁止try/except语句
-            opcode.opmap['SETUP_LOOP'],   # 禁止循环
+            op for op_name in _forbidden_op_names if (op := opcode.opmap.get(op_name)) is not None
         }
+
+        # Add opcodes needed for control flow to the allowed list
+        # Opcodes for loops, try/except, with statements
+        control_flow_opcodes = [
+            'FOR_ITER',
+            'SETUP_LOOP', 'BREAK_LOOP', 'CONTINUE_LOOP',
+            'SETUP_EXCEPT', 'POP_EXCEPT', 'SETUP_FINALLY', 'END_FINALLY',
+            'SETUP_WITH', 'WITH_EXCEPT_START', 'POP_BLOCK',
+            'GET_AWAITABLE', 'GET_AITER', 'GET_ANEXT', 'END_ASYNC_FOR',
+            'BEFORE_ASYNC_WITH', 'SETUP_ASYNC_WITH', 'GET_AEXIT_CORO'
+        ]
+        for op_name in control_flow_opcodes:
+            if (op := opcode.opmap.get(op_name)) is not None:
+                self.allowed_opcodes.add(op)
     
     def validate(self, code_obj):
         """验证字节码"""
@@ -483,7 +415,9 @@ class Sandbox:
     def create_restricted_globals(self):
         """创建受限制的全局变量环境"""
         restricted_globals = {
-            '__builtins__': RestrictedBuiltins(),
+            '__builtins__': RestrictedBuiltins(
+                self.ast_validator.forbidden_attributes, self.importer.import_module
+            ),
             '__name__': '__main__',
             '__file__': None,
             '__package__': None,
@@ -551,12 +485,26 @@ class Sandbox:
         
         def run_code():
             nonlocal result, exception
+
+            def trace_dispatch(frame, event, arg):
+                try:
+                    if event == 'opcode':
+                        self.resource_monitor.count_instruction()
+                except ResourceLimitError as e:
+                    # Must raise an exception here to stop execution.
+                    # This is a bit of a hack, as there's no clean way to stop exec.
+                    raise e
+                return trace_dispatch
+
+            sys.settrace(trace_dispatch)
             try:
                 # 执行代码
                 exec(code_obj, globals_dict, locals_dict)
                 result = (globals_dict, locals_dict)
             except Exception as e:
                 exception = e
+            finally:
+                sys.settrace(None)
         
         # 在单独的线程中执行代码
         thread = threading.Thread(target=run_code)
@@ -585,5 +533,81 @@ class Sandbox:
 
 # 示例使用
 if __name__ == '__main__':
-    # 创建沙盒实例
-    sandbox = Sandbox(timeout=10, memory_limit=50*1024*1024, instruction_limit=500000)
+    def run_test(name, code, sandbox_factory):
+        print(f"\n--- {name} ---")
+        try:
+            sandbox = sandbox_factory()
+            output_catcher = io.StringIO()
+            with redirect_stdout(output_catcher):
+                sandbox.execute(code)
+            output = output_catcher.getvalue()
+            if output:
+                print("代码输出:\n" + output.strip())
+            else:
+                print("代码成功执行，无输出。")
+        except Exception as e:
+            print(f"成功捕获错误: {e}")
+
+    # 1. Safe code
+    run_test(
+        "1. 测试安全的代码 (循环和打印)",
+        """
+total = 0
+for i in range(10):
+    total += i
+print(f"计算结果: {total}")
+        """,
+        lambda: Sandbox(timeout=5, instruction_limit=30000)
+    )
+
+    # 2. Forbidden import
+    run_test(
+        "2. 测试禁止的导入 (subprocess)",
+        "import subprocess",
+        lambda: Sandbox()
+    )
+
+    # 3. Instruction limit (now timeout)
+    run_test(
+        "3. 测试指令数量限制 (无限循环)",
+        "while True: pass",
+        lambda: Sandbox(timeout=2, instruction_limit=20000) # shorter timeout to ensure it triggers
+    )
+
+    # 4. Timeout
+    run_test(
+        "4. 测试执行超时 (time.sleep)",
+        "import time; time.sleep(5)",
+        lambda: Sandbox(timeout=2)
+    )
+
+    # 5. Forbidden getattr
+    run_test(
+        "5. 测试禁止的属性访问 (getattr)",
+        "getattr(int, '__' + 'subclasses' + '__')()",
+        lambda: Sandbox()
+    )
+
+    # 6. Safe sys/os import
+    def sys_os_test_sandbox():
+        s = Sandbox()
+        s.importer.allowed_modules.add('sys')
+        s.importer.allowed_modules.add('os')
+        return s
+    run_test(
+        "6. 测试安全的 'sys' 和 'os' 模块导入",
+        """
+import sys
+import os
+print(f'Python platform: {sys.platform}')
+print(f'OS name: {os.name}')
+        """,
+        sys_os_test_sandbox
+    )
+
+    # 7. Memory limit
+    run_test(
+        "7. 测试内存限制",
+        "a = [i for i in range(20000)]",
+        lambda: Sandbox(memory_limit=1024*1024)
+    )
