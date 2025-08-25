@@ -1,4 +1,3 @@
-print("Reloading butler/main.py")
 import os
 import sys
 import time
@@ -74,7 +73,8 @@ class Jarvis:
         self.panel = None
         self.MAX_HISTORY_MESSAGES = 10
         self.interpreter = Interpreter()
-
+        self.program_folder = []
+        
     def set_panel(self, panel):
         self.panel = panel
 
